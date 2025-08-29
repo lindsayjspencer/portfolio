@@ -7,18 +7,11 @@ export const env = createEnv({
 	 * isn't built with invalid env vars.
 	 */
 	server: {
-		REDIS_URL: z.string().url(),
 		GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
 		NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-		SERPER_API_KEY: z.string(),
 		LANGFUSE_SECRET_KEY: z.string(),
 		LANGFUSE_PUBLIC_KEY: z.string(),
 		LANGFUSE_BASEURL: z.string().url(),
-		EVAL_DATASET: z.enum(['dev', 'ci', 'regression']).default('dev'),
-		SEARCH_RESULTS_COUNT: z.coerce.number().default(3),
-		BYPASS_SEARCH: z.string().optional(),
-		CUSTOM_MODEL_URL: z.string().url().optional(),
-		CUSTOM_MODEL_API_KEY: z.string().optional(),
 	},
 
 	/**
@@ -33,18 +26,11 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	runtimeEnv: {
-		REDIS_URL: process.env.REDIS_URL,
 		GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 		NODE_ENV: process.env.NODE_ENV,
-		SERPER_API_KEY: process.env.SERPER_API_KEY,
 		LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
 		LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
 		LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL,
-		EVAL_DATASET: process.env.EVAL_DATASET,
-		SEARCH_RESULTS_COUNT: process.env.SEARCH_RESULTS_COUNT,
-		BYPASS_SEARCH: process.env.BYPASS_SEARCH,
-		CUSTOM_MODEL_URL: process.env.CUSTOM_MODEL_URL,
-		CUSTOM_MODEL_API_KEY: process.env.CUSTOM_MODEL_API_KEY,
 	},
 	/**
 	 * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
