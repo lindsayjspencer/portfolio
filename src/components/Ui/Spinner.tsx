@@ -30,17 +30,12 @@ export const Spinner: React.FC<SpinnerProps> = ({
 	const colorValue = useComponentColor(color);
 
 	// Build CSS classes
-	const classes = [
-		'spinner',
-		className,
-	]
-		.filter(Boolean)
-		.join(' ');
+	const classes = ['spinner', className].filter(Boolean).join(' ');
 
 	// Build inline styles
 	const inlineStyle: React.CSSProperties = {
-		width: sizeValue,
-		height: sizeValue,
+		width: `calc(${sizeValue} - 4px)`,
+		height: `calc(${sizeValue} - 4px)`,
 		borderColor: `${colorValue}20`, // 20 = ~12% opacity for light border
 		borderTopColor: colorValue,
 		...style,
