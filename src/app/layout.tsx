@@ -1,4 +1,4 @@
-import '~/styles/main.css';
+import '~/styles/main.scss';
 import { type Metadata } from 'next';
 import { ThemeProvider } from '~/contexts/theme-context';
 import { getServerTheme } from '~/lib/server-theme';
