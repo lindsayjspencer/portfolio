@@ -1,0 +1,62 @@
+{
+  "themes": {
+    "cold": {
+      "primary": "#2563eb",
+      "secondary": "#0891b2", 
+      "accent": "#06b6d4",
+      "neutral": "#6b7280",
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444"
+    },
+    "corporate": {
+      "primary": "#1f2937",
+      "secondary": "#374151",
+      "accent": "#4f46e5",
+      "neutral": "#6b7280",
+      "success": "#059669",
+      "warning": "#d97706",
+      "error": "#dc2626"
+    },
+    "adventurous": {
+      "primary": "#ea580c",
+      "secondary": "#16a34a",
+      "accent": "#ca8a04",
+      "neutral": "#78716c",
+      "success": "#16a34a",
+      "warning": "#ea580c",
+      "error": "#dc2626"
+    },
+    "exciting": {
+      "primary": "#dc2626",
+      "secondary": "#9333ea",
+      "accent": "#ec4899",
+      "neutral": "#525252",
+      "success": "#16a34a",
+      "warning": "#f59e0b",
+      "error": "#dc2626"
+    },
+    "elegant": {
+      "primary": "#7c3aed",
+      "secondary": "#1e293b",
+      "accent": "#8b5cf6",
+      "neutral": "#64748b",
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444"
+    },
+    "vibrant": {
+      "primary": "#06b6d4",
+      "secondary": "#f59e0b",
+      "accent": "#ec4899",
+      "neutral": "#71717a",
+      "success": "#22c55e",
+      "warning": "#f59e0b",
+      "error": "#ef4444"
+    }
+  },
+  "output": {
+    "typescript": "./src/lib/themes.ts",
+    "scss": "./src/styles/themes.scss"
+  }
+}

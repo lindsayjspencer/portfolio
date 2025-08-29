@@ -1,0 +1,61 @@
+.landing-view {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	background-color: var(--color-neutral-50);
+	overflow: hidden;
+	
+	// Disable all interactions for landing view
+	pointer-events: none;
+	user-select: none;
+
+	// Dark theme support
+	:global(.theme-corporate) &,
+	:global(.theme-elegant) & {
+		background-color: var(--color-neutral-900);
+	}
+
+	// Transition phases
+	&--entering {
+		opacity: 0;
+		animation: fadeIn 0.5s ease-out forwards;
+	}
+
+	&--stable {
+		opacity: 1;
+	}
+
+	&--exiting {
+		opacity: 1;
+		animation: fadeOut 0.5s ease-in forwards;
+	}
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+	from { opacity: 1; }
+	to { opacity: 0; }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+	.landing-view {
+		&--entering,
+		&--exiting {
+			animation: none;
+		}
+
+		&--entering {
+			opacity: 1;
+		}
+
+		&--exiting {
+			opacity: 0;
+		}
+	}
+}

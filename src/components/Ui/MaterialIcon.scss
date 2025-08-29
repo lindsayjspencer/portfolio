@@ -1,0 +1,42 @@
+// Material Icon Component Styles
+
+.material-icon-component {
+  // Base styles for all material icons
+  font-variation-settings: 
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  
+  // Smooth transitions for hover effects
+  transition: color 0.2s ease, transform 0.2s ease;
+  
+  // Ensure proper alignment
+  vertical-align: middle;
+}
+
+.material-icon-clickable {
+  // Clickable icon styles
+  &:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  
+  &:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Responsive size adjustments
+@media (max-width: 768px) {
+  .material-icon-component {
+    // Slightly smaller icons on mobile
+    font-size: 0.9em;
+  }
+}

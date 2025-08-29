@@ -1,0 +1,27 @@
+.view-transition-manager {
+	position: relative;
+	height: 100%;
+	width: 100%;
+
+	.view-instance {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 100%;
+		width: 100%;
+
+		&--entering {
+			// Incoming view starts on top during transition
+		}
+
+		&--stable {
+			// Normal stable state
+		}
+
+		&--exiting {
+			// Outgoing view stays underneath during transition
+		}
+	}
+}

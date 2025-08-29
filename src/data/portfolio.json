@@ -1,0 +1,763 @@
+{
+	"nodes": [
+		{
+			"id": "person_lindsay",
+			"type": "person",
+			"label": "Lindsay Spencer",
+			"summary": "Senior Full Stack Developer specialising in frontend. Deep CSS, canvas/WebGL, advanced TypeScript, and performance-focused UI/UX.",
+			"description": "Highly experienced across React/TypeScript with a strong eye for design polish and performance. Leads quality initiatives and builds tooling (CLIs) alongside product work. Self-taught with targeted advanced courses (Total TypeScript, Three.js Journey).",
+			"location": "Brisbane, Australia",
+			"links": [
+				{
+					"title": "Email",
+					"href": "mailto:lindsayjspencer@gmail.com"
+				},
+				{
+					"title": "GitHub",
+					"href": "https://github.com/lindsayjspencer"
+				}
+			],
+			"tags": [
+				"frontend",
+				"full-stack",
+				"ui-ux",
+				"performance",
+				"typescript",
+				"canvas"
+			]
+		},
+		{
+			"id": "role_codebots_sfsd_quality",
+			"type": "role",
+			"label": "Senior Full Stack Developer / Quality Lead — Codebots",
+			"summary": "Senior developer and quality lead embedded across squads; frontend specialist.",
+			"description": "Led a quality uplift program embedded in squads focusing on traceability/observability, E2E system testing, and automated documentation pipelines, in parallel with feature delivery. Ran the company frontend focus group for two years (15–20 devs).",
+			"period": {
+				"start": "2020-05",
+				"end": "present"
+			},
+			"years": [
+				2020,
+				2025
+			],
+			"location": "Milton, Brisbane",
+			"tags": [
+				"frontend",
+				"full-stack",
+				"leadership",
+				"quality",
+				"react",
+				"typescript",
+				"threejs",
+				"canvas",
+				"dotnet",
+				"csharp",
+				"nextjs",
+				"node",
+				"cli"
+			]
+		},
+		{
+			"id": "role_goodwill_fs",
+			"type": "role",
+			"label": "Full Stack Developer — Goodwill Projects",
+			"summary": "Owned internal markets/events platform end-to-end.",
+			"description": "Designed and developed a multi-year system for markets and events: vendor onboarding, bookings, payments and accounting integrations, onsite tools, analytics, mapping, document management, surveys, rich email templating, and a marketing site generator.",
+			"period": {
+				"start": "2014-01",
+				"end": "2020-03"
+			},
+			"years": [
+				2014,
+				2020
+			],
+			"location": "Fortitude Valley, Brisbane",
+			"tags": [
+				"full-stack",
+				"product",
+				"operations",
+				"payments",
+				"integrations",
+				"react",
+				"typescript",
+				"jquery",
+				"lamp"
+			],
+			"metrics": [
+				{
+					"label": "Admin reduction",
+					"value": "-60% office admin per event"
+				},
+				{
+					"label": "Bookkeeper automation",
+					"value": "80% automated"
+				},
+				{
+					"label": "Markets scaled",
+					"value": "1 → 36 across AU"
+				}
+			]
+		},
+		{
+			"id": "proj_codebots_modeler",
+			"type": "project",
+			"label": "Codebots Model & Generate",
+			"summary": "Diagram-driven modelling to generate applications; pioneered React/TS generation.",
+			"description": "Users model entities, security, and queries across interconnected diagrams. A pipeline generates the target application. Led development and introduced React/TypeScript code generation as a first-class target.",
+			"period": {
+				"start": "2020-06",
+				"end": "present"
+			},
+			"years": [
+				2020,
+				2025
+			],
+			"tags": [
+				"react",
+				"typescript",
+				"codegen",
+				"devtools",
+				"diagramming",
+				"pipelines"
+			]
+		},
+		{
+			"id": "proj_dep_graph_versions",
+			"type": "project",
+			"label": "Resource Version Dependency Graph",
+			"summary": "Interactive force-directed tool for cascading dependency/version updates.",
+			"description": "3D/2D force-directed interface to create/update resource versions and dependency combinations with cascades. Reduced multi-hour workflows to under a minute.",
+			"period": {
+				"start": "2025-04",
+				"end": "2025-07"
+			},
+			"years": [
+				2025,
+				2025
+			],
+			"tags": [
+				"data-viz",
+				"force-graph",
+				"react",
+				"threejs",
+				"typescript",
+				"automation"
+			],
+			"metrics": [
+				{
+					"label": "Efficiency gain",
+					"value": "3–4h tasks → <1m"
+				}
+			]
+		},
+		{
+			"id": "proj_codebots_homepage_ai",
+			"type": "project",
+			"label": "Codebots Homepage / AI Search",
+			"summary": "LLM-driven chat with RAG answering queries about Codebots.",
+			"description": "Public-facing landing page using Next.js and Vercel AI SDK. Chat interface grounded in RAG over company documentation.",
+			"period": {
+				"start": "2025-01",
+				"end": "present"
+			},
+			"years": [
+				2025,
+				2025
+			],
+			"tags": [
+				"llm",
+				"rag",
+				"nextjs",
+				"vercel-ai-sdk",
+				"chat-ux"
+			],
+			"links": [
+				{
+					"title": "Demo",
+					"href": "https://beta.codebots.com"
+				}
+			]
+		},
+		{
+			"id": "proj_react_granular_store",
+			"type": "project",
+			"label": "React Granular Store (OSS)",
+			"summary": "React/TS state management library adopted in enterprise applications.",
+			"description": "Released as OSS on npm, enabling performant granular store updates for React apps.",
+			"period": {
+				"start": "2023-12",
+				"end": "2023-12"
+			},
+			"years": [
+				2023,
+				2023
+			],
+			"tags": [
+				"react",
+				"typescript",
+				"oss",
+				"state-management"
+			],
+			"links": [
+				{
+					"title": "npm",
+					"href": "https://www.npmjs.com/package/react-granular-store"
+				}
+			]
+		},
+		{
+			"id": "proj_goodwill_markets",
+			"type": "project",
+			"label": "Markets & Events Platform",
+			"summary": "End-to-end admin & operations platform for a state-wide market operator.",
+			"description": "Applications, vendors/bookings, payments, MYOB/Westpac integrations, Square OAuth-style sales tracking, drag-and-drop UIs, onsite mobile views, analytics/graphs, mapping tools, document management, surveys, rich email editing/templating, inductions, media management, and a marketing site generator.",
+			"period": {
+				"start": "2014-01",
+				"end": "2020-03"
+			},
+			"years": [
+				2014,
+				2020
+			],
+			"tags": [
+				"product",
+				"ops",
+				"payments",
+				"integrations",
+				"react",
+				"typescript",
+				"jquery",
+				"lamp"
+			]
+		},
+		{
+			"id": "skill_react",
+			"type": "skill",
+			"label": "React",
+			"years": [
+				2017,
+				2025
+			],
+			"tags": [
+				"frontend"
+			],
+			"level": "expert"
+		},
+		{
+			"id": "skill_typescript",
+			"type": "skill",
+			"label": "TypeScript",
+			"years": [
+				2018,
+				2025
+			],
+			"tags": [
+				"frontend",
+				"backend"
+			],
+			"level": "expert"
+		},
+		{
+			"id": "skill_css",
+			"type": "skill",
+			"label": "CSS",
+			"years": [
+				2012,
+				2025
+			],
+			"tags": [
+				"frontend",
+				"ui-ux"
+			],
+			"level": "advanced"
+		},
+		{
+			"id": "skill_canvas",
+			"type": "skill",
+			"label": "Canvas/WebGL/Three.js",
+			"years": [
+				2021,
+				2025
+			],
+			"tags": [
+				"frontend",
+				"data-viz"
+			],
+			"level": "intermediate"
+		},
+		{
+			"id": "skill_next",
+			"type": "skill",
+			"label": "Next.js",
+			"years": [
+				2021,
+				2025
+			],
+			"tags": [
+				"frontend"
+			],
+			"level": "intermediate"
+		},
+		{
+			"id": "skill_node",
+			"type": "skill",
+			"label": "Node.js & CLI tooling",
+			"years": [
+				2016,
+				2025
+			],
+			"tags": [
+				"backend",
+				"tooling"
+			],
+			"level": "intermediate"
+		},
+		{
+			"id": "skill_dotnet",
+			"type": "skill",
+			"label": ".NET / C#",
+			"years": [
+				2020,
+				2025
+			],
+			"tags": [
+				"backend"
+			],
+			"level": "intermediate"
+		},
+		{
+			"id": "skill_vite",
+			"type": "skill",
+			"label": "Vite",
+			"years": [
+				2022,
+				2025
+			],
+			"tags": [
+				"frontend",
+				"tooling"
+			],
+			"level": "expert"
+		},
+		{
+			"id": "skill_lamp",
+			"type": "skill",
+			"label": "LAMP (PHP/MySQL)",
+			"years": [
+				2014,
+				2020
+			],
+			"tags": [
+				"backend"
+			],
+			"level": "expert"
+		},
+		{
+			"id": "skill_jquery",
+			"type": "skill",
+			"label": "jQuery/JavaScript (legacy)",
+			"years": [
+				2012,
+				2020
+			],
+			"tags": [
+				"frontend"
+			],
+			"level": "expert"
+		},
+		{
+			"id": "skill_llm_apps",
+			"type": "skill",
+			"label": "LLM Application Engineering",
+			"years": [
+				2023,
+				2025
+			],
+			"tags": [
+				"llm",
+				"ai-apps",
+				"gpt",
+				"claude",
+				"gemini",
+				"rag"
+			],
+			"level": "advanced"
+		},
+		{
+			"id": "skill_llm_local",
+			"type": "skill",
+			"label": "Local Model Integration",
+			"years": [
+				2024,
+				2025
+			],
+			"tags": [
+				"llm",
+				"local"
+			],
+			"level": "intermediate"
+		},
+		{
+			"id": "value_mentorship",
+			"type": "value",
+			"label": "Mentorship & Community",
+			"summary": "Ran company-wide frontend focus group for two years (15–20 devs).",
+			"tags": [
+				"leadership",
+				"mentoring",
+				"practice"
+			]
+		},
+		{
+			"id": "value_quality",
+			"type": "value",
+			"label": "Quality & Observability",
+			"summary": "Traceability, E2E testing, and automated docs embedded in squads.",
+			"tags": [
+				"quality",
+				"testing",
+				"observability"
+			]
+		},
+		{
+			"id": "value_design_perf",
+			"type": "value",
+			"label": "Design Polish & Performance",
+			"summary": "Craft UI/UX with canvas/WebGL and performance budgets.",
+			"tags": [
+				"ui-ux",
+				"performance",
+				"craft"
+			]
+		},
+		{
+			"id": "value_innovation",
+			"type": "value",
+			"label": "Innovation with Emerging Tech",
+			"summary": "Pioneered AI-driven features with GPT, Claude, and Gemini; delivered automation wins.",
+			"tags": [
+				"innovation",
+				"llm",
+				"ai"
+			]
+		},
+		{
+			"id": "value_open_source",
+			"type": "value",
+			"label": "Open Source Contribution",
+			"summary": "Released React Granular Store to npm, adopted in enterprise projects.",
+			"tags": [
+				"oss",
+				"community",
+				"contribution"
+			]
+		},
+		{
+			"id": "story_css_perf",
+			"type": "story",
+			"label": "Performance Revolution (CSS-in-JS)",
+			"summary": "Migrated from CSS-in-JS to standard CSS, improving load/render times.",
+			"description": "Identified CSS-in-JS as the bottleneck, pitched migration, created guidelines, and led adoption across frontend teams.",
+			"years": [
+				2022,
+				2023
+			]
+		},
+		{
+			"id": "story_deadlines",
+			"type": "story",
+			"label": "Deadline Leadership",
+			"summary": "Delivered under tight, client-driven deadlines by rallying teams around just-enough features.",
+			"description": "Balanced scope vs urgency when downstream teams needed tools to deliver to customers; kept projects on track.",
+			"years": [
+				2020,
+				2025
+			]
+		},
+		{
+			"id": "story_pixel_perfect",
+			"type": "story",
+			"label": "Pixel-Perfect Execution",
+			"summary": "Built UI so precisely a designer mistook the live app for her Figma prototype.",
+			"years": [
+				2021,
+				2025
+			]
+		},
+		{
+			"id": "story_bank_recon",
+			"type": "story",
+			"label": "Automated Bank Reconciliation",
+			"summary": "Replaced a week-long manual task with a fully automated reconciliation system.",
+			"description": "Built invoicing + bank feed matching system that scaled from dozens to thousands of payments with zero extra staff.",
+			"years": [
+				2016,
+				2019
+			]
+		},
+		{
+			"id": "story_first_html",
+			"type": "story",
+			"label": "First Website",
+			"summary": "Built first HTML site.",
+			"years": [
+				1999,
+				1999
+			]
+		},
+		{
+			"id": "story_flash_portals",
+			"type": "story",
+			"label": "Flash Portals",
+			"summary": "Collaborated on early Flash portals incl. Smosh founders.",
+			"years": [
+				2003,
+				2003
+			]
+		},
+		{
+			"id": "story_flash_spellcheck",
+			"type": "story",
+			"label": "Flash Spellchecker",
+			"summary": "Created the first free spellchecker plugin for Flash.",
+			"years": [
+				2006,
+				2006
+			]
+		}
+	],
+	"edges": [
+		{
+			"id": "e1",
+			"source": "person_lindsay",
+			"target": "role_codebots_sfsd_quality",
+			"rel": "worked_as"
+		},
+		{
+			"id": "e2",
+			"source": "person_lindsay",
+			"target": "role_goodwill_fs",
+			"rel": "worked_as"
+		},
+		{
+			"id": "e3",
+			"source": "person_lindsay",
+			"target": "proj_codebots_modeler",
+			"rel": "built"
+		},
+		{
+			"id": "e4",
+			"source": "person_lindsay",
+			"target": "proj_dep_graph_versions",
+			"rel": "built"
+		},
+		{
+			"id": "e5",
+			"source": "person_lindsay",
+			"target": "proj_codebots_homepage_ai",
+			"rel": "built"
+		},
+		{
+			"id": "e6",
+			"source": "person_lindsay",
+			"target": "proj_react_granular_store",
+			"rel": "built"
+		},
+		{
+			"id": "e7",
+			"source": "person_lindsay",
+			"target": "proj_goodwill_markets",
+			"rel": "built"
+		},
+		{
+			"id": "e8",
+			"source": "role_codebots_sfsd_quality",
+			"target": "value_mentorship",
+			"rel": "evidence"
+		},
+		{
+			"id": "e9",
+			"source": "role_codebots_sfsd_quality",
+			"target": "value_quality",
+			"rel": "evidence"
+		},
+		{
+			"id": "e10",
+			"source": "person_lindsay",
+			"target": "value_design_perf",
+			"rel": "evidence"
+		},
+		{
+			"id": "e11",
+			"source": "person_lindsay",
+			"target": "value_innovation",
+			"rel": "evidence"
+		},
+		{
+			"id": "e12",
+			"source": "person_lindsay",
+			"target": "value_open_source",
+			"rel": "evidence"
+		},
+		{
+			"id": "e13",
+			"source": "proj_codebots_modeler",
+			"target": "skill_react",
+			"rel": "used"
+		},
+		{
+			"id": "e14",
+			"source": "proj_codebots_modeler",
+			"target": "skill_typescript",
+			"rel": "used"
+		},
+		{
+			"id": "e33",
+			"source": "proj_codebots_modeler",
+			"target": "skill_canvas",
+			"rel": "used"
+		},
+		{
+			"id": "e33",
+			"source": "proj_codebots_modeler",
+			"target": "skill_dotnet",
+			"rel": "used"
+		},
+		{
+			"id": "e34",
+			"source": "proj_codebots_modeler",
+			"target": "skill_vite",
+			"rel": "used"
+		},
+		{
+			"id": "e35",
+			"source": "proj_codebots_modeler",
+			"target": "skill_css",
+			"rel": "used"
+		},
+		{
+			"id": "e37",
+			"source": "proj_codebots_modeler",
+			"target": "skill_node",
+			"rel": "used"
+		},
+		{
+			"id": "e15",
+			"source": "proj_dep_graph_versions",
+			"target": "skill_react",
+			"rel": "used"
+		},
+		{
+			"id": "e16",
+			"source": "proj_dep_graph_versions",
+			"target": "skill_typescript",
+			"rel": "used"
+		},
+		{
+			"id": "e17",
+			"source": "proj_dep_graph_versions",
+			"target": "skill_canvas",
+			"rel": "used"
+		},
+		{
+			"id": "e18",
+			"source": "proj_codebots_homepage_ai",
+			"target": "skill_next",
+			"rel": "used"
+		},
+		{
+			"id": "e19",
+			"source": "proj_codebots_homepage_ai",
+			"target": "skill_llm_apps",
+			"rel": "used"
+		},
+		{
+			"id": "e36",
+			"source": "proj_codebots_homepage_ai",
+			"target": "skill_llm_local",
+			"rel": "used"
+		},
+		{
+			"id": "e20",
+			"source": "proj_react_granular_store",
+			"target": "skill_react",
+			"rel": "used"
+		},
+		{
+			"id": "e21",
+			"source": "proj_react_granular_store",
+			"target": "skill_typescript",
+			"rel": "used"
+		},
+		{
+			"id": "e22",
+			"source": "proj_goodwill_markets",
+			"target": "skill_lamp",
+			"rel": "used"
+		},
+		{
+			"id": "e23",
+			"source": "proj_goodwill_markets",
+			"target": "skill_jquery",
+			"rel": "used"
+		},
+		{
+			"id": "e24",
+			"source": "proj_goodwill_markets",
+			"target": "skill_react",
+			"rel": "learned"
+		},
+		{
+			"id": "e25",
+			"source": "proj_goodwill_markets",
+			"target": "skill_typescript",
+			"rel": "learned"
+		},
+		{
+			"id": "e26",
+			"source": "story_css_perf",
+			"target": "role_codebots_sfsd_quality",
+			"rel": "happened_during"
+		},
+		{
+			"id": "e27",
+			"source": "story_deadlines",
+			"target": "role_codebots_sfsd_quality",
+			"rel": "happened_during"
+		},
+		{
+			"id": "e28",
+			"source": "story_pixel_perfect",
+			"target": "role_codebots_sfsd_quality",
+			"rel": "happened_during"
+		},
+		{
+			"id": "e29",
+			"source": "story_bank_recon",
+			"target": "role_goodwill_fs",
+			"rel": "happened_during"
+		},
+		{
+			"id": "e30",
+			"source": "story_first_html",
+			"target": "person_lindsay",
+			"rel": "timeline"
+		},
+		{
+			"id": "e31",
+			"source": "story_flash_portals",
+			"target": "person_lindsay",
+			"rel": "timeline"
+		},
+		{
+			"id": "e32",
+			"source": "story_flash_spellcheck",
+			"target": "person_lindsay",
+			"rel": "timeline"
+		}
+	],
+	"meta": {
+		"personId": "person_lindsay",
+		"lastUpdated": "2025-08-26"
+	}
+}

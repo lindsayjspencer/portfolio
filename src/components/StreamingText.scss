@@ -1,0 +1,29 @@
+.streaming-cursor {
+	display: inline-block;
+	color: var(--color-primary);
+	animation: blink 1s infinite;
+	margin-left: 2px;
+}
+
+@keyframes blink {
+	0%, 50% {
+		opacity: 1;
+	}
+	51%, 100% {
+		opacity: 0;
+	}
+}
+
+[data-streaming-text] {
+	&[data-streaming="true"] {
+		.streaming-cursor {
+			animation: blink 1s infinite;
+		}
+	}
+	
+	&[data-complete="true"] {
+		.streaming-cursor {
+			display: none;
+		}
+	}
+}
