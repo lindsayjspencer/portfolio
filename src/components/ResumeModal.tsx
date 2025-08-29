@@ -5,8 +5,8 @@ import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { buildResume } from '~/lib/ResumeFromGraph';
 import './ResumeModal.scss';
 
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+// import html2canvas from 'html2canvas';
+// import jsPDF from 'jspdf';
 
 interface ResumeModalProps {
 	isOpen: boolean;
@@ -26,17 +26,19 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
 		return () => document.removeEventListener('keydown', onEsc);
 	}, [isOpen, onClose]);
 
-	const handlePdf = async () => {
-		if (!ref.current) return;
-		const canvas = await html2canvas(ref.current, { scale: 2, useCORS: true });
-		const img = canvas.toDataURL('image/png');
-		const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
-		const pageW = pdf.internal.pageSize.getWidth();
-		const pageH = pdf.internal.pageSize.getHeight();
-		const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
-		pdf.addImage(img, 'PNG', 0, 0, canvas.width * ratio, canvas.height * ratio);
-		pdf.save('Lindsay-Spencer-Resume.pdf');
-	};
+	const handlePdf = () => window.print();
+
+	// const handlePdf = async () => {
+	// 	if (!ref.current) return;
+	// 	const canvas = await html2canvas(ref.current, { scale: 2, useCORS: true });
+	// 	const img = canvas.toDataURL('image/png');
+	// 	const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+	// 	const pageW = pdf.internal.pageSize.getWidth();
+	// 	const pageH = pdf.internal.pageSize.getHeight();
+	// 	const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+	// 	pdf.addImage(img, 'PNG', 0, 0, canvas.width * ratio, canvas.height * ratio);
+	// 	pdf.save('Lindsay-Spencer-Resume.pdf');
+	// };
 
 	return (
 		<Dialog.Root open={isOpen} onOpenChange={onClose}>
