@@ -27,9 +27,32 @@ export const ZOOM_CONFIG = {
 	/** Maximum zoom level (10x) */
 	maxZoom: 10,
 	
-	/** Minimum zoom level */
-	minZoom: 2,
+	/** Base minimum zoom level for desktop */
+	baseMinZoom: 1.5,
+	
+	/** Mobile breakpoint width in pixels */
+	mobileBreakpoint: 768,
+	
+	/** Mobile minimum zoom multiplier (smaller = more zoomed out) */
+	mobileZoomFactor: 0.4,
 } as const;
+
+/**
+ * Calculate responsive minimum zoom based on screen dimensions
+ * Mobile devices get a lower minimum zoom to allow more content to be visible
+ */
+export const calculateResponsiveMinZoom = (width: number, height: number): number => {
+	// Use the smaller dimension to determine if we're on mobile
+	const smallerDimension = Math.min(width, height);
+	
+	if (smallerDimension < ZOOM_CONFIG.mobileBreakpoint) {
+		// Mobile: allow more zoom out
+		return ZOOM_CONFIG.baseMinZoom * ZOOM_CONFIG.mobileZoomFactor;
+	}
+	
+	// Desktop: use base minimum zoom
+	return ZOOM_CONFIG.baseMinZoom;
+};
 
 /**
  * Default padding for zoom-to-fit operations

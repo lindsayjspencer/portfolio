@@ -6,6 +6,7 @@ import type { DirectiveType } from '~/lib/DirectiveTool';
 import './page.scss';
 import { OptionsDropdown } from '~/components/OptionsDropdown';
 import { ChatContainer } from '~/components/ChatContainer';
+import { SlidingPanel } from '~/components/Ui/SlidingPanel';
 
 export default function HomePage() {
 	const graph = usePortfolioStore((state) => state.graph);
@@ -37,28 +38,35 @@ export default function HomePage() {
 		.join(' ');
 
 	return (
-		<div className={homePageClasses}>
-			{/* Top nav bar with debug dropdown - only visible when not in landing mode */}
-			<OptionsDropdown
-				currentMode={directive.mode}
-				onModeChange={handleDebugModeChange}
-				isVisible={true} //{!isLandingMode || hasHadInteraction}
-			/>
+		<div className="home-page-wrapper">
+			<div className={homePageClasses}>
+				{/* Top nav bar with debug dropdown - only visible when not in landing mode */}
+				<OptionsDropdown
+					currentMode={directive.mode}
+					onModeChange={handleDebugModeChange}
+					isVisible={true} //{!isLandingMode || hasHadInteraction}
+				/>
 
-			{/* Main view area */}
-			<div className="view-container">
-				<ViewTransitionManager currentMode={directive.mode} graph={graph} directive={directive} />
-			</div>
-
-			{/* Welcome message for landing mode */}
-			{isLandingMode && !hasHadInteraction && (
-				<div className="welcome-message">
-					Ask me about my experience, technical skills, projects, or career progression.
+				{/* Main view area */}
+				<div className="view-container">
+					<ViewTransitionManager currentMode={directive.mode} graph={graph} directive={directive} />
 				</div>
-			)}
 
-			{/* Floating chat input at bottom */}
-			<ChatContainer isLandingMode={isLandingMode} hasHadInteraction={hasHadInteraction} />
+				{/* Welcome message for landing mode */}
+				{isLandingMode && !hasHadInteraction && (
+					<div className="welcome-message">
+					<div className="name">Lindsay Spencer</div>
+					<div className="job-title">
+							Senior Full Stack Engineer
+						</div>
+					</div>
+				)}
+
+				{/* Floating chat input at bottom */}
+				<ChatContainer isLandingMode={isLandingMode} hasHadInteraction={hasHadInteraction} />
+
+			</div>
+			<SlidingPanel />
 		</div>
 	);
 }

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { type ThemeName, getThemeNames } from '~/lib/themes';
 
 const schema = z.object({
-	mode: z.enum(['timeline', 'projects', 'skills', 'values', 'compare', 'play']).describe('Graph display mode'),
+	mode: z.enum(['timeline', 'career-timeline', 'skills-timeline', 'projects', 'skills', 'values', 'compare', 'play', 'resume']).describe('Graph display mode'),
 	highlights: z.array(z.string()).describe('Node IDs to highlight'),
 	narration: z.string().describe('Response text to show in chat'),
 	theme: z

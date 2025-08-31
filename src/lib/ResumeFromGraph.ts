@@ -21,7 +21,7 @@ type ResumeView = {
 };
 
 const fmtPeriod = (n: Node) => {
-	if (n.period) {
+	if ((n.type === 'role' || n.type === 'project') && n.period) {
 		const end = n.period.end === 'present' ? 'Present' : n.period.end;
 		return `${n.period.start} — ${end}`;
 	}
@@ -29,9 +29,22 @@ const fmtPeriod = (n: Node) => {
 	return '';
 };
 
+// Helper function to get the end date for sorting (most recent first)
+const getEndDateForSorting = (n: Node): string => {
+	if ((n.type === 'role' || n.type === 'project') && n.period) {
+		return n.period.end === 'present' ? '9999-12' : n.period.end; // 'present' sorts to the top
+	}
+	if (n.years) return `${n.years[1]}-12`; // Convert year to YYYY-MM format
+	return '0000-01'; // Default for nodes without dates
+};
+
 export function buildResume(g: Graph): ResumeView {
 	const me = g.nodes.find((n) => n.type === 'person')!;
-	const roles = g.nodes.filter((n) => n.type === 'role').sort((a, b) => (b.years?.[1] ?? 0) - (a.years?.[1] ?? 0));
+	const roles = g.nodes.filter((n) => n.type === 'role').sort((a, b) => {
+		const endDateA = getEndDateForSorting(a);
+		const endDateB = getEndDateForSorting(b);
+		return endDateB.localeCompare(endDateA); // Most recent first
+	});
 
 	const skillsByLevel: Record<SkillLevel, string[]> = { expert: [], advanced: [], intermediate: [] };
 	for (const s of g.nodes.filter((n) => n.type === 'skill')) {

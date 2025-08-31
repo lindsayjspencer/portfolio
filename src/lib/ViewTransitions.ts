@@ -33,12 +33,15 @@ export interface TransitionCallbacks {
  */
 export const COMPONENT_TRANSITION_TIMINGS = {
 	landing: { in: 400, out: 300 },
-	timeline: { in: 1000, out: 1000 }, // ForceGraph needs more time for complex animations
-	play: { in: 2000, out: 2000 },
+	timeline: { in: 1000, out: 400 }, // ForceGraph needs more time for complex animations
+	'career-timeline': { in: 1000, out: 400 }, // Same as timeline
+	'skills-timeline': { in: 1000, out: 400 }, // Same as timeline
+	play: { in: 1000, out: 400 },
 	projects: { in: 400, out: 300 },
 	skills: { in: 400, out: 300 },
 	values: { in: 400, out: 300 },
 	compare: { in: 400, out: 300 },
+	resume: { in: 400, out: 300 },
 } as const;
 
 /**

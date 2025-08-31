@@ -15,7 +15,7 @@ const ForceDirectedGraph = dynamic(() => import('./ForceDirectedGraph'), {
 
 interface EnhancedForceGraphProps {
 	graphData: ForceDirectedGraphData;
-	mode: 'timeline' | 'play';
+	mode: 'timeline' | 'career-timeline' | 'skills-timeline' | 'play';
 	transitionPhase?: TransitionPhase;
 	onRegisterCallbacks?: (callbacks: TransitionCallbacks) => void;
 }

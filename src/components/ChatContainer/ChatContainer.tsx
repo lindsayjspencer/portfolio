@@ -3,7 +3,7 @@
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { useTheme } from '~/contexts/theme-context';
 import { MaterialIcon, Spinner } from '~/components/Ui';
-import { StreamingText } from '~/components/StreamingText';
+import { StreamingText } from '~/components/Ui/StreamingText';
 import { handleChatSubmit } from '~/lib/chat-actions';
 
 export interface ChatContainerProps {
@@ -27,7 +27,7 @@ export function ChatContainer({ isLandingMode, hasHadInteraction, onSubmitSucces
 		addMessage,
 		setIsTransitioningFromLanding,
 	} = usePortfolioStore();
-	
+
 	const { setTheme } = useTheme();
 
 	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -73,7 +73,7 @@ export function ChatContainer({ isLandingMode, hasHadInteraction, onSubmitSucces
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={handleKeyDown}
-						placeholder="Ask me about my experience, skills, or projects..."
+						placeholder="Ask me anything"
 						disabled={isLoading}
 						className="chat-input"
 						rows={1}

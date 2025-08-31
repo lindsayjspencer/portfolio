@@ -60,34 +60,18 @@ function getLinkColor(edge: Edge): string {
 	}
 }
 
-// Transform portfolio data to timeline view
-function transformToTimelineGraph(portfolio: Graph): Graph {
-	// Get current month in YYYY-MM format
-	const now = new Date();
-	const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+// Common timeline infrastructure
+function getCurrentMonth(): string {
+	return `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+}
 
-	// Filter out unwanted node types first
-	const excludedTypes = new Set(['skill', 'value', 'story']);
-	const filteredNodes = portfolio.nodes.filter((node) => !excludedTypes.has(node.type));
+function createTimelineSpine(months: string[], currentMonth: string): {
+	timelineNodes: TimelineNode[];
+	timelineEdges: Edge[];
+} {
+	const sortedMonths = Array.from(months).sort();
 
-	// Extract unique timeline months from temporal nodes (only from filtered nodes)
-	const timelineMonths = new Set<string>();
-
-	filteredNodes.forEach((node) => {
-		if (node.period) {
-			timelineMonths.add(node.period.start);
-			if (node.period.end !== 'present') {
-				timelineMonths.add(node.period.end);
-			} else {
-				timelineMonths.add(currentMonth);
-			}
-		}
-	});
-
-	// Convert to sorted array
-	const sortedMonths = Array.from(timelineMonths).sort();
-
-	// Create timeline nodes
+	// Create timeline nodes (non-selectable)
 	const timelineNodes: TimelineNode[] = sortedMonths.map((month) => ({
 		id: `timeline_${month}`,
 		type: 'timeline-month',
@@ -107,21 +91,108 @@ function transformToTimelineGraph(portfolio: Graph): Graph {
 		});
 	}
 
-	// Filter nodes that have temporal data (only roles and projects, from already filtered nodes)
-	const temporalNodes = filteredNodes.filter((node) => {
-		return node.period && (node.type === 'role' || node.type === 'project');
+	return { timelineNodes, timelineEdges };
+}
+
+function createAttachmentEdges<T extends Node>(nodes: T[], getStartMonth: (node: T) => string): Edge[] {
+	return nodes.map((node, index) => ({
+		id: `timeline_attach_${index}`,
+		source: `timeline_${getStartMonth(node)}`,
+		target: node.id,
+		rel: 'timeline',
+	}));
+}
+
+// Transform portfolio data to career timeline view (roles only)
+function transformToCareerTimelineGraph(portfolio: Graph): Graph {
+	const currentMonth = getCurrentMonth();
+	const filteredNodes = portfolio.nodes.filter((node) => node.type === 'role');
+
+	// Extract unique timeline months from role nodes (start dates only)
+	const timelineMonths = new Set<string>();
+	filteredNodes.forEach((node) => {
+		if (node.type === 'role' && node.period) {
+			timelineMonths.add(node.period.start);
+		}
+	});
+	timelineMonths.add(currentMonth); // Always include present
+
+	const { timelineNodes, timelineEdges } = createTimelineSpine(Array.from(timelineMonths), currentMonth);
+	const attachmentEdges = createAttachmentEdges(filteredNodes, (node) => 
+		(node.type === 'role' && node.period) ? node.period.start : ''
+	);
+
+	return {
+		nodes: [...timelineNodes, ...filteredNodes],
+		edges: [...timelineEdges, ...attachmentEdges],
+		meta: portfolio.meta,
+	};
+}
+
+// Transform portfolio data to skills timeline view (skills with "learned" dates)
+function transformToSkillsTimelineGraph(portfolio: Graph): Graph {
+	const currentMonth = getCurrentMonth();
+	const skillNodes = portfolio.nodes.filter((node) => node.type === 'skill');
+	
+	// Transform skill nodes to show when they were first learned
+	const transformedSkills = skillNodes.map((skill) => {
+		const firstYear = skill.years ? Math.min(...skill.years) : new Date().getFullYear();
+		const startDate = `${firstYear}-01`;
+		
+		return {
+			...skill,
+			period: {
+				start: startDate,
+				end: 'present' as const
+			}
+		} as Node & { period: { start: string; end: string } };
 	});
 
-	// Create attachment edges from timeline months to temporal nodes (attach to start month)
-	const attachmentEdges: Edge[] = temporalNodes.map((node, index) => {
-		const startMonth = node.period!.start;
-		return {
-			id: `timeline_attach_${index}`,
-			source: `timeline_${startMonth}`,
-			target: node.id,
-			rel: 'timeline',
-		};
+	// Extract unique timeline months from transformed skills (start dates only)
+	const timelineMonths = new Set<string>();
+	transformedSkills.forEach((skill) => {
+		if (skill.period) {
+			timelineMonths.add(skill.period.start);
+		}
 	});
+	timelineMonths.add(currentMonth); // Always include present
+
+	const { timelineNodes, timelineEdges } = createTimelineSpine(Array.from(timelineMonths), currentMonth);
+	const attachmentEdges = createAttachmentEdges(transformedSkills, (skill) => skill.period.start);
+
+	return {
+		nodes: [...timelineNodes, ...transformedSkills],
+		edges: [...timelineEdges, ...attachmentEdges],
+		meta: portfolio.meta,
+	};
+}
+
+// Transform portfolio data to timeline view (original combined timeline)
+function transformToTimelineGraph(portfolio: Graph): Graph {
+	const currentMonth = getCurrentMonth();
+	const excludedTypes = new Set(['skill', 'value']);
+	const filteredNodes = portfolio.nodes.filter((node) => !excludedTypes.has(node.type));
+
+	// Extract unique timeline months from temporal nodes (start dates only)
+	const timelineMonths = new Set<string>();
+	filteredNodes.forEach((node) => {
+		if ((node.type === 'role' || node.type === 'project') && node.period) {
+			timelineMonths.add(node.period.start);
+		}
+	});
+	timelineMonths.add(currentMonth); // Always include present
+
+	const { timelineNodes, timelineEdges } = createTimelineSpine(Array.from(timelineMonths), currentMonth);
+
+	// Filter nodes that have temporal data (only roles and projects, from already filtered nodes)
+	const temporalNodes = filteredNodes.filter((node) => {
+		return (node.type === 'role' || node.type === 'project') && node.period;
+	});
+
+	// Create attachment edges from timeline months to temporal nodes
+	const attachmentEdges = createAttachmentEdges(temporalNodes, (node) => 
+		(node.type === 'role' || node.type === 'project') ? node.period.start : ''
+	);
 
 	// Create filtered node ID map for fast lookup (already excluding skills, values, stories)
 	const filteredNodeIds = new Set(filteredNodes.map((n) => n.id));
@@ -182,6 +253,10 @@ export function portfolioToForceGraph(portfolio: Graph, mode: DirectiveType['mod
 
 	if (mode === 'timeline') {
 		transformedGraph = transformToTimelineGraph(portfolio);
+	} else if (mode === 'career-timeline') {
+		transformedGraph = transformToCareerTimelineGraph(portfolio);
+	} else if (mode === 'skills-timeline') {
+		transformedGraph = transformToSkillsTimelineGraph(portfolio);
 	}
 
 	// Create a map for quick node lookup
@@ -191,6 +266,8 @@ export function portfolioToForceGraph(portfolio: Graph, mode: DirectiveType['mod
 	const nodes: ForceDirectedGraphNode[] = transformedGraph.nodes.map((node) => ({
 		itemName: node.label,
 		...node,
+		// Mark timeline nodes as non-selectable
+		selectable: node.type === 'timeline-month' ? false : undefined,
 	}));
 
 	// Transform edges (only include edges where both nodes exist)

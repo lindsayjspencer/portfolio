@@ -9,6 +9,8 @@ export type SemanticColor = 'primary' | 'secondary' | 'accent' | 'neutral' | 'su
 
 export type SemanticColors = Record<SemanticColor, ColorVariations>;
 
+// CSS variables: --color-<SemanticColor>-<ColorVariation>, e.g. --color-primary-500
+
 export type ThemeName = 'cold' | 'corporate' | 'adventurous' | 'exciting' | 'elegant' | 'vibrant';
 
 export type Theme = {

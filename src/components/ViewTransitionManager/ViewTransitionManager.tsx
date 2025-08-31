@@ -5,6 +5,7 @@ import { SkillsView } from '~/components/SkillsView/SkillsView';
 import { ValuesView } from '~/components/ValuesView/ValuesView';
 import { CompareView } from '~/components/CompareView/CompareView';
 import { LandingView } from '~/components/LandingView/LandingView';
+import { ResumeView } from '~/components/ResumeView/ResumeView';
 import {
 	type ViewInstanceState,
 	type ViewTransitionState,
@@ -156,6 +157,8 @@ export function ViewTransitionManager({ currentMode, graph, directive }: ViewTra
 				return <ValuesView key={instance.key} {...commonProps} />;
 			case 'compare':
 				return <CompareView key={instance.key} {...commonProps} />;
+			case 'resume':
+				return <ResumeView key={instance.key} {...commonProps} />;
 			case 'timeline':
 			case 'play':
 			default:

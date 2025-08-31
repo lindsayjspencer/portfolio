@@ -7,10 +7,11 @@ export interface ForceDirectedGraphData {
 	links: ForceDirectedGraphLink[];
 }
 
-export type ForceDirectedGraphNode = {
-	id: string;
+// Simplified base type to avoid complex union issues
+export type ForceDirectedGraphNode = Node & {
 	itemName: string;
-} & (Node | SyntheticNode);
+	selectable?: boolean;
+};
 
 export interface ForceDirectedGraphLink {
 	id: string;

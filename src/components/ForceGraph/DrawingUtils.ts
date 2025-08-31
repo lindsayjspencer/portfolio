@@ -354,12 +354,9 @@ export class DrawingUtils {
 		calculatedTheme: GraphNodeThemeSet,
 	) => {
 		const { node, isSelected } = settings;
-		const { x, y, itemName } = node;
+		const { x, y, itemName, company, position } = node;
 
 		// --- Parse role label into title and company ---
-		const parts = itemName.split(' — ');
-		const roleTitle = parts[0] || itemName;
-		const company = parts[1] || '';
 
 		// --- Dimensions ---
 		const scale = (value: number) => value / globalScale;
@@ -373,10 +370,10 @@ export class DrawingUtils {
 
 		// --- Text measurements ---
 		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
-		const titleTextWidth = ctx.measureText(roleTitle).width;
+		const titleTextWidth = ctx.measureText(position).width;
 
 		ctx.font = `normal ${scale(12)}px 'Lato', sans-serif`;
-		const companyTextWidth = company ? ctx.measureText(company).width : 0;
+		const companyTextWidth = ctx.measureText(company).width;
 
 		// Use the wider text to determine node width
 		const maxTextWidth = Math.max(titleTextWidth, companyTextWidth);
@@ -436,8 +433,8 @@ export class DrawingUtils {
 		// Role title (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
 		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
-		const titleY = company ? y - scale(8) : y; // Move up if there's a company line
-		ctx.fillText(roleTitle, textStartX, titleY);
+		const titleY = y - scale(8);
+		ctx.fillText(position, textStartX, titleY);
 
 		// Company name (secondary text)
 		if (company) {

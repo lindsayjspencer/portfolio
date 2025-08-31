@@ -1,8 +1,8 @@
 .options-dropdown-container {
-	position: fixed;
+	position: absolute;
 	top: 1rem;
 	left: -3rem;
-	z-index: 1000;
+	z-index: 20;
 	opacity: 0;
 	transition: all 0.3s ease-in-out;
 

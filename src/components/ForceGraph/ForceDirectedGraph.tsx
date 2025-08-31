@@ -8,6 +8,7 @@ import Store, { useStoreState } from 'react-granular-store';
 import Tippy, { type TippyProps } from '@tippyjs/react';
 import useInterval from '~/hooks/UseInterval';
 import { useTheme } from '~/contexts/theme-context';
+import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { MaterialIcon, Spinner } from '../Ui';
 import './ForceDirectedGraph.scss';
 import Starfield from './Starfield';
@@ -23,7 +24,7 @@ import { ZoomUtils, type ZoomPadding } from './ZoomUtils';
 import { LinkRenderUtils } from './LinkRenderUtils';
 import { GraphDataUtils } from './GraphDataUtils';
 import { InteractionUtils, type TooltipData, type NodeSelectionState } from './InteractionUtils';
-import { GRAPH_BOUNDS, ZOOM_CONFIG, DEFAULT_ZOOM_PADDING, FORCE_CONFIG, RENDER_CONFIG, UI_CONFIG } from './constants';
+import { GRAPH_BOUNDS, ZOOM_CONFIG, DEFAULT_ZOOM_PADDING, FORCE_CONFIG, RENDER_CONFIG, UI_CONFIG, calculateResponsiveMinZoom } from './constants';
 
 interface ForceDirectedGraphProps
 	extends ForceGraphProps<
@@ -75,11 +76,14 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 
 	const [selectedNodes, setSelectedNodes] = useStoreState(store, 'selectedNodes');
 	const { themeColors } = useTheme();
+	const { openPanel, closePanel } = usePortfolioStore();
 
 	// Create selection state object for InteractionUtils
 	const selectionState: NodeSelectionState = {
 		selectedNodes,
 		setSelectedNodes,
+		openPanel,
+		closePanel,
 	};
 
 	const forceGraph =
@@ -124,6 +128,13 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 	// Automatically zoom to fit the graph when it changes, but have any user interaction disable auto zoom
 	const [autoZoom, setAutoZoom] = useState(false);
 
+	// Responsive minimum zoom based on screen dimensions
+	const [minZoom, setMinZoom] = useState(() => {
+		const graphWidth = width ?? (typeof window !== 'undefined' ? window.innerWidth : 800);
+		const graphHeight = height ?? (typeof window !== 'undefined' ? window.innerHeight : 600);
+		return calculateResponsiveMinZoom(graphWidth, graphHeight);
+	});
+
 	// Default padding if none provided
 	const effectivePadding = zoomPadding ?? DEFAULT_ZOOM_PADDING;
 
@@ -141,6 +152,19 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 			);
 		}
 	}, ZOOM_CONFIG.autoZoomInterval);
+
+	// Update minimum zoom when screen size changes
+	useEffect(() => {
+		const graphWidth = width ?? (typeof window !== 'undefined' ? window.innerWidth : 800);
+		const graphHeight = height ?? (typeof window !== 'undefined' ? window.innerHeight : 600);
+		const newMinZoom = calculateResponsiveMinZoom(graphWidth, graphHeight);
+		
+		if (newMinZoom !== minZoom) {
+			setMinZoom(newMinZoom);
+			// Trigger auto zoom when minimum zoom changes to re-fit the view
+			setAutoZoom(true);
+		}
+	}, [width, height, minZoom]);
 
 	// Restart auto zoom after graph data changes, but turn it off after 1 second
 	useEffect(() => setAutoZoom(true), [width, height, dagMode]);
@@ -267,7 +291,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 						setTooltipData(null);
 					}
 				}}
-				minZoom={ZOOM_CONFIG.minZoom}
+				minZoom={minZoom}
 				nodePointerAreaPaint={(node, color, ctx) => {
 					if (!isExtendedNodeObject(node)) return;
 					ctx.fillStyle = color;

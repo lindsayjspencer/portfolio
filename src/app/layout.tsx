@@ -3,6 +3,7 @@ import { type Metadata } from 'next';
 import { ThemeProvider } from '~/contexts/theme-context';
 import { getServerTheme } from '~/lib/server-theme';
 import { IconPreloader } from '~/components/Ui';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
 	title: 'Lindsay Spencer - Interactive Portfolio',
@@ -11,7 +12,12 @@ export const metadata: Metadata = {
 	keywords:
 		'portfolio, software engineer, full-stack developer, React, TypeScript, .NET, Azure, interactive resume, data visualization',
 	authors: [{ name: 'Lindsay Spencer' }],
-	icons: [{ rel: 'icon', url: '/favicon.ico' }],
+	icons: {
+		other: [
+			{ rel: 'icon', url: '/favicon-light.svg', media: '(prefers-color-scheme: light)' },
+			{ rel: 'icon', url: '/favicon-dark.svg', media: '(prefers-color-scheme: dark)' },
+		],
+	},
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -38,6 +44,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 					rel="stylesheet"
 					href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
 				/>
+				<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 			</head>
 			<body>
 				<ThemeProvider serverTheme={serverTheme}>

@@ -2,6 +2,7 @@ import type { NodeObject } from 'react-force-graph-2d';
 import type { TippyProps } from '@tippyjs/react';
 import type { ForceDirectedGraphNode } from './Common';
 import { ZoomUtils } from './ZoomUtils';
+import type { PanelContent } from '~/lib/PortfolioStore';
 
 export interface TooltipData {
 	x: number;
@@ -12,11 +13,13 @@ export interface TooltipData {
 export interface NodeSelectionState {
 	selectedNodes: Set<string>;
 	setSelectedNodes: (nodes: Set<string>) => void;
+	openPanel?: (content: PanelContent) => void;
+	closePanel?: () => void;
 }
 
 export class InteractionUtils {
 	/**
-	 * Handles node click interactions with support for multi-selection and toggle behavior
+	 * Handles node click interactions with single selection and toggle behavior
 	 */
 	static handleNodeClick(
 		node: NodeObject<ForceDirectedGraphNode> | null,
@@ -27,25 +30,39 @@ export class InteractionUtils {
 		onCanvasInteraction();
 
 		if (node) {
-			const { selectedNodes, setSelectedNodes } = selectionState;
+			const { selectedNodes, setSelectedNodes, openPanel, closePanel } = selectionState;
 
-			if (event.shiftKey) {
-				// Multi-selection mode with Shift key
-				const newSelectedNodes = new Set(selectedNodes);
-				if (selectedNodes.has(node.id)) {
-					newSelectedNodes.delete(node.id);
-				} else {
-					newSelectedNodes.add(node.id);
+			// Check if node is selectable (default to true for backwards compatibility)
+			const isSelectable = node.selectable !== false;
+			
+			if (!isSelectable) {
+				// Node is not selectable, do nothing
+				return;
+			}
+
+			// Single selection mode only
+			if (selectedNodes.size === 1 && selectedNodes.has(node.id)) {
+				// Deselect if clicking on the only selected node
+				setSelectedNodes(new Set());
+				// Close panel when deselecting
+				if (closePanel) {
+					closePanel();
 				}
-				setSelectedNodes(newSelectedNodes);
 			} else {
-				// Single selection mode
-				if (selectedNodes.size === 1 && selectedNodes.has(node.id)) {
-					// Deselect if clicking on the only selected node
-					setSelectedNodes(new Set());
-				} else {
-					// Select this node only
-					setSelectedNodes(new Set([node.id]));
+				// Select this node only
+				setSelectedNodes(new Set([node.id]));
+				
+				// Open panel with node details
+				if (openPanel) {
+					openPanel({
+						type: 'node',
+						title: node.label || node.itemName || 'Node Details',
+						data: node,
+						onClose: () => {
+							// Deselect the node when panel is closed
+							setSelectedNodes(new Set());
+						}
+					});
 				}
 			}
 		} else {
@@ -63,6 +80,11 @@ export class InteractionUtils {
 	) {
 		onCanvasInteraction();
 		selectionState.setSelectedNodes(new Set());
+		
+		// Close panel when clicking background
+		if (selectionState.closePanel) {
+			selectionState.closePanel();
+		}
 	}
 
 	/**
@@ -167,14 +189,6 @@ export class InteractionUtils {
 			case 'Escape':
 				// Clear selection on Escape
 				selectionState.setSelectedNodes(new Set());
-				break;
-			case 'a':
-			case 'A':
-				// Select all on Ctrl+A (could be extended in the future)
-				if (event.ctrlKey || event.metaKey) {
-					event.preventDefault();
-					// Could implement select all functionality here
-				}
 				break;
 		}
 	}
