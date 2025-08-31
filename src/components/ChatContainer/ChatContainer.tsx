@@ -67,7 +67,7 @@ export function ChatContainer({ isLandingMode, hasHadInteraction, onSubmitSucces
 		<div className="chat-container">
 			<form onSubmit={onSubmit} className="chat-form">
 				{!narrative && hasHadInteraction && <div className="loading-response" />}
-				{narrative && <StreamingText text={narrative} className="streaming-text" />}
+				{narrative && <StreamingText speed={2} className="streaming-text">{narrative}</StreamingText>}
 				<div className="input-container">
 					<textarea
 						value={input}

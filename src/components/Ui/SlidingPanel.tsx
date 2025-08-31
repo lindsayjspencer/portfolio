@@ -5,6 +5,7 @@ import type { ForceDirectedGraphNode } from '~/components/ForceGraph/Common';
 import type { Node, Link, Metric } from '~/lib/PortfolioStore';
 import { MaterialIcon } from './MaterialIcon';
 import './SlidingPanel.scss';
+import StreamingText from './StreamingText';
 
 export const SlidingPanel = () => {
 	const { isPanelOpen, panelContent, closePanel } = usePortfolioStore();
@@ -32,9 +33,9 @@ export const SlidingPanel = () => {
 			<div className="sliding-panel-main">
 				{/* Header */}
 				<div className="sliding-panel-header">
-					<h2 className="panel-title">
+					<StreamingText as="h2" className="panel-title">
 						{panelContent.title}
-					</h2>
+					</StreamingText>
 					<button
 						onClick={handleClose}
 						className="close-button"
@@ -60,54 +61,67 @@ export const SlidingPanel = () => {
 
 const NodeContent = ({ data }: { data: ForceDirectedGraphNode }) => {
 	return (
-		<div className="sliding-panel-node-content">
+		<StreamingText className="sliding-panel-node-content">
+			
+			{data.type === 'role' && (
+				<>
+					<StreamingText className="node-section">
+						<StreamingText as="h3" className="section-title">Company</StreamingText>
+						<StreamingText as="p" className="section-text">{data.company}</StreamingText>
+					</StreamingText>
+					<StreamingText className="node-section">
+						<StreamingText as="h3" className="section-title">Position</StreamingText>
+						<StreamingText as="p" className="section-text">{data.position}</StreamingText>
+					</StreamingText>
+				</>
+			)}
 			{data.summary !== undefined && data.description === undefined ? (
-				<div className="node-section">
-					<h3 className="section-title">Summary</h3>
-					<p className="section-text">{data.summary}</p>
-				</div>
+				<StreamingText className="node-section">
+					<StreamingText as="h3" className="section-title">Summary</StreamingText>
+					<StreamingText as="p" className="section-text">{data.summary}</StreamingText>
+				</StreamingText>
 			) : null}
 			
 			{data.description && (
-				<div className="node-section">
-					<h3 className="section-title">Description</h3>
-					<p className="section-text description-text">{data.description}</p>
-				</div>
+				<StreamingText className="node-section">
+					<StreamingText as="h3" className="section-title">Description</StreamingText>
+					<StreamingText as="p" className="section-text description-text">{data.description}</StreamingText>
+				</StreamingText>
 			)}
 			
 			{data.tags && data.tags.length > 0 && (
-				<div className="node-section">
-					<h3 className="section-title">Tags</h3>
-					<div className="node-tags">
+				<StreamingText className="node-section">
+					<StreamingText as="h3" className="section-title">Tags</StreamingText>
+					<StreamingText className="node-tags">
 						{data.tags.map((tag: string, index: number) => (
-							<span key={index} className="tag">
+							<StreamingText key={index} as="span" className="tag">
 								{tag}
-							</span>
+							</StreamingText>
 						))}
-					</div>
-				</div>
+					</StreamingText>
+				</StreamingText>
 			)}
 			
 			{(data.type === 'role' || data.type === 'project') && data.period && (
-				<div className="node-section">
-					<h3 className="section-title">Period</h3>
-					<p className="section-text">
+				<StreamingText className="node-section">
+					<StreamingText as="h3" className="section-title">Period</StreamingText>
+					<StreamingText as="p" className="section-text">
 						{data.period.start} - {data.period.end}
-					</p>
-				</div>
+					</StreamingText>
+				</StreamingText>
 			)}
 			
 			{(data.type === 'person' || data.type === 'role' || data.type === 'education' || data.type === 'talk') && data.location && (
-				<div className="node-section">
-					<h3 className="section-title">Location</h3>
-					<p className="section-text">{data.location}</p>
-				</div>
+				<StreamingText className="node-section">
+					<StreamingText as="h3" className="section-title">Location</StreamingText>
+					<StreamingText as="p" className="section-text">{data.location}</StreamingText>
+				</StreamingText>
 			)}
 			
 			{((data.type === 'person' || data.type === 'project' || data.type === 'talk') && data.links && data.links.length > 0) && (
-				<div className="node-section">
-					<h3 className="section-title">Links</h3>
-					<div className="node-links">
+				<StreamingText className="node-section">
+					<StreamingText as="h3" className="section-title">Links</StreamingText>
+					<StreamingText className="node-links">
 						{data.links.map((link: Link, index: number) => (
 							<a
 								key={index}
@@ -119,45 +133,32 @@ const NodeContent = ({ data }: { data: ForceDirectedGraphNode }) => {
 								{link.title}
 							</a>
 						))}
-					</div>
-				</div>
+					</StreamingText>
+				</StreamingText>
 			)}
 			
 			{((data.type === 'role' || data.type === 'project') && data.metrics && data.metrics.length > 0) && (
-				<div className="node-section">
-					<h3 className="section-title">Metrics</h3>
-					<div className="node-metrics">
+				<StreamingText className="node-section">
+					<StreamingText as="h3" className="section-title">Metrics</StreamingText>
+					<StreamingText className="node-metrics">
 						{data.metrics.map((metric: Metric, index: number) => (
-							<div key={index} className="metric-item">
-								<span className="metric-label">{metric.label}:</span>{' '}
-								<span className="metric-value">{metric.value}</span>
-							</div>
+							<StreamingText key={index} className="metric-item">
+								<StreamingText as="span" className="metric-label">{metric.label}:</StreamingText>{' '}
+								<StreamingText as="span" className="metric-value">{metric.value}</StreamingText>
+							</StreamingText>
 						))}
-					</div>
-				</div>
+					</StreamingText>
+				</StreamingText>
 			)}
 			
 			{data.type === 'skill' && data.level && (
-				<div className="node-section">
-					<h3 className="section-title">Skill Level</h3>
-					<span className={`skill-level-badge ${data.level}`}>
+				<StreamingText className="node-section">
+					<StreamingText as="h3" className="section-title">Skill Level</StreamingText>
+					<StreamingText as="span" className={`skill-level-badge ${data.level}`}>
 						{data.level}
-					</span>
-				</div>
+					</StreamingText>
+				</StreamingText>
 			)}
-			
-			{data.type === 'role' && (
-				<>
-					<div className="node-section">
-						<h3 className="section-title">Company</h3>
-						<p className="section-text">{data.company}</p>
-					</div>
-					<div className="node-section">
-						<h3 className="section-title">Position</h3>
-						<p className="section-text">{data.position}</p>
-					</div>
-				</>
-			)}
-		</div>
+		</StreamingText>
 	);
 };
