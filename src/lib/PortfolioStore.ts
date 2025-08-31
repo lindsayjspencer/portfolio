@@ -219,7 +219,6 @@ interface PortfolioState {
 	// Chat-specific state
 	input: string;
 	narrative: string | null;
-	isTransitioningFromLanding: boolean;
 	
 	// Panel state
 	isPanelOpen: boolean;
@@ -234,7 +233,6 @@ interface PortfolioState {
 	// Chat actions
 	setInput: (input: string) => void;
 	setNarrative: (narrative: string | null) => void;
-	setIsTransitioningFromLanding: (transitioning: boolean) => void;
 	
 	// Panel actions
 	openPanel: (content: PanelContent) => void;
@@ -255,7 +253,6 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
 	// Chat-specific state
 	input: '',
 	narrative: null,
-	isTransitioningFromLanding: false,
 	
 	// Panel state
 	isPanelOpen: false,
@@ -289,7 +286,6 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
 	// Chat actions
 	setInput: (input) => set({ input }),
 	setNarrative: (narrative) => set({ narrative }),
-	setIsTransitioningFromLanding: (isTransitioningFromLanding) => set({ isTransitioningFromLanding }),
 	
 	// Panel actions
 	openPanel: (content) => set({ isPanelOpen: true, panelContent: content }),

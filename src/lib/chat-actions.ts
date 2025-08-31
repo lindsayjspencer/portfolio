@@ -14,7 +14,6 @@ export interface ChatSubmitParams {
 	setDirective: (directive: DirectiveType) => void;
 	setNarrative: (narrative: string | null) => void;
 	setLoading: (loading: boolean) => void;
-	setIsTransitioningFromLanding: (transitioning: boolean) => void;
 	
 	// External actions
 	setTheme: (theme: ThemeName) => void;
@@ -30,17 +29,11 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 		setDirective,
 		setNarrative,
 		setLoading,
-		setIsTransitioningFromLanding,
 		setTheme,
 	} = params;
 
 	setNarrative(null);
 	setLoading(true);
-
-	// Handle transition away from landing mode
-	if (isLandingMode) {
-		setIsTransitioningFromLanding(true);
-	}
 
 	// Add user message
 	addMessage({ role: 'user', content: userMessage });
@@ -90,9 +83,5 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 		});
 	} finally {
 		setLoading(false);
-		// Reset transition state after completion
-		if (isLandingMode) {
-			setIsTransitioningFromLanding(false);
-		}
 	}
 }

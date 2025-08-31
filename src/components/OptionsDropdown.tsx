@@ -6,14 +6,14 @@ import './OptionsDropdown.scss';
 interface TopNavBarProps {
 	currentMode: DirectiveType['mode'];
 	onModeChange: (mode: DirectiveType['mode']) => void;
-	isVisible: boolean;
+	landingMode: boolean;
 }
 
 const DIRECTIVE_MODES: DirectiveType['mode'][] = ['timeline', 'career-timeline', 'skills-timeline', 'projects', 'skills', 'values', 'compare', 'play', 'resume'];
 
-export function OptionsDropdown({ currentMode, onModeChange, isVisible }: TopNavBarProps) {
+export function OptionsDropdown({ currentMode, onModeChange, landingMode }: TopNavBarProps) {
 	return (
-		<div className={`options-dropdown-container ${isVisible ? 'visible' : ''}`}>
+		<div className={`options-dropdown-container ${!landingMode ? 'visible' : ''}`}>
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger asChild>
 					<button className="options-dropdown-trigger" aria-label="Debug menu">

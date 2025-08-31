@@ -1,0 +1,84 @@
+/* ===== Welcome block ===== */
+.welcome-message {
+	position: fixed;
+	inset: 0 auto auto 50%;
+	top: calc(50% - 4rem);
+	transform: translate(-50%, -50%);
+	z-index: 2;
+	text-align: center;
+	color: var(--color-neutral-900);
+	opacity: 0;
+	padding: 0 1rem;
+	pointer-events: none; /* don't block chat input */
+	min-width: 340px;
+
+	/* Landing mode - fade in animation */
+	&.landing-mode {
+		animation: welcomeFade 0.36s ease-out 0.1s both;
+	}
+
+	/* Exiting mode - fade out animation */
+	&.exiting {
+		animation: welcomeFadeOut 0.4s ease-in-out forwards;
+	}
+}
+
+/* Name */
+.welcome-message .name {
+	font-size: 2.5rem; /* ~40px */
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1.1;
+	margin: 0;
+	color: var(--color-neutral-900);
+	text-shadow: 0 1px 0 rgba(255,255,255,.35); /* subtle lift on particle bg */
+}
+
+/* Job title row */
+.welcome-message .job-title {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: .75rem;
+	margin-top: .5rem;
+	pointer-events: none; /* keep canvas non-blocking */
+}
+
+/* Title text */
+.welcome-message .job-title {
+	font-size: 1.125rem; /* 18px */
+	font-weight: 500;
+	color: var(--color-neutral-600);
+	line-height: 1.2;
+}
+
+/* Subtle entrance */
+@keyframes welcomeFade {
+	from { opacity: 0; transform: translate(-50%, calc(-50% + 6px)); }
+	to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* Subtle exit */
+@keyframes welcomeFadeOut {
+	from { opacity: 1; transform: translate(-50%, -50%); }
+	to { opacity: 0; transform: translate(-50%, calc(-50% + 6px)); }
+}
+
+/* Responsive scale */
+@media (min-width: 768px) {
+	.welcome-message .name { font-size: 3rem; }     /* 48px */
+	.welcome-message .job-title { font-size: 1.25rem; } /* 20px */
+	.welcome-message .job-title canvas,
+	.welcome-message .job-title .flagword,
+	.welcome-message .job-title .flag-word { height: 2.1rem; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+	.welcome-message { animation: none; opacity: 1; }
+}
+
+/* Optional: dark mode tweak (if your bg goes dark) */
+@media (prefers-color-scheme: dark) {
+	.welcome-message .name { text-shadow: none; }
+}

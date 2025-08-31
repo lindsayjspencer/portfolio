@@ -1,5 +1,6 @@
 'use client';
 
+import './ChatContainer.scss';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { useTheme } from '~/contexts/theme-context';
 import { MaterialIcon, Spinner } from '~/components/Ui';
@@ -9,23 +10,22 @@ import { handleChatSubmit } from '~/lib/chat-actions';
 export interface ChatContainerProps {
 	isLandingMode: boolean;
 	hasHadInteraction: boolean;
+	landingMode: boolean;
 	onSubmitSuccess?: () => void;
 }
 
-export function ChatContainer({ isLandingMode, hasHadInteraction, onSubmitSuccess }: ChatContainerProps) {
+export function ChatContainer({ isLandingMode, hasHadInteraction, landingMode, onSubmitSuccess }: ChatContainerProps) {
 	const {
 		input,
 		narrative,
 		messages,
 		directive,
 		isLoading,
-		isTransitioningFromLanding,
 		setInput,
 		setNarrative,
 		setLoading,
 		setDirective,
 		addMessage,
-		setIsTransitioningFromLanding,
 	} = usePortfolioStore();
 
 	const { setTheme } = useTheme();
@@ -46,7 +46,6 @@ export function ChatContainer({ isLandingMode, hasHadInteraction, onSubmitSucces
 			setDirective,
 			setNarrative,
 			setLoading,
-			setIsTransitioningFromLanding,
 			setTheme,
 		});
 
@@ -64,7 +63,7 @@ export function ChatContainer({ isLandingMode, hasHadInteraction, onSubmitSucces
 	};
 
 	return (
-		<div className="chat-container">
+		<div className={`chat-container ${landingMode ? 'landing-mode' : ''}`}>
 			<form onSubmit={onSubmit} className="chat-form">
 				{!narrative && hasHadInteraction && <div className="loading-response" />}
 				{narrative && <StreamingText speed={2} className="streaming-text">{narrative}</StreamingText>}
