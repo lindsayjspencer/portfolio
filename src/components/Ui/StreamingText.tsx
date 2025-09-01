@@ -10,21 +10,21 @@ type ExecutionUnit =
 interface StreamingTextProps {
 	as?: keyof JSX.IntrinsicElements;
 	children: React.ReactNode;
-	speed?: number;		// words per tick
-	interval?: number;	// ms per tick
+	speed?: number; // words per tick
+	interval?: number; // ms per tick
 	autoStart?: boolean;
 	onComplete?: () => void;
 	className?: string;
 	// Ungarbling effect props
 	ungarble?: boolean;
 	ungarbleChars?: 'binary' | 'latin' | 'cjk' | 'mixed';
-	ungarbleDuration?: number;		// total duration in ms
+	ungarbleDuration?: number; // total duration in ms
 	ungarbleCompleteDelay?: number; // delay before calling onComplete
-	ungarbleInterval?: number;		// ms between character updates (min 200ms)
-	ungarbleMonospace?: boolean;	// force monospace font during ungarbling
-	ungarbleCjkScale?: number;		// font-size scale for CJK characters (default: 0.85)
-	ungarblePerCharMs?: number;		// ms per character for duration (overrides ungarbleDuration)
-	ungarbleLeftBias?: number;		// left-to-right bias strength (0-1, default: 0.3)
+	ungarbleInterval?: number; // ms between character updates (min 200ms)
+	ungarbleMonospace?: boolean; // force monospace font during ungarbling
+	ungarbleCjkScale?: number; // font-size scale for CJK characters (default: 0.85)
+	ungarblePerCharMs?: number; // ms per character for duration (overrides ungarbleDuration)
+	ungarbleLeftBias?: number; // left-to-right bias strength (0-1, default: 0.3)
 	[key: string]: any;
 }
 
@@ -38,7 +38,7 @@ const GIBBERISH_SETS = {
 	latin: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
 	// Use a mix of full-width and regular CJK characters that work better in monospace
 	cjk: '我你他它们这那里哪什么时候地方工作技术开发测试系统网络数据安全性能优化设计架构前端后端全栈应用程序界面用户体验算法机器学习人工智能',
-	mixed: '' // will be combination of latin + cjk
+	mixed: '', // will be combination of latin + cjk
 };
 GIBBERISH_SETS.mixed = GIBBERISH_SETS.latin + GIBBERISH_SETS.cjk;
 
@@ -55,22 +55,22 @@ const preserveSpacing = (char: string): boolean => {
 const isCjkChar = (char: string): boolean => {
 	const codePoint = char.codePointAt(0);
 	if (!codePoint) return false;
-	
+
 	return (
 		// CJK Unified Ideographs
-		(codePoint >= 0x4E00 && codePoint <= 0x9FFF) ||
+		(codePoint >= 0x4e00 && codePoint <= 0x9fff) ||
 		// CJK Extension A
-		(codePoint >= 0x3400 && codePoint <= 0x4DBF) ||
+		(codePoint >= 0x3400 && codePoint <= 0x4dbf) ||
 		// CJK Extension B
-		(codePoint >= 0x20000 && codePoint <= 0x2A6DF) ||
+		(codePoint >= 0x20000 && codePoint <= 0x2a6df) ||
 		// CJK Symbols and Punctuation
-		(codePoint >= 0x3000 && codePoint <= 0x303F) ||
+		(codePoint >= 0x3000 && codePoint <= 0x303f) ||
 		// Hiragana
-		(codePoint >= 0x3040 && codePoint <= 0x309F) ||
+		(codePoint >= 0x3040 && codePoint <= 0x309f) ||
 		// Katakana
-		(codePoint >= 0x30A0 && codePoint <= 0x30FF) ||
+		(codePoint >= 0x30a0 && codePoint <= 0x30ff) ||
 		// Hangul Syllables (Korean)
-		(codePoint >= 0xAC00 && codePoint <= 0xD7AF)
+		(codePoint >= 0xac00 && codePoint <= 0xd7af)
 	);
 };
 
@@ -81,17 +81,21 @@ const createCharacterSpans = (text: string, cjkScale: number): React.ReactElemen
 			// Preserve spacing characters as-is
 			return <React.Fragment key={index}>{char}</React.Fragment>;
 		}
-		
+
 		const isCjk = isCjkChar(char);
 		return (
 			<span
 				key={index}
-				style={isCjk ? { 
-					fontSize: `${cjkScale}em`,
-					display: 'inline-block',
-					textAlign: 'center',
-					minWidth: '1ch' // ensure consistent spacing
-				} : undefined}
+				style={
+					isCjk
+						? {
+								fontSize: `${cjkScale}em`,
+								display: 'inline-block',
+								textAlign: 'center',
+								minWidth: '1ch', // ensure consistent spacing
+							}
+						: undefined
+				}
 			>
 				{char}
 			</span>
@@ -105,9 +109,9 @@ function isStreamingTextElement(el: React.ReactElement): boolean {
 	const t: any = el.type;
 	return Boolean(
 		t?.[STREAMING_MARKER] ||
-		t?.type?.[STREAMING_MARKER] ||		// React.memo
-		t?.render?.[STREAMING_MARKER] ||	// forwardRef
-		t?.displayName === 'StreamingText'
+			t?.type?.[STREAMING_MARKER] || // React.memo
+			t?.render?.[STREAMING_MARKER] || // forwardRef
+			t?.displayName === 'StreamingText',
 	);
 }
 
@@ -128,13 +132,16 @@ function buildPlan(node: React.ReactNode): ExecutionUnit[] {
 /* Create a **stable signature** that ignores element identity but captures structure. */
 function planSignature(plan: ExecutionUnit[]): string {
 	return JSON.stringify(
-		plan.map(u => {
+		plan.map((u) => {
 			switch (u.type) {
-				case 'text_stream': return ['T', u.content];					// include text so content changes re-run
-				case 'nested_stream': return ['N'];								// structure only
-				case 'instant_render': return ['I'];							// structure only
+				case 'text_stream':
+					return ['T', u.content]; // include text so content changes re-run
+				case 'nested_stream':
+					return ['N']; // structure only
+				case 'instant_render':
+					return ['I']; // structure only
 			}
-		})
+		}),
 	);
 }
 
@@ -163,7 +170,9 @@ export function StreamingText({
 
 	/* Keep latest onComplete in a ref to avoid effect resubscribes */
 	const onCompleteRef = useRef<(() => void) | undefined>(onComplete);
-	useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+	useEffect(() => {
+		onCompleteRef.current = onComplete;
+	}, [onComplete]);
 
 	/* Build plan & a stable signature */
 	const computedPlan = useMemo(() => buildPlan(children), [children]);
@@ -171,15 +180,19 @@ export function StreamingText({
 
 	/* Check if content can be ungarbled (single text stream unit) */
 	const canUngarble = useMemo(() => {
-		return ungarble && 
-			   computedPlan.length === 1 && 
-			   computedPlan[0]?.type === 'text_stream' &&
-			   typeof computedPlan[0].content === 'string';
+		return (
+			ungarble &&
+			computedPlan.length === 1 &&
+			computedPlan[0]?.type === 'text_stream' &&
+			typeof computedPlan[0].content === 'string'
+		);
 	}, [ungarble, computedPlan]);
 
 	/* Store plan in a ref for the executor */
 	const planRef = useRef<ExecutionUnit[]>(computedPlan);
-	useEffect(() => { planRef.current = computedPlan; }, [computedPlan]);
+	useEffect(() => {
+		planRef.current = computedPlan;
+	}, [computedPlan]);
 
 	/* scheduling / run guards */
 	const runIdRef = useRef(0);
@@ -234,11 +247,13 @@ export function StreamingText({
 				setCurrentTextWords(words);
 				setCurrentWordIndex(0);
 				setIsStreamingText(true);
-				setRenderedContent(prev => prev.some(p => p.key === k) ? prev : [...prev, { key: k, content: '' }]);
+				setRenderedContent((prev) =>
+					prev.some((p) => p.key === k) ? prev : [...prev, { key: k, content: '' }],
+				);
 				break;
 			}
 			case 'instant_render': {
-				setRenderedContent(prev => [...prev, { key: instKey(unitIndex), content: unit.content }]);
+				setRenderedContent((prev) => [...prev, { key: instKey(unitIndex), content: unit.content }]);
 				const next = unitIndex + 1;
 				setCurrentUnit(next);
 				schedule(() => executeUnit(next), 0);
@@ -250,15 +265,21 @@ export function StreamingText({
 				const child = unit.component;
 				const childExisting = (child.props as any)?.onComplete as (() => void) | undefined;
 				const composed = () => {
-					try { childExisting?.(); } finally {
+					try {
+						childExisting?.();
+					} finally {
 						setIsWaitingForNested(false);
 						const next = unitIndex + 1;
 						setCurrentUnit(next);
 						schedule(() => executeUnit(next), 0);
 					}
 				};
-				const nestedWithCb = React.cloneElement(child, { ...child.props, autoStart: true, onComplete: composed });
-				setRenderedContent(prev => [...prev, { key: nestKey(unitIndex), content: nestedWithCb }]);
+				const nestedWithCb = React.cloneElement(child, {
+					...child.props,
+					autoStart: true,
+					onComplete: composed,
+				});
+				setRenderedContent((prev) => [...prev, { key: nestKey(unitIndex), content: nestedWithCb }]);
 				break; // wait for nested to call back
 			}
 		}
@@ -274,25 +295,27 @@ export function StreamingText({
 			schedule(() => executeUnit(next), 0);
 			return;
 		}
-		const t = window.setTimeout(() => {
-			const step = Math.max(1, speed ?? 1);
-			const nextIndex = Math.min(currentWordIndex + step, currentTextWords.length);
-			const textContent = currentTextWords.slice(0, nextIndex).join('');
-			const k = activeTextKeyRef.current;
-			setRenderedContent(prev => {
-				if (!k) return prev;
-				const idx = prev.findIndex(p => p.key === k);
-				if (idx === -1) return [...prev, { key: k, content: textContent }];
-				const clone = prev.slice();
-				clone[idx] = { key: k, content: textContent };
-				return clone;
-			});
-			setCurrentWordIndex(nextIndex);
-		}, Math.max(0, interval ?? 0));
+		const t = window.setTimeout(
+			() => {
+				const step = Math.max(1, speed ?? 1);
+				const nextIndex = Math.min(currentWordIndex + step, currentTextWords.length);
+				const textContent = currentTextWords.slice(0, nextIndex).join('');
+				const k = activeTextKeyRef.current;
+				setRenderedContent((prev) => {
+					if (!k) return prev;
+					const idx = prev.findIndex((p) => p.key === k);
+					if (idx === -1) return [...prev, { key: k, content: textContent }];
+					const clone = prev.slice();
+					clone[idx] = { key: k, content: textContent };
+					return clone;
+				});
+				setCurrentWordIndex(nextIndex);
+			},
+			Math.max(0, interval ?? 0),
+		);
 		timersRef.current.push(t);
 		return () => clearTimeout(t);
 	}, [isStreamingText, currentTextWords, currentWordIndex, speed, interval, currentUnit, executeUnit, schedule]);
-
 
 	/* reset ONLY when the **signature** or autoStart change (not raw children / onComplete) */
 	useEffect(() => {
@@ -308,7 +331,7 @@ export function StreamingText({
 		setCurrentWordIndex(0);
 		setIsStreamingText(false);
 		setIsComplete(false);
-		
+
 		// Reset ungarbling state
 		setIsUngarbling(false);
 		setUngarbledText('');
@@ -332,9 +355,9 @@ export function StreamingText({
 				// Create initial gibberish text preserving spaces
 				const initialGibberish = text
 					.split('')
-					.map(char => preserveSpacing(char) ? char : getRandomChar(ungarbleChars))
+					.map((char) => (preserveSpacing(char) ? char : getRandomChar(ungarbleChars)))
 					.join('');
-				
+
 				setUngarbledText(initialGibberish);
 
 				// Add to rendered content immediately (with character spans)
@@ -352,9 +375,9 @@ export function StreamingText({
 
 				// Start ungarbling process
 				const textChars = text.split('');
-				
+
 				// Calculate duration: use per-character if provided, otherwise fixed duration
-				const effectiveDuration = ungarblePerCharMs 
+				const effectiveDuration = ungarblePerCharMs
 					? Math.max(textChars.length * ungarblePerCharMs, 500) // minimum 500ms
 					: ungarbleDuration;
 
@@ -365,24 +388,24 @@ export function StreamingText({
 				const ungarbleTimer = setInterval(() => {
 					currentStep++;
 					const progress = currentStep / totalSteps;
-					
+
 					const newText = textChars
 						.map((targetChar, index) => {
 							if (preserveSpacing(targetChar)) return targetChar;
-							
+
 							// If this character is already settled, keep it settled
 							if (settledChars[index]) {
 								return targetChar;
 							}
-							
+
 							// Calculate position bias: earlier characters (left) get higher chance
-							const positionBias = ungarbleLeftBias * (1 - (index / textChars.length));
-							
+							const positionBias = ungarbleLeftBias * (1 - index / textChars.length);
+
 							// Each character has a chance to "settle" based on progress and position
-							const baseProgress = Math.max(0, progress - (index * 0.02)); // stagger reveals
+							const baseProgress = Math.max(0, progress - index * 0.02); // stagger reveals
 							const biasedProgress = Math.min(1, baseProgress + positionBias);
 							const settleChance = Math.pow(biasedProgress, 1.5); // exponential curve
-							
+
 							if (Math.random() < settleChance) {
 								settledChars[index] = true; // Mark as permanently settled
 								return targetChar;
@@ -418,29 +441,47 @@ export function StreamingText({
 			timersRef.current.forEach(clearTimeout);
 			timersRef.current = [];
 		};
-	}, [signature, autoStart, executeUnit, canUngarble, ungarbleChars, ungarbleDuration, ungarbleInterval, ungarbleCompleteDelay, ungarbleCjkScale, ungarblePerCharMs, ungarbleLeftBias]); // <-- critical change
+	}, [
+		signature,
+		autoStart,
+		executeUnit,
+		canUngarble,
+		ungarbleChars,
+		ungarbleDuration,
+		ungarbleInterval,
+		ungarbleCompleteDelay,
+		ungarbleCjkScale,
+		ungarblePerCharMs,
+		ungarbleLeftBias,
+	]); // <-- critical change
 
-	return (
+	// Memoize the element creation to ensure it updates when props change
+	const element = useMemo(() => (
 		<Element
 			{...elementProps}
 			className={className}
 			style={{
 				...((elementProps as any)?.style || {}),
-				...(isUngarbling && ungarbleMonospace ? { 
-					fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-					letterSpacing: '0.05em'
-				} : {})
+				...(isUngarbling && ungarbleMonospace
+					? {
+							fontFamily:
+								'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+							letterSpacing: '0.05em',
+						}
+					: {}),
 			}}
 			data-streaming-text
 			data-streaming={isStreamingText || isWaitingForNested || isUngarbling}
 			data-complete={isComplete}
 			data-ungarbling={isUngarbling}
 		>
-			{renderedContent.map(item => (
+			{renderedContent.map((item) => (
 				<React.Fragment key={item.key}>{item.content}</React.Fragment>
 			))}
 		</Element>
-	);
+	), [Element, elementProps, className, isUngarbling, ungarbleMonospace, isStreamingText, isWaitingForNested, isComplete, renderedContent]);
+
+	return element;
 }
 
 /* mark component for wrapped detection */
