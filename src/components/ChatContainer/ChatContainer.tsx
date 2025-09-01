@@ -1,7 +1,7 @@
 'use client';
 
 import './ChatContainer.scss';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { useTheme } from '~/contexts/theme-context';
 import { MaterialIcon, Spinner } from '~/components/Ui';
@@ -33,6 +33,7 @@ export function ChatContainer({ landingMode, onSubmitSuccess }: ChatContainerPro
 
 	const { setTheme } = useTheme();
 	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+	const containerRef = useRef<HTMLDivElement>(null);
 
 	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -126,8 +127,29 @@ export function ChatContainer({ landingMode, onSubmitSuccess }: ChatContainerPro
 		}
 	}, [pendingClarify]);
 
+	// Set up ResizeObserver to track chat container height
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container) return;
+
+		const updateChatHeight = () => {
+			const rect = container.getBoundingClientRect();
+			document.documentElement.style.setProperty('--chat-container-height', `${rect.height}px`);
+		};
+
+		const resizeObserver = new ResizeObserver(updateChatHeight);
+		resizeObserver.observe(container);
+		
+		// Initial measurement
+		updateChatHeight();
+
+		return () => {
+			resizeObserver.disconnect();
+		};
+	}, []);
+
 	return (
-		<div className={`chat-container ${landingMode ? 'landing-mode' : ''}`}>
+		<div ref={containerRef} className={`chat-container ${landingMode ? 'landing-mode' : ''}`}>
 			<form onSubmit={onSubmit} className="chat-form">
 				{isLoading && <div className="loading-response" />}
 

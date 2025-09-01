@@ -49,6 +49,7 @@ interface ForceDirectedGraphProps
 		fadeOut: (duration: number) => void;
 		resetAlpha: (alpha: number) => void;
 	}) => void;
+	ringLabels?: Array<{ radius: number; label: string; }>;
 }
 
 export class ForceDirectedGraphStore extends Store<{ selectedNodes: Set<string> }> {
@@ -76,6 +77,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 		getNodeTooltip,
 		starfieldStartVisible = false,
 		onStarfieldReady,
+		ringLabels,
 		...rest
 	} = props;
 
@@ -278,6 +280,46 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 					const transform = ctx.getTransform();
 					if (webglRenderRef.current) {
 						webglRenderRef.current(transform);
+					}
+
+					// Draw ring labels for radial DAG mode
+					if (ringLabels && ringLabels.length > 0) {
+						ctx.save();
+						
+						// Set up ring label styling
+						const labelFontSize = Math.max(12, 16 / globalScale);
+						ctx.font = `${labelFontSize}px Inter, sans-serif`;
+						ctx.fillStyle = themeColors.neutral[500];
+						ctx.textAlign = 'center';
+						ctx.textBaseline = 'middle';
+						ctx.globalAlpha = 0.6;
+						
+						// Draw each ring label
+						for (const { radius, label } of ringLabels) {
+							// Position label at the top of each ring
+							const x = 0; // Center of graph
+							const y = -radius; // Top of ring
+							
+							// Add a subtle background for better readability
+							const textWidth = ctx.measureText(label).width;
+							const padding = 4;
+							
+							ctx.globalAlpha = 0.3;
+							ctx.fillStyle = themeColors.neutral[50];
+							ctx.fillRect(
+								x - textWidth / 2 - padding,
+								y - labelFontSize / 2 - padding,
+								textWidth + padding * 2,
+								labelFontSize + padding * 2
+							);
+							
+							// Draw the label text
+							ctx.globalAlpha = 0.7;
+							ctx.fillStyle = themeColors.neutral[600];
+							ctx.fillText(label, x, y);
+						}
+						
+						ctx.restore();
 					}
 				}}
 				onRenderFramePost={(ctx, globalScale) => {

@@ -41,7 +41,6 @@ const MENU_OPTIONS: MenuOption[] = [
 		label: 'Skills',
 		variants: [
 			{ value: 'clusters', label: 'Clusters' },
-			{ value: 'timeline', label: 'Timeline' },
 			{ value: 'matrix', label: 'Matrix' },
 		],
 	},
@@ -107,7 +106,7 @@ export function OptionsDropdown({ currentDirective, onDirectiveChange, landingMo
 				return {
 					mode: 'skills',
 					data: {
-						variant: (variant as 'clusters' | 'timeline' | 'matrix') || 'clusters',
+						variant: (variant as 'clusters' | 'matrix') || 'clusters',
 						clusterBy: 'domain',
 						...base,
 					},

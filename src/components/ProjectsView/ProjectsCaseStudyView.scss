@@ -1,0 +1,253 @@
+.projects-case-study {
+	--pcs-gap: 1rem;
+	--pcs-gap-lg: 1.5rem;
+
+	/* Fill parent view instance and allow vertical scrolling */
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	display: block;
+	color: var(--color-neutral-900);
+	padding: 3.5rem 2rem 10rem 2rem;
+	padding-bottom: calc(var(--chat-container-height) + 2rem) !important;
+
+	.pcs-container {
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+
+	.pcs-header {
+		display: grid;
+		gap: var(--pcs-gap);
+		margin-bottom: var(--pcs-gap-lg);
+	}
+
+	.pcs-title {
+		font-size: 2.5rem;
+		line-height: 1.2;
+		margin: 0;
+	}
+
+	.pcs-period {
+		color: var(--color-neutral-600);
+		font-size: 0.95rem;
+	}
+
+	.pcs-tech {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+
+		.pcs-chip {
+			background: var(--color-primary-50);
+			color: var(--color-primary-700);
+			border: 1px solid var(--color-primary-200);
+			padding: 0.25rem 0.75rem;
+			border-radius: 16px;
+			font-size: 0.75rem;
+			font-weight: 500;
+		}
+	}
+
+	.pcs-hero {
+		border-radius: 12px;
+		overflow: hidden;
+		background: var(--color-neutral-100);
+		border: 1px solid var(--color-neutral-200);
+		margin-bottom: var(--pcs-gap-lg);
+
+		// next/image wrapper span
+		span {
+			display: block !important;
+			width: 100% !important;
+			height: auto !important;
+		}
+
+		img {
+			width: 100%;
+			height: auto;
+			display: block;
+		}
+	}
+
+	.pcs-sections {
+		display: grid;
+		gap: var(--pcs-gap-lg);
+	}
+
+	.pcs-section {
+		background: #fff;
+		border: 1px solid var(--color-neutral-200);
+		border-radius: 12px;
+		padding: 1.5rem;
+
+		h2 {
+			font-size: 1.25rem;
+			font-weight: 600;
+			color: var(--color-neutral-900);
+			margin: 0 0 0.75rem 0;
+		}
+
+		p {
+			color: var(--color-neutral-600);
+			line-height: 1.6;
+			margin: 0;
+		}
+	}
+
+	.pcs-image {
+		figure {
+			margin: 0;
+		}
+		img {
+			width: 100%;
+			height: auto;
+			display: block;
+			border-radius: 8px;
+		}
+		figcaption {
+			color: var(--color-neutral-600);
+			font-size: 0.9rem;
+			margin-top: 0.5rem;
+		}
+	}
+
+	.pcs-gallery {
+		.pcs-gallery-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: var(--pcs-gap);
+		}
+
+		img {
+			width: 100%;
+			height: auto;
+			border-radius: 8px;
+			display: block;
+		}
+
+		@media (max-width: 720px) {
+			.pcs-gallery-grid {
+				grid-template-columns: 1fr;
+			}
+		}
+	}
+
+	.pcs-bullets ul {
+		margin: 0;
+		padding-left: 1.25rem;
+		li {
+			margin: 0.25rem 0;
+			color: var(--color-neutral-600);
+			line-height: 1.5;
+		}
+	}
+
+	.pcs-quote {
+		background: var(--color-neutral-100);
+		border-left: 4px solid var(--color-primary-500);
+		p {
+			font-size: 1.1rem;
+			font-style: italic;
+			color: var(--color-neutral-700);
+			margin: 0;
+		}
+		footer {
+			margin-top: 0.5rem;
+			color: var(--color-neutral-500);
+			font-size: 0.9rem;
+		}
+	}
+
+	.pcs-metrics {
+		.pcs-metrics-grid {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: var(--pcs-gap);
+
+			@media (max-width: 900px) {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+			@media (max-width: 600px) {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		.pcs-metric {
+			background: var(--color-neutral-100);
+			border: 1px solid var(--color-neutral-200);
+			border-radius: 10px;
+			padding: 1rem;
+		}
+
+		.pcs-metric-label {
+			color: var(--color-neutral-500);
+			font-size: 0.85rem;
+			font-weight: 500;
+		}
+
+		.pcs-metric-value {
+			color: var(--color-neutral-900);
+			font-size: 1.1rem;
+			font-weight: 600;
+		}
+	}
+
+	// Mobile responsive adjustments
+	@media (max-width: 768px) {
+		// Match grid view mobile padding
+		padding: 4rem 1rem 6rem 1rem;
+
+		.pcs-title {
+			font-size: 1.75rem;
+		}
+
+		.pcs-section {
+			padding: 1rem;
+		}
+
+		.pcs-tech {
+			gap: 0.375rem;
+
+			.pcs-chip {
+				font-size: 0.7rem;
+				padding: 0.2rem 0.6rem;
+			}
+		}
+
+		.pcs-metrics {
+			.pcs-metrics-grid {
+				grid-template-columns: 1fr;
+				gap: 0.75rem;
+			}
+
+			.pcs-metric {
+				padding: 0.75rem;
+			}
+		}
+
+		.pcs-gallery {
+			.pcs-gallery-grid {
+				grid-template-columns: 1fr;
+				gap: 0.75rem;
+			}
+		}
+	}
+
+	// Very small screens
+	@media (max-width: 480px) {
+		// Keep consistent padding approach for very small screens
+		padding: 5rem 0.75rem 6rem 0.75rem;
+
+		.pcs-section {
+			padding: 0.75rem;
+		}
+	}
+}

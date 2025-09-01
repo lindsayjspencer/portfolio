@@ -1,6 +1,14 @@
 import type { Graph, Node, ProjectNode, SkillNode, ValueNode, RoleNode, StoryNode, Metric } from './PortfolioStore';
 import type { ForceDirectedGraphData } from '~/components/ForceGraph/Common';
 import { portfolioToForceGraph } from './PortfolioToForceGraph';
+import {
+	toProjectCard,
+	buildCaseStudyViewModel,
+	portfolioToRadialProjects,
+	filterNodesByType,
+	type ProjectCard,
+	type CaseStudyViewModel,
+} from './PortfolioToProject';
 import type {
 	Directive,
 	TimelineDirective,
@@ -62,29 +70,30 @@ interface TimelineSkillsSnapshot extends BaseDataSnapshot {
 type TimelineDataSnapshot = TimelineCareerSnapshot | TimelineProjectsSnapshot | TimelineSkillsSnapshot;
 
 // Projects DataSnapshots
-interface ProjectsGridSnapshot extends BaseDataSnapshot {
+export interface ProjectsGridSnapshot extends BaseDataSnapshot {
 	mode: 'projects';
 	variant: 'grid';
-	projects: ProjectNode[];
+	projects: ProjectCard[];
 	metrics?: Metric[];
-	pinnedProjects?: ProjectNode[];
+	pinnedProjects?: ProjectCard[];
 }
 
 interface ProjectsRadialSnapshot extends BaseDataSnapshot {
 	mode: 'projects';
 	variant: 'radial';
 	forceGraphData: ForceDirectedGraphData;
-	projects: ProjectNode[];
+	projects: ProjectCard[];
 	metrics?: Metric[];
-	pinnedProjects?: ProjectNode[];
+	pinnedProjects?: ProjectCard[];
 }
 
 interface ProjectsCaseStudySnapshot extends BaseDataSnapshot {
 	mode: 'projects';
 	variant: 'case-study';
-	projects: ProjectNode[];
+	projects: ProjectCard[];
 	metrics?: Metric[];
-	pinnedProjects?: ProjectNode[];
+	pinnedProjects?: ProjectCard[];
+	caseStudy: CaseStudyViewModel;
 }
 
 type ProjectsDataSnapshot = ProjectsGridSnapshot | ProjectsRadialSnapshot | ProjectsCaseStudySnapshot;
@@ -253,9 +262,7 @@ function findNodeById<T extends Node>(graph: Graph, id: string, type: T['type'])
 	return node as T | null;
 }
 
-function filterNodesByType<T extends Node>(graph: Graph, type: T['type']): T[] {
-	return graph.nodes.filter((node) => node.type === type) as T[];
-}
+// Note: filterNodesByType moved to PortfolioToProject.ts
 
 function filterNodesByTags(nodes: Node[], tags?: string[]): Node[] {
 	if (!tags || tags.length === 0) return nodes;
@@ -303,10 +310,23 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 		}
 
 		case 'projects': {
-			const allProjects = filterNodesByType<ProjectNode>(graph, 'project');
-			const pinnedProjects = directive.data.pinned
-				? allProjects.filter((p) => directive.data.pinned!.includes(p.id))
-				: undefined;
+			const allProjectNodes = filterNodesByType<ProjectNode>(graph.nodes, 'project');
+			const highlights = new Set<string>(directive.data.highlights ?? []);
+			const pinnedIds = new Set<string>(directive.data.pinned ?? []);
+
+			// Transform projects to enriched ProjectCards
+			const allProjects = allProjectNodes.map((project) =>
+				toProjectCard(project, graph, highlights, pinnedIds)
+			);
+
+			// Sort projects: pinned → start date (newest first) → alphabetical
+			allProjects.sort((a, b) =>
+				(Number(b.isPinned) - Number(a.isPinned)) ||
+				((b.yearStart ?? 0) - (a.yearStart ?? 0)) ||
+				a.label.localeCompare(b.label)
+			);
+
+			const pinnedProjects = allProjects.filter((p) => p.isPinned);
 
 			switch (directive.data.variant) {
 				case 'grid':
@@ -315,7 +335,7 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						mode: 'projects',
 						variant: 'grid',
 						projects: allProjects,
-						metrics: directive.data.showMetrics ? [] : undefined, // TODO: Extract metrics
+						metrics: undefined,
 						pinnedProjects,
 					};
 				case 'radial':
@@ -323,25 +343,44 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						...baseData,
 						mode: 'projects',
 						variant: 'radial',
-						forceGraphData: portfolioToForceGraph(graph, directive),
+						forceGraphData: portfolioToRadialProjects(graph, directive.data),
 						projects: allProjects,
-						metrics: directive.data.showMetrics ? [] : undefined,
+						metrics: undefined,
 						pinnedProjects,
 					};
-				case 'case-study':
+				case 'case-study': {
+					// Select focus project for case study
+					const focusProject = (() => {
+						const fromHighlights = allProjectNodes.find((p) => highlights.has(p.id));
+						const fromPinned = allProjectNodes.find((p) => pinnedIds.has(p.id));
+						const fallback = allProjectNodes
+							.slice()
+							.sort((a, b) => (b.years?.[1] ?? 0) - (a.years?.[1] ?? 0))[0];
+						
+						return fromHighlights ?? fromPinned ?? fallback;
+					})();
+
+					if (!focusProject) {
+						throw new Error('No projects available for case study');
+					}
+
+					const caseStudy = buildCaseStudyViewModel(focusProject, graph);
+
 					return {
 						...baseData,
 						mode: 'projects',
 						variant: 'case-study',
 						projects: allProjects,
-						metrics: directive.data.showMetrics ? [] : undefined,
+						metrics: undefined,
 						pinnedProjects,
+						caseStudy,
 					};
+				}
 			}
 		}
 
 		case 'skills': {
-			const allSkills = filterNodesByType<SkillNode>(graph, 'skill');
+			const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
 			const filteredSkills = directive.data.focusLevel
 				? allSkills.filter((s) => s.level === directive.data.focusLevel)
 				: allSkills;
@@ -372,7 +411,7 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 		}
 
 		case 'values': {
-			const allValues = filterNodesByType<ValueNode>(graph, 'value');
+			const allValues = filterNodesByType<ValueNode>(graph.nodes, 'value');
 
 			switch (directive.data.variant) {
 				case 'mindmap':
@@ -425,7 +464,7 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 					};
 				}
 				case 'frontend-vs-backend': {
-					const allSkills = filterNodesByType<SkillNode>(graph, 'skill');
+					const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
 					return {
 						...baseData,
 						mode: 'compare',

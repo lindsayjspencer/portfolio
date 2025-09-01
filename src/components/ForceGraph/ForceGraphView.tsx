@@ -8,7 +8,6 @@ import { getAdditionOrder, getRemovalOrder } from '~/lib/NodeAnimationLayers';
 import { useMutableGraphData } from './UseMutableGraphData';
 import type { TransitionCallbacks, TransitionPhase } from '~/lib/ViewTransitions';
 import dynamic from 'next/dynamic';
-import type { Directive } from '~/lib/ai/directiveTools';
 
 const ForceDirectedGraph = dynamic(() => import('./ForceDirectedGraph'), {
 	ssr: false,
@@ -18,12 +17,15 @@ interface EnhancedForceGraphProps {
 	graphData: ForceDirectedGraphData;
 	transitionPhase?: TransitionPhase;
 	onRegisterCallbacks?: (callbacks: TransitionCallbacks) => void;
+	// Pass through any additional props to ForceDirectedGraph
+	[key: string]: any;
 }
 
 export function ForceGraphView({
 	graphData,
 	transitionPhase = 'stable',
 	onRegisterCallbacks,
+	...additionalProps
 }: EnhancedForceGraphProps) {
 	const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
 	const [isActive, setIsActive] = useState(false);
@@ -232,8 +234,9 @@ export function ForceGraphView({
 				nodeData={visibleGraphData}
 				width={rect?.width}
 				height={rect?.height}
-				dagMode={undefined} // Top-down for timeline
+				dagMode={additionalProps.dagMode ?? undefined} // Allow override, default to undefined for timeline
 				zoomPadding={{ top: 50, right: 50, bottom: 200, left: 50 }} // Extra bottom padding for chat
+				{...additionalProps}
 				backgroundColor="rgba(0, 0, 0, 0)"
 				// Start visible for stable/exiting; start invisible for entering
 				starfieldStartVisible={transitionPhase !== 'entering'}

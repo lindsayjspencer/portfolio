@@ -192,18 +192,23 @@ export function ViewTransitionManager({ directive, graph }: ViewTransitionManage
 			case 'projects':
 				switch (dataSnapshot.variant) {
 					case 'grid':
-						return <ProjectsGridView key={instance.key} {...commonProps} />;
+						return <ProjectsGridView key={instance.key} dataSnapshot={dataSnapshot} {...commonProps} />;
 					case 'radial':
-						// TODO: Create ProjectsRadialView component
 						return (
 							<ForceGraphView
 								key={instance.key}
 								graphData={dataSnapshot.forceGraphData}
+								dagMode="radialout"
+								dagLevelDistance={100}
+								warmupTicks={80}
+								cooldownTime={2000}
 								{...commonProps}
 							/>
 						);
 					case 'case-study':
-						return <ProjectsCaseStudyView key={instance.key} {...commonProps} />;
+						return (
+							<ProjectsCaseStudyView key={instance.key} dataSnapshot={dataSnapshot} {...commonProps} />
+						);
 				}
 
 			case 'skills':

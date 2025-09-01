@@ -455,9 +455,9 @@ export class DrawingUtils {
 		// Get shared dimensions
 		const dimensions = DrawingUtils.calculateNodeDimensions(globalScale, isSelected);
 
-		// --- Handle single-line rendering for non-highlighted nodes when highlights exist ---
-		if (hasHighlights && !node.isHighlighted) {
-			// Use default single-line rendering for non-highlighted nodes
+		// --- Handle single-line rendering for non-highlighted nodes when highlights exist OR when singleLine is set ---
+		if ((hasHighlights && !node.isHighlighted) || node.singleLine) {
+			// Use default single-line rendering for non-highlighted nodes or nodes with singleLine flag
 			// (default rendering code below handles this)
 		} else {
 			// --- Handle type-specific rendering for highlighted nodes or when no highlights exist ---
