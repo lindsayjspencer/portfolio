@@ -6,6 +6,8 @@ import type { Node, Link, Metric } from '~/lib/PortfolioStore';
 import { MaterialIcon } from './MaterialIcon';
 import './SlidingPanel.scss';
 import StreamingText from './StreamingText';
+import { useTheme } from '~/contexts/theme-context';
+import { DrawingUtils } from '~/components/ForceGraph/DrawingUtils';
 
 export const SlidingPanel = () => {
 	const { isPanelOpen, panelContent, closePanel } = usePortfolioStore();
@@ -60,8 +62,23 @@ export const SlidingPanel = () => {
 };
 
 const NodeContent = ({ data }: { data: ForceDirectedGraphNode }) => {
+	const { themeColors } = useTheme();
+	
+	// Get the node colors from DrawingUtils
+	const nodeTheme = DrawingUtils.getTheme(data, themeColors, false, false);
+	
+	// Create inline styles for the type badge
+	const badgeStyles = {
+		backgroundColor: nodeTheme.selectedBackground,
+		color: nodeTheme.resourceIndicatorColor,
+		borderColor: nodeTheme.selectedBorder,
+	};
+	
 	return (
 		<StreamingText className="sliding-panel-node-content">
+			<StreamingText as="div" className="node-type-badge" style={badgeStyles}>
+				{data.type.charAt(0).toUpperCase() + data.type.slice(1)}
+			</StreamingText>
 			
 			{data.type === 'role' && (
 				<>

@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { ForceGraphView } from '~/components/ForceGraph/ForceGraphView';
 import { ProjectsView } from '~/components/ProjectsView/ProjectsView';
+import { ProjectsGridView } from '~/components/ProjectsView/ProjectsGridView';
+import { ProjectsCaseStudyView } from '~/components/ProjectsView/ProjectsCaseStudyView';
 import { SkillsView } from '~/components/SkillsView/SkillsView';
+import { SkillsMatrixView } from '~/components/SkillsView/SkillsMatrixView';
 import { ValuesView } from '~/components/ValuesView/ValuesView';
+import { ValuesEvidenceView } from '~/components/ValuesView/ValuesEvidenceView';
 import { CompareView } from '~/components/CompareView/CompareView';
 import { LandingView } from '~/components/LandingView/LandingView';
 import { ResumeView } from '~/components/ResumeView/ResumeView';
@@ -13,17 +17,17 @@ import {
 	COMPONENT_TRANSITION_TIMINGS,
 	createDataSnapshot,
 } from '~/lib/ViewTransitions';
-import type { DirectiveType } from '~/lib/DirectiveTool';
 import type { Graph } from '~/lib/PortfolioStore';
 import './ViewTransitionManager.scss';
+import type { Directive } from '~/lib/ai/directiveTools';
 
 interface ViewTransitionManagerProps {
-	currentMode: DirectiveType['mode'];
+	directive: Directive;
 	graph: Graph;
-	directive: DirectiveType;
 }
 
-export function ViewTransitionManager({ currentMode, graph, directive }: ViewTransitionManagerProps) {
+export function ViewTransitionManager({ directive, graph }: ViewTransitionManagerProps) {
+	const currentMode = directive.mode;
 	// Create initial data snapshot using utility
 	const initialDataSnapshot = useMemo(() => createDataSnapshot(graph, directive), [graph, directive]);
 
@@ -50,18 +54,26 @@ export function ViewTransitionManager({ currentMode, graph, directive }: ViewTra
 		};
 	}, []);
 
-	// Handle mode changes
+	// Handle directive changes (including mode and variant changes)
 	useEffect(() => {
-		const currentStableView = transitionState.instances.find((i) => i.phase === 'stable')?.mode;
+		const currentStableView = transitionState.instances.find((i) => i.phase === 'stable');
 
-		if (currentStableView === currentMode || transitionState.isTransitioning) {
+		// Compare the full directive, not just the mode
+		if (!currentStableView || transitionState.isTransitioning) {
 			return;
 		}
 
-		startTransition(currentMode);
-	}, [currentMode]);
+		// Check if this is a meaningful change that requires a transition
+		const needsTransition =
+			currentStableView.mode !== currentMode ||
+			JSON.stringify(currentStableView.dataSnapshot) !== JSON.stringify(createDataSnapshot(graph, directive));
 
-	const startTransition = async (newMode: DirectiveType['mode']) => {
+		if (needsTransition) {
+			startTransition(currentMode);
+		}
+	}, [directive, graph]);
+
+	const startTransition = async (newMode: Directive['mode']) => {
 		const currentInstances = transitionState.instances;
 		const stableInstance = currentInstances.find((i) => i.phase === 'stable');
 
@@ -89,9 +101,9 @@ export function ViewTransitionManager({ currentMode, graph, directive }: ViewTra
 			isTransitioning: true,
 		});
 
-		// Get component-specific timings
-		const exitTiming = COMPONENT_TRANSITION_TIMINGS[exitingInstance.mode];
-		const enterTiming = COMPONENT_TRANSITION_TIMINGS[incomingInstance.mode];
+		// Get component-specific timings with fallback
+		const exitTiming = COMPONENT_TRANSITION_TIMINGS[exitingInstance.mode] || COMPONENT_TRANSITION_TIMINGS.landing;
+		const enterTiming = COMPONENT_TRANSITION_TIMINGS[incomingInstance.mode] || COMPONENT_TRANSITION_TIMINGS.landing;
 
 		// Start exit transition
 		const exitCallbacks = transitionCallbacks.current.get(exitingInstance.key);
@@ -146,31 +158,133 @@ export function ViewTransitionManager({ currentMode, graph, directive }: ViewTra
 				registerTransitionCallbacks(instance.key, callbacks),
 		};
 
-		switch (instance.mode) {
+		const { dataSnapshot } = instance;
+
+		switch (dataSnapshot.mode) {
+			case 'timeline':
+				switch (dataSnapshot.variant) {
+					case 'career':
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+					case 'projects':
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+					case 'skills':
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+				}
+
+			case 'projects':
+				switch (dataSnapshot.variant) {
+					case 'grid':
+						return <ProjectsGridView key={instance.key} {...commonProps} />;
+					case 'radial':
+						// TODO: Create ProjectsRadialView component
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+					case 'case-study':
+						return <ProjectsCaseStudyView key={instance.key} {...commonProps} />;
+				}
+
+			case 'skills':
+				switch (dataSnapshot.variant) {
+					case 'clusters':
+						// TODO: Create SkillsClustersView component
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+					case 'matrix':
+						return <SkillsMatrixView key={instance.key} {...commonProps} />;
+				}
+				break;
+
+			case 'values':
+				switch (dataSnapshot.variant) {
+					case 'mindmap':
+						// TODO: Create ValuesMindmapView component
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+					case 'evidence':
+						return <ValuesEvidenceView key={instance.key} {...commonProps} />;
+				}
+				break;
+
+			case 'compare':
+				switch (dataSnapshot.variant) {
+					case 'skills':
+						// TODO: Create CompareSkillsView component
+						return <LandingView key={instance.key} {...commonProps} />; // Placeholder
+					case 'projects':
+						// TODO: Create CompareProjectsView component
+						return <LandingView key={instance.key} {...commonProps} />; // Placeholder
+					case 'frontend-vs-backend':
+						// TODO: Create CompareFrontendVsBackendView component
+						return <LandingView key={instance.key} {...commonProps} />; // Placeholder
+				}
+				break;
+
+			case 'explore':
+				switch (dataSnapshot.variant) {
+					case 'all':
+						// TODO: Create ExploreAllView component
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+					case 'filtered':
+						// TODO: Create ExploreFilteredView component
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+				}
+				break;
+
 			case 'landing':
 				return <LandingView key={instance.key} {...commonProps} />;
-			case 'projects':
-				return <ProjectsView key={instance.key} {...commonProps} />;
-			case 'skills':
-				return <SkillsView key={instance.key} {...commonProps} />;
-			case 'values':
-				return <ValuesView key={instance.key} {...commonProps} />;
-			case 'compare':
-				return <CompareView key={instance.key} {...commonProps} />;
+
 			case 'resume':
+				// TODO: Create or enhance ResumeView component to use dataSnapshot.resumeData
 				return <ResumeView key={instance.key} {...commonProps} />;
-			case 'timeline':
-			case 'play':
+
 			default:
-				// Use the instance's snapshot data (now required)
-				return (
-					<ForceGraphView
-						key={instance.key}
-						graphData={instance.dataSnapshot.forceGraphData}
-						mode={instance.mode}
-						{...commonProps}
-					/>
-				);
+				// Fallback
+				return <LandingView key={instance.key} {...commonProps} />;
 		}
 	};
 

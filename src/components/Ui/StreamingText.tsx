@@ -455,31 +455,98 @@ export function StreamingText({
 		ungarbleLeftBias,
 	]); // <-- critical change
 
-	// Memoize the element creation to ensure it updates when props change
-	const element = useMemo(() => (
-		<Element
-			{...elementProps}
-			className={className}
-			style={{
-				...((elementProps as any)?.style || {}),
-				...(isUngarbling && ungarbleMonospace
-					? {
-							fontFamily:
-								'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-							letterSpacing: '0.05em',
+	/*
+	 * Sync cached elements when children/props change without restarting the stream.
+	 * We intentionally keep the execution progress but replace the content for
+	 * instant_render and nested_stream entries so prop updates (like className)
+	 * take effect. Text stream entries are left untouched to preserve progress.
+	 */
+	useEffect(() => {
+		setRenderedContent((prev) => {
+			if (!prev.length) return prev;
+			let changed = false;
+			const next = prev.map((item) => {
+				const m = /:u(\d+):(t|i|n)$/.exec(item.key);
+				if (!m) return item;
+				const idx = Number(m[1]);
+				const kind = m[2];
+				const unit = planRef.current[idx];
+				if (!unit) return item;
+
+				if (kind === 'i' && unit.type === 'instant_render') {
+					if (item.content !== unit.content) {
+						changed = true;
+						return { ...item, content: unit.content };
+					}
+					return item;
+				}
+
+				if (kind === 'n' && unit.type === 'nested_stream') {
+					const child = unit.component;
+					const childExisting = (child.props as any)?.onComplete as (() => void) | undefined;
+					const composed = () => {
+						try {
+							childExisting?.();
+						} finally {
+							setIsWaitingForNested(false);
+							const nextIndex = idx + 1;
+							setCurrentUnit(nextIndex);
+							schedule(() => executeUnit(nextIndex), 0);
 						}
-					: {}),
-			}}
-			data-streaming-text
-			data-streaming={isStreamingText || isWaitingForNested || isUngarbling}
-			data-complete={isComplete}
-			data-ungarbling={isUngarbling}
-		>
-			{renderedContent.map((item) => (
-				<React.Fragment key={item.key}>{item.content}</React.Fragment>
-			))}
-		</Element>
-	), [Element, elementProps, className, isUngarbling, ungarbleMonospace, isStreamingText, isWaitingForNested, isComplete, renderedContent]);
+					};
+					const nestedWithCb = React.cloneElement(child, {
+						...child.props,
+						autoStart: true,
+						onComplete: composed,
+					});
+					changed = true;
+					return { ...item, content: nestedWithCb };
+				}
+
+				return item;
+			});
+			return changed ? next : prev;
+		});
+	}, [computedPlan, executeUnit, schedule]);
+
+	// Memoize the element creation to ensure it updates when props change
+	const element = useMemo(
+		() => (
+			<Element
+				{...elementProps}
+				className={className}
+				style={{
+					...((elementProps as any)?.style || {}),
+					...(isUngarbling && ungarbleMonospace
+						? {
+								fontFamily:
+									'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+								letterSpacing: '0.05em',
+							}
+						: {}),
+				}}
+				data-streaming-text
+				data-streaming={isStreamingText || isWaitingForNested || isUngarbling}
+				data-complete={isComplete}
+				data-ungarbling={isUngarbling}
+			>
+				{renderedContent.map((item) => (
+					<React.Fragment key={item.key}>{item.content}</React.Fragment>
+				))}
+			</Element>
+		),
+		[
+			Element,
+			elementProps,
+			className,
+			isUngarbling,
+			ungarbleMonospace,
+			isStreamingText,
+			isWaitingForNested,
+			isComplete,
+			renderedContent,
+		],
+	);
 
 	return element;
 }

@@ -24,10 +24,12 @@ export function WelcomeMessage({ landingMode }: WelcomeMessageProps) {
 				setShouldRender(false);
 				setIsAnimating(false);
 			}, 400); // matches animation duration
-			
-			return () => clearTimeout(timer);
+
+			return () => {
+				clearTimeout(timer);
+			};
 		}
-	}, [landingMode, shouldRender, isAnimating]);
+	}, [landingMode, shouldRender]);
 
 	if (!shouldRender) {
 		return null;

@@ -2,7 +2,17 @@
 
 import { streamText, type ModelMessage } from 'ai';
 import { generalModel } from '~/server/model';
-import { enhancedDirectiveTool, type DirectiveType } from '~/lib/DirectiveTool';
+import {
+	timelineDirective,
+	projectsDirective,
+	skillsDirective,
+	valuesDirective,
+	compareDirective,
+	resumeDirective,
+	type Directive,
+	exploreDirective,
+} from '~/lib/ai/directiveTools';
+import { clarifyTool, type ClarifyPayload } from '~/lib/ai/clarifyTool';
 import { setServerTheme } from '~/lib/server-theme';
 import portfolioData from '~/data/portfolio.json';
 import { langfuse } from '~/server/langfuse';
@@ -60,61 +70,98 @@ const formatMessagesAsMarkdown = (messages: ModelMessage[]): string => {
 	return `<conversationHistory>${formattedMessages}</conversationHistory>`;
 };
 
-const formatDirectiveAsMarkdown = (directive: DirectiveType | null): string => {
+const formatDirectiveAsMarkdown = (directive: Directive | null): string => {
 	if (!directive) return 'No directive';
 
 	let markdown = `## Directive: ${directive.mode}\n\n`;
 
-	if (directive.highlights.length > 0) {
+	if (directive.data.highlights && directive.data.highlights.length > 0) {
 		markdown += `### Highlights\n\n`;
-		directive.highlights.forEach((highlight) => {
+		directive.data.highlights.forEach((highlight: string) => {
 			markdown += `- ${highlight}\n`;
 		});
 	}
 
-	if (directive.narration) {
-		markdown += `### Narration\n\n${directive.narration}\n`;
+	if (directive.data.narration) {
+		markdown += `### Narration\n\n${directive.data.narration}\n`;
 	}
 
 	return markdown;
 };
 
 interface EnhancedAskResult {
-	directive: DirectiveType | null;
+	directive: Directive | null; // Will be legacy format from convertDirectiveToLegacyFormat
 	text: string;
 	themeChanged: boolean;
-	themeReason?: string;
+	clarify?: ClarifyPayload;
+	responseType: 'directive' | 'clarify' | 'narration';
 }
 
-export async function Ask(
-	messages: ModelMessage[],
-	currentDirective: DirectiveType | null,
-): Promise<EnhancedAskResult> {
+export async function Ask(messages: ModelMessage[], currentDirective: any | null): Promise<EnhancedAskResult> {
 	const portfolioContext = formatPortfolioAsMarkdown();
 
 	const SYSTEM_PROMPT = `You are an AI assistant for Lindsay Spencer's interactive portfolio. Your job is to help users explore their background through a dynamic graph visualization.
 
-IMPORTANT: You must respond with exactly one directive using the tool. The directive controls how the graph displays information.
+You have access to these tools:
+- **timelineDirective**: Show progression over time (career, projects, or skills)
+- **projectsDirective**: Display project work (grid, radial, or case-study view)
+- **skillsDirective**: Technical capabilities (clusters, timeline, or matrix view)
+- **valuesDirective**: Personal values and principles (mindmap or evidence view)
+- **compareDirective**: Side-by-side comparisons (skills, projects, or frontend-vs-backend)
+- **playDirective**: Interactive exploration (all or filtered nodes)
+- **landingDirective**: Landing/welcome view
+- **resumeDirective**: Full résumé view
+- **clarify**: Ask clarifying questions when user request is ambiguous
 
-Available modes:
-- timeline: Show career progression chronologically
-- projects: Focus on specific projects and their relationships
-- skills: Highlight technical skills and competencies
-- values: Display personal values and motivations
-- compare: Compare different aspects (skills, projects, etc.)
-- play: Interactive exploration mode
+## Routing Guidelines:
 
-Guidelines:
-- Always highlight relevant nodes based on the user's question
-- Keep narration conversational and informative
-- Use node IDs from the portfolio data for highlights
-- Suggest theme changes when the conversation context shifts significantly
-- Provide a brief reason for theme suggestions
+### Timeline queries
+- User mentions dates/"when": → **timelineDirective**
+  - Career progression → variant: "career"
+  - Project history → variant: "projects"  
+  - Learning journey → variant: "skills"
+
+### Project queries
+- "Show projects", "What have you built" → **projectsDirective**
+  - Overview → variant: "grid"
+  - Interactive layout → variant: "radial"
+  - Deep dive → variant: "case-study"
+
+### Skills queries
+- "What technologies", "Your expertise" → **skillsDirective**
+  - By domain → variant: "clusters"
+  - Over time → variant: "timeline"
+  - Skill matrix → variant: "matrix"
+
+### Values queries
+- "What drives you", "Your principles" → **valuesDirective**
+  - Value connections → variant: "mindmap"
+  - With examples → variant: "evidence"
+
+### Comparison queries
+- "Compare", "vs", "difference" → **compareDirective**
+  - Must specify leftId and rightId
+  - If unclear, use **clarify** first
+
+### General queries
+- Landing/welcome → **landingDirective**
+- Full résumé → **resumeDirective**
+- Free exploration → **playDirective**
+
+### Clarification Examples:
+- User: "Show me your experience" → **clarify**: "Would you like to see my career timeline, specific skills, or project work?"
+- User: "Tell me about React" → **clarify**: "Are you interested in React projects I've built, my React skill level, or how I learned React?"
+
+Always include:
+- confidence scores (0-1) 
+- relevant highlights (node IDs from portfolio)
+- engaging narration
+- theme suggestions when context shifts
 
 Portfolio context:
 ${portfolioContext}
 
-Return exactly one directive via the tool.`;
+Choose the most appropriate directive tool based on the user's request. Use clarify when ambiguous.`;
 
 	const trace = langfuse.trace({
 		id: randomUUID(),
@@ -137,9 +184,16 @@ The current directive is ${formatDirectiveAsMarkdown(currentDirective)}
 			},
 		],
 		tools: {
-			directive: enhancedDirectiveTool,
+			timelineDirective,
+			projectsDirective,
+			skillsDirective,
+			valuesDirective,
+			compareDirective,
+			exploreDirective,
+			resumeDirective,
+			clarify: clarifyTool,
 		},
-		toolChoice: { type: 'tool', toolName: 'directive' },
+		toolChoice: 'auto',
 		experimental_telemetry: {
 			isEnabled: true,
 			metadata: {
@@ -151,13 +205,38 @@ The current directive is ${formatDirectiveAsMarkdown(currentDirective)}
 
 	langfuse.flushAsync();
 
-	// Extract the directive and text from the stream
-	let directive: DirectiveType | null = null;
+	// Extract the directive, clarify, and text from the stream
+	let directive: Directive | null = null;
+	let clarifyPayload: ClarifyPayload | undefined;
 	let text = '';
+	let responseType: 'directive' | 'clarify' | 'narration' = 'narration';
 
 	for await (const part of result.fullStream) {
-		if (part.type === 'tool-call' && part.toolName === 'directive') {
-			directive = part.input as DirectiveType;
+		if (part.type === 'tool-call') {
+			console.log(part);
+			// Handle all directive tool types
+			const directiveTools = [
+				'timelineDirective',
+				'projectsDirective',
+				'skillsDirective',
+				'valuesDirective',
+				'compareDirective',
+				'playDirective',
+				'landingDirective',
+				'resumeDirective',
+			];
+
+			if (directiveTools.includes(part.toolName)) {
+				// Convert tool name to mode and create directive object
+				directive = {
+					mode: part.toolName.replace('Directive', ''),
+					data: part.input,
+				} as Directive;
+				responseType = 'directive';
+			} else if (part.toolName === 'clarify') {
+				clarifyPayload = part.input as ClarifyPayload;
+				responseType = 'clarify';
+			}
 		}
 		if (part.type === 'text-delta') {
 			text += part.text;
@@ -165,17 +244,18 @@ The current directive is ${formatDirectiveAsMarkdown(currentDirective)}
 	}
 
 	console.log('🎯 LLM Response:', {
+		responseType,
 		directive,
+		clarifyPayload,
 		text,
-		themeRequested: directive?.theme,
-		themeReason: directive?.themeReason,
+		themeRequested: directive?.data.theme,
 	});
 
 	// Apply theme suggestion if provided
-	if (directive?.theme) {
+	if (directive?.data.theme) {
 		try {
-			console.log('🎨 Setting server theme to:', directive.theme);
-			await setServerTheme(directive.theme);
+			console.log('🎨 Setting server theme to:', directive.data.theme);
+			await setServerTheme(directive.data.theme);
 		} catch (error) {
 			console.warn('Failed to set server theme:', error);
 		}
@@ -184,8 +264,9 @@ The current directive is ${formatDirectiveAsMarkdown(currentDirective)}
 	// Return plain objects only
 	return {
 		directive,
-		text: text || directive?.narration || '',
-		themeChanged: !!directive?.theme,
-		themeReason: directive?.themeReason,
+		text: text || directive?.data.narration || '',
+		themeChanged: !!directive?.data.theme,
+		clarify: clarifyPayload,
+		responseType,
 	};
 }

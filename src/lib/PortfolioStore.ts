@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import portfolioData from '~/data/portfolio.json';
-import type { DirectiveType } from './DirectiveTool';
+import type { ClarifyPayload } from './ai/clarifyTool';
 import type { ForceDirectedGraphNode } from '~/components/ForceGraph/Common';
+import type { Directive, LandingDirective } from './ai/directiveTools';
 
 // ===== Portfolio Graph Types =====
 
@@ -142,13 +143,13 @@ export interface TimelineMonthNode extends BaseNode {
 }
 
 // Discriminated union of all node types
-export type Node = 
-	| PersonNode 
-	| RoleNode 
-	| ProjectNode 
-	| SkillNode 
-	| ValueNode 
-	| StoryNode 
+export type Node =
+	| PersonNode
+	| RoleNode
+	| ProjectNode
+	| SkillNode
+	| ValueNode
+	| StoryNode
 	| YearNode
 	| EducationNode
 	| CertNode
@@ -189,51 +190,69 @@ export type Graph = {
 	meta?: GraphMeta;
 };
 
+// Response types for multi-modal AI responses
+export type Response =
+	| { kind: 'directive'; data: Directive }
+	| { kind: 'clarify'; data: ClarifyPayload }
+	| { kind: 'narration'; text: string };
+
 export type ChatMessage = {
 	id: string;
 	role: 'user' | 'assistant';
 	content: string;
-	directive?: DirectiveType;
+	directive?: Directive;
+	response?: Response; // New field for rich responses
 };
 
-export type PanelContent = 
+export type PanelContent =
 	| {
-		type: 'node';
-		title: string;
-		data: ForceDirectedGraphNode;
-		onClose?: () => void;
-	}
+			type: 'node';
+			title: string;
+			data: ForceDirectedGraphNode;
+			onClose?: () => void;
+	  }
 	| {
-		type: 'custom';
-		title: string;
-		data: React.ReactNode;
-		onClose?: () => void;
-	};
+			type: 'custom';
+			title: string;
+			data: React.ReactNode;
+			onClose?: () => void;
+	  };
 
 interface PortfolioState {
 	graph: Graph;
-	directive: DirectiveType;
+	directive: Directive;
 	messages: ChatMessage[];
 	isLoading: boolean;
-	
+
 	// Chat-specific state
 	input: string;
 	narrative: string | null;
-	
+
 	// Panel state
 	isPanelOpen: boolean;
 	panelContent: PanelContent | null;
 
+	// New: Response tracking
+	responses: Response[];
+	pendingClarify?: ClarifyPayload;
+	lastDirective?: Directive;
+
 	// Actions
-	setDirective: (directive: DirectiveType) => void;
+	setDirective: (directive: Directive) => void;
 	addMessage: (message: Omit<ChatMessage, 'id'>) => void;
 	setLoading: (loading: boolean) => void;
 	clearMessages: () => void;
-	
+
 	// Chat actions
 	setInput: (input: string) => void;
 	setNarrative: (narrative: string | null) => void;
-	
+
+	// New: Response actions
+	pushResponse: (response: Response) => void;
+	setPendingClarify: (payload: ClarifyPayload | undefined) => void;
+	setLastDirective: (directive: Directive) => void;
+	clearResponses: () => void;
+
 	// Panel actions
 	openPanel: (content: PanelContent) => void;
 	closePanel: () => void;
@@ -244,19 +263,28 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
 	graph: portfolioData as Graph,
 	directive: {
 		mode: 'landing',
-		highlights: [],
-		narration: '',
-	},
+		data: {
+			variant: 'neutral',
+			highlights: [],
+			narration: '',
+			confidence: 0.7,
+		},
+	} as Directive,
 	messages: [],
 	isLoading: false,
-	
+
 	// Chat-specific state
 	input: '',
 	narrative: null,
-	
+
 	// Panel state
 	isPanelOpen: false,
 	panelContent: null,
+
+	// New: Response tracking
+	responses: [],
+	pendingClarify: undefined,
+	lastDirective: undefined,
 
 	setDirective: (directive) => set({ directive }),
 
@@ -278,15 +306,31 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
 			messages: [],
 			directive: {
 				mode: 'landing',
-				highlights: [],
-				narration: '',
-			},
+				data: {
+					variant: 'neutral',
+					highlights: [],
+					narration: '',
+					confidence: 0.7,
+				},
+			} as Directive,
 		}),
-	
+
 	// Chat actions
 	setInput: (input) => set({ input }),
 	setNarrative: (narrative) => set({ narrative }),
-	
+
+	// New: Response actions
+	pushResponse: (response) =>
+		set((state) => ({
+			responses: [...state.responses, response],
+		})),
+
+	setPendingClarify: (payload) => set({ pendingClarify: payload }),
+
+	setLastDirective: (directive) => set({ lastDirective: directive }),
+
+	clearResponses: () => set({ responses: [], pendingClarify: undefined }),
+
 	// Panel actions
 	openPanel: (content) => set({ isPanelOpen: true, panelContent: content }),
 	closePanel: () => set({ isPanelOpen: false, panelContent: null }),

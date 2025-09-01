@@ -8,6 +8,7 @@ import { getAdditionOrder, getRemovalOrder } from '~/lib/NodeAnimationLayers';
 import { useMutableGraphData } from './UseMutableGraphData';
 import type { TransitionCallbacks, TransitionPhase } from '~/lib/ViewTransitions';
 import dynamic from 'next/dynamic';
+import type { Directive } from '~/lib/ai/directiveTools';
 
 const ForceDirectedGraph = dynamic(() => import('./ForceDirectedGraph'), {
 	ssr: false,
@@ -15,14 +16,12 @@ const ForceDirectedGraph = dynamic(() => import('./ForceDirectedGraph'), {
 
 interface EnhancedForceGraphProps {
 	graphData: ForceDirectedGraphData;
-	mode: 'timeline' | 'career-timeline' | 'skills-timeline' | 'play';
 	transitionPhase?: TransitionPhase;
 	onRegisterCallbacks?: (callbacks: TransitionCallbacks) => void;
 }
 
 export function ForceGraphView({
 	graphData,
-	mode,
 	transitionPhase = 'stable',
 	onRegisterCallbacks,
 }: EnhancedForceGraphProps) {
@@ -236,7 +235,6 @@ export function ForceGraphView({
 				dagMode={undefined} // Top-down for timeline
 				zoomPadding={{ top: 50, right: 50, bottom: 200, left: 50 }} // Extra bottom padding for chat
 				backgroundColor="rgba(0, 0, 0, 0)"
-				displayMode={mode}
 				// Start visible for stable/exiting; start invisible for entering
 				starfieldStartVisible={transitionPhase !== 'entering'}
 				onStarfieldReady={onStarfieldReady}

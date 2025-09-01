@@ -4,7 +4,7 @@ import type {
 	ForceDirectedGraphLink,
 } from '~/components/ForceGraph/Common';
 import { type Graph, type Node, type Edge } from '~/lib/PortfolioStore';
-import type { DirectiveType } from './DirectiveTool';
+import type { Directive } from './ai/directiveTools';
 
 export type SyntheticNode = TimelineNode;
 
@@ -35,37 +35,15 @@ function calculateLinkValue(edge: Edge, sourceNode: Node, targetNode: Node): num
 	return value;
 }
 
-// Get color for links based on relationship type
-function getLinkColor(edge: Edge): string {
-	switch (edge.rel) {
-		case 'used':
-		case 'learned':
-			return '#10b981'; // Green for skill relationships
-		case 'built':
-			return '#3b82f6'; // Blue for projects
-		case 'worked_as':
-			return '#8b5cf6'; // Purple for roles
-		case 'evidence':
-			return '#ef4444'; // Red for values evidence
-		case 'happened_during':
-		case 'timeline-marker':
-			return '#f59e0b'; // Yellow for time/story relationships
-		case 'led':
-		case 'mentored':
-			return '#f97316'; // Orange for leadership
-		case 'impacted':
-			return '#06b6d4'; // Cyan for impact
-		default:
-			return '#06b6d4'; // Use theme default
-	}
-}
-
 // Common timeline infrastructure
 function getCurrentMonth(): string {
 	return `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
 }
 
-function createTimelineSpine(months: string[], currentMonth: string): {
+function createTimelineSpine(
+	months: string[],
+	currentMonth: string,
+): {
 	timelineNodes: TimelineNode[];
 	timelineEdges: Edge[];
 } {
@@ -118,8 +96,8 @@ function transformToCareerTimelineGraph(portfolio: Graph): Graph {
 	timelineMonths.add(currentMonth); // Always include present
 
 	const { timelineNodes, timelineEdges } = createTimelineSpine(Array.from(timelineMonths), currentMonth);
-	const attachmentEdges = createAttachmentEdges(filteredNodes, (node) => 
-		(node.type === 'role' && node.period) ? node.period.start : ''
+	const attachmentEdges = createAttachmentEdges(filteredNodes, (node) =>
+		node.type === 'role' && node.period ? node.period.start : '',
 	);
 
 	return {
@@ -133,18 +111,18 @@ function transformToCareerTimelineGraph(portfolio: Graph): Graph {
 function transformToSkillsTimelineGraph(portfolio: Graph): Graph {
 	const currentMonth = getCurrentMonth();
 	const skillNodes = portfolio.nodes.filter((node) => node.type === 'skill');
-	
+
 	// Transform skill nodes to show when they were first learned
 	const transformedSkills = skillNodes.map((skill) => {
 		const firstYear = skill.years ? Math.min(...skill.years) : new Date().getFullYear();
 		const startDate = `${firstYear}-01`;
-		
+
 		return {
 			...skill,
 			period: {
 				start: startDate,
-				end: 'present' as const
-			}
+				end: 'present' as const,
+			},
 		} as Node & { period: { start: string; end: string } };
 	});
 
@@ -167,100 +145,53 @@ function transformToSkillsTimelineGraph(portfolio: Graph): Graph {
 	};
 }
 
-// Transform portfolio data to timeline view (original combined timeline)
-function transformToTimelineGraph(portfolio: Graph): Graph {
+// Transform portfolio data to projects timeline view (projects only)
+function transformToProjectsTimelineGraph(portfolio: Graph): Graph {
 	const currentMonth = getCurrentMonth();
-	const excludedTypes = new Set(['skill', 'value']);
-	const filteredNodes = portfolio.nodes.filter((node) => !excludedTypes.has(node.type));
+	const filteredNodes = portfolio.nodes.filter((node) => node.type === 'project');
 
-	// Extract unique timeline months from temporal nodes (start dates only)
+	// Extract unique timeline months from project nodes (start dates only)
 	const timelineMonths = new Set<string>();
 	filteredNodes.forEach((node) => {
-		if ((node.type === 'role' || node.type === 'project') && node.period) {
+		if (node.type === 'project' && node.period) {
 			timelineMonths.add(node.period.start);
 		}
 	});
 	timelineMonths.add(currentMonth); // Always include present
 
 	const { timelineNodes, timelineEdges } = createTimelineSpine(Array.from(timelineMonths), currentMonth);
-
-	// Filter nodes that have temporal data (only roles and projects, from already filtered nodes)
-	const temporalNodes = filteredNodes.filter((node) => {
-		return (node.type === 'role' || node.type === 'project') && node.period;
-	});
-
-	// Create attachment edges from timeline months to temporal nodes
-	const attachmentEdges = createAttachmentEdges(temporalNodes, (node) => 
-		(node.type === 'role' || node.type === 'project') ? node.period.start : ''
+	const attachmentEdges = createAttachmentEdges(filteredNodes, (node) =>
+		node.type === 'project' && node.period ? node.period.start : '',
 	);
-
-	// Create filtered node ID map for fast lookup (already excluding skills, values, stories)
-	const filteredNodeIds = new Set(filteredNodes.map((n) => n.id));
-	const temporalNodeIds = new Set(temporalNodes.map((n) => n.id));
-
-	// Filter edges to only include those between valid nodes (no skills, values, stories)
-	const validEdges = portfolio.edges.filter((edge) => {
-		const sourceExists = filteredNodeIds.has(edge.source);
-		const targetExists = filteredNodeIds.has(edge.target);
-
-		// Only keep edges where both source and target exist in filtered nodes
-		return sourceExists && targetExists;
-	});
-
-	// Get edges that involve temporal nodes (but exclude person connections)
-	const connectedEdges = validEdges.filter((edge) => {
-		const sourceIsTemporal = temporalNodeIds.has(edge.source);
-		const targetIsTemporal = temporalNodeIds.has(edge.target);
-		const sourceNode = filteredNodes.find((n) => n.id === edge.source);
-		const targetNode = filteredNodes.find((n) => n.id === edge.target);
-
-		// Exclude person connections
-		const sourceIsPerson = sourceNode?.type === 'person';
-		const targetIsPerson = targetNode?.type === 'person';
-
-		// Keep edges that involve temporal nodes, but exclude person connections
-		return (sourceIsTemporal || targetIsTemporal) && !sourceIsPerson && !targetIsPerson;
-	});
-
-	// Start with temporal nodes (roles and projects)
-	const connectedNodeIds = new Set(temporalNodes.map((n) => n.id));
-
-	// Add connected nodes from edges
-	connectedEdges.forEach((edge) => {
-		connectedNodeIds.add(edge.source);
-		connectedNodeIds.add(edge.target);
-	});
-
-	// Filter nodes to only include temporal and connected nodes (excluding person)
-	const filteredOriginalNodes = filteredNodes.filter(
-		(node) => connectedNodeIds.has(node.id) && node.type !== 'person',
-	);
-
-	// Combine all nodes and edges
-	const allNodes = [...timelineNodes, ...filteredOriginalNodes];
-	const allEdges = [...timelineEdges, ...attachmentEdges, ...connectedEdges];
 
 	return {
-		nodes: allNodes,
-		edges: allEdges,
+		nodes: [...timelineNodes, ...filteredNodes],
+		edges: [...timelineEdges, ...attachmentEdges],
 		meta: portfolio.meta,
 	};
 }
 
-export function portfolioToForceGraph(portfolio: Graph, mode: DirectiveType['mode']): ForceDirectedGraphData {
+export function portfolioToForceGraph(portfolio: Graph, directive: Directive): ForceDirectedGraphData {
 	// Apply mode-specific transformations
 	let transformedGraph = portfolio;
 
-	if (mode === 'timeline') {
-		transformedGraph = transformToTimelineGraph(portfolio);
-	} else if (mode === 'career-timeline') {
-		transformedGraph = transformToCareerTimelineGraph(portfolio);
-	} else if (mode === 'skills-timeline') {
-		transformedGraph = transformToSkillsTimelineGraph(portfolio);
+	if (directive.mode === 'timeline') {
+		// Use the variant to determine which timeline type
+		if (directive.data.variant === 'career') {
+			transformedGraph = transformToCareerTimelineGraph(portfolio);
+		} else if (directive.data.variant === 'skills') {
+			transformedGraph = transformToSkillsTimelineGraph(portfolio);
+		} else if (directive.data.variant === 'projects') {
+			transformedGraph = transformToProjectsTimelineGraph(portfolio);
+		}
 	}
 
 	// Create a map for quick node lookup
 	const nodeMap = new Map(transformedGraph.nodes.map((node) => [node.id, node]));
+
+	// Get highlights from directive
+	const highlights = directive.data.highlights || [];
+	const highlightSet = new Set(highlights);
 
 	// Transform nodes
 	const nodes: ForceDirectedGraphNode[] = transformedGraph.nodes.map((node) => ({
@@ -268,6 +199,8 @@ export function portfolioToForceGraph(portfolio: Graph, mode: DirectiveType['mod
 		...node,
 		// Mark timeline nodes as non-selectable
 		selectable: node.type === 'timeline-month' ? false : undefined,
+		// Mark nodes as highlighted if they're in the highlights array
+		isHighlighted: highlightSet.has(node.id),
 	}));
 
 	// Transform edges (only include edges where both nodes exist)
@@ -283,7 +216,7 @@ export function portfolioToForceGraph(portfolio: Graph, mode: DirectiveType['mod
 				target: edge.target,
 				rel: edge.rel,
 				value: calculateLinkValue(edge, sourceNode!, targetNode!),
-				colour: getLinkColor(edge),
+				colour: undefined,
 			};
 		});
 
@@ -297,10 +230,10 @@ export function portfolioToForceGraph(portfolio: Graph, mode: DirectiveType['mod
 export function getFilteredForceGraphData(
 	portfolio: Graph,
 	highlights: string[],
-	mode: DirectiveType['mode'],
+	directive: Directive,
 ): ForceDirectedGraphData {
 	if (!highlights || highlights.length === 0) {
-		return portfolioToForceGraph(portfolio, mode);
+		return portfolioToForceGraph(portfolio, directive);
 	}
 
 	// Get highlighted nodes and their connected nodes
@@ -326,7 +259,7 @@ export function getFilteredForceGraphData(
 		edges: relevantEdges,
 	};
 
-	return portfolioToForceGraph(filteredGraph, mode);
+	return portfolioToForceGraph(filteredGraph, directive);
 }
 
 // Helper to update node emphasis based on highlights

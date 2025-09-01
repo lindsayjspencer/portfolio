@@ -5,7 +5,6 @@
 	transform: translateX(-50%);
 	z-index: 10;
 	width: max-content;
-	pointer-events: none;
 	transition: all 1.4s ease-in-out;
 
 	/* Landing mode positioning */
@@ -34,6 +33,36 @@
 			font-size: 0.8rem;
 			align-self: stretch;
 			color: var(--color-neutral-600);
+		}
+
+		.clarify-options {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.25rem;
+			width: 100%;
+			margin-top: 0.5rem;
+
+			.option-chip {
+				display: inline-block;
+				padding: 0.25rem 0.5rem;
+				background-color: var(--color-accent-100, #e0f7fa);
+				color: var(--color-accent-700, #0e7490);
+				font-size: 0.75rem;
+				border-radius: 4px;
+				border: none;
+				cursor: pointer;
+				transition: all 0.2s ease-in-out;
+				white-space: nowrap;
+
+				&:hover {
+					background-color: var(--color-accent-200, #bae6fd);
+				}
+
+				&.selected {
+					background-color: var(--color-primary-100, #dbeafe);
+					color: var(--color-primary-700, #1d4ed8);
+				}
+			}
 		}
 
 		.input-container {

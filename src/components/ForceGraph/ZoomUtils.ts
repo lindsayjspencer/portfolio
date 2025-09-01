@@ -1,5 +1,10 @@
 import type { ForceGraphMethods, NodeObject, LinkObject } from 'react-force-graph-2d';
-import type { ForceDirectedGraphNode, ForceDirectedGraphLink, ForceDirectedGraphData, ExtendedNodeObject } from './Common';
+import type {
+	ForceDirectedGraphNode,
+	ForceDirectedGraphLink,
+	ForceDirectedGraphData,
+	ExtendedNodeObject,
+} from './Common';
 import { ZOOM_CONFIG } from './constants';
 
 export interface ZoomPadding {
@@ -13,7 +18,8 @@ export class ZoomUtils {
 	private static readonly EPS = 1e-3;
 
 	/**
-	 * Performs a custom zoom-to-fit operation that accounts for node dimensions and padding
+	 * Performs a custom zoom-to-fit operation that accounts for node dimensions and padding.
+	 * If any nodes are highlighted, only highlights are considered for zoom bounds.
 	 */
 	static customZoomToFit(
 		forceGraph: ForceGraphMethods<
@@ -28,8 +34,16 @@ export class ZoomUtils {
 	) {
 		if (!graphData.nodes.length) return;
 
-		// Calculate bounding box of all nodes including their dimensions
-		const nodeExtents = graphData.nodes
+		// Check if any nodes are highlighted
+		const hasHighlights = graphData.nodes.some((node) => node.isHighlighted);
+
+		// Use only highlighted nodes if highlights exist, otherwise use all nodes
+		const targetNodes = hasHighlights ? graphData.nodes.filter((node) => node.isHighlighted) : graphData.nodes;
+
+		if (!targetNodes.length) return;
+
+		// Calculate bounding box of target nodes including their dimensions
+		const nodeExtents = targetNodes
 			.map((node) => {
 				const nodeObj = node as ExtendedNodeObject;
 				if (nodeObj.x === undefined || nodeObj.y === undefined || !nodeObj.backgroundDimensions) {
@@ -110,7 +124,12 @@ export class ZoomUtils {
 	/**
 	 * Clamps coordinates within bounds with a margin to prevent edge snapping
 	 */
-	static clampWithMargin(x: number, y: number, bounds: { minX: number; maxX: number; minY: number; maxY: number }, margin: number = 2) {
+	static clampWithMargin(
+		x: number,
+		y: number,
+		bounds: { minX: number; maxX: number; minY: number; maxY: number },
+		margin: number = 2,
+	) {
 		return {
 			x: Math.min(Math.max(x, bounds.minX + margin), bounds.maxX - margin),
 			y: Math.min(Math.max(y, bounds.minY + margin), bounds.maxY - margin),
@@ -128,10 +147,12 @@ export class ZoomUtils {
 	 * Converts canvas coordinates to screen coordinates
 	 */
 	static canvasToScreenCoords(
-		forceGraph: ForceGraphMethods<
-			NodeObject<ForceDirectedGraphNode>,
-			LinkObject<ForceDirectedGraphNode, ForceDirectedGraphLink>
-		> | undefined,
+		forceGraph:
+			| ForceGraphMethods<
+					NodeObject<ForceDirectedGraphNode>,
+					LinkObject<ForceDirectedGraphNode, ForceDirectedGraphLink>
+			  >
+			| undefined,
 		canvasX: number,
 		canvasY: number,
 	) {

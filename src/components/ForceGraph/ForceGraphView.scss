@@ -50,7 +50,7 @@
 		margin-bottom: 0.5rem;
 		font-size: 0.75rem;
 		text-transform: capitalize;
-		color: #d1d5db;
+		color: var(--color-neutral-300);
 	}
 
 	.tooltip-tags {
@@ -60,7 +60,7 @@
 
 		.tooltip-tag {
 			border-radius: 0.25rem;
-			background-color: #2563eb;
+			background-color: var(--color-primary-500);
 			padding: 0.125rem 0.5rem;
 			font-size: 0.75rem;
 			color: white;
@@ -70,7 +70,7 @@
 	.tooltip-years {
 		margin-top: 0.5rem;
 		font-size: 0.75rem;
-		color: #9ca3af;
+		color: var(--color-neutral-400);
 	}
 
 	// Mobile responsive

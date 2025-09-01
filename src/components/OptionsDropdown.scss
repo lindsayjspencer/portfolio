@@ -109,6 +109,7 @@
 		border-radius: 3px;
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		height: 25px;
 		padding: 0 5px;
 		position: relative;
@@ -137,6 +138,14 @@
 			&[data-highlighted] {
 				background-color: var(--color-primary-600);
 				color: white;
+			}
+		}
+
+		&.submenu-trigger {
+			padding-right: 10px;
+			
+			.submenu-arrow {
+				opacity: 0.6;
 			}
 		}
 		
@@ -212,5 +221,86 @@
 	to {
 		opacity: 1;
 		transform: translateX(0);
+	}
+}
+
+// Submenu styles - matching main menu appearance
+.options-dropdown-submenu {
+	min-width: 180px;
+	background-color: white;
+	border-radius: 6px;
+	padding: 5px;
+	box-shadow:
+		0px 10px 38px -10px rgba(22, 23, 24, 0.35),
+		0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+	animation-duration: 400ms;
+	animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+	will-change: transform, opacity;
+	z-index: 1002; // Higher than main menu
+
+	&[data-side='top'] {
+		animation-name: slideDownAndFade;
+	}
+	&[data-side='right'] {
+		animation-name: slideLeftAndFade;
+	}
+	&[data-side='bottom'] {
+		animation-name: slideUpAndFade;
+	}
+	&[data-side='left'] {
+		animation-name: slideRightAndFade;
+	}
+
+	.mode-button {
+		// Make submenu items consistent with main menu styling
+		font-size: 13px;
+		line-height: 1;
+		color: var(--color-neutral-700);
+		border-radius: 3px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		height: 25px;
+		padding: 0 5px;
+		position: relative;
+		padding-left: 25px; // Same as main menu
+		user-select: none;
+		outline: none;
+		text-transform: capitalize;
+		width: 100%;
+		box-sizing: border-box;
+
+		&[data-highlighted] {
+			background-color: var(--color-primary-600);
+			color: white;
+		}
+
+		&[data-disabled] {
+			color: var(--color-neutral-400);
+			pointer-events: none;
+		}
+
+		&.active {
+			background-color: var(--color-primary-100);
+			color: var(--color-primary-700);
+			font-weight: 500;
+
+			&[data-highlighted] {
+				background-color: var(--color-primary-600);
+				color: white;
+			}
+		}
+	}
+
+	// Mobile responsive for submenu
+	@media (max-width: 640px) {
+		min-width: 160px;
+		padding: 4px;
+
+		.mode-button {
+			font-size: 12px;
+			height: 22px;
+			padding-left: 20px;
+		}
 	}
 }

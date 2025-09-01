@@ -5,4 +5,5 @@ module.exports = {
 	jsxSingleQuote: false,
 	trailingComma: 'all',
 	printWidth: 120,
+	plugins: [],
 };

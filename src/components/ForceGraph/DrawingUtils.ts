@@ -36,7 +36,177 @@ interface CustomNodeSettings {
 	isSelected: boolean;
 }
 
+// Internal types for shared functionality
+interface NodeDimensions {
+	scale: (value: number) => number;
+	cornerRadius: number;
+	padding: number;
+	iconSize: number;
+	outlineWidth: number;
+	leftBorderWidth: number;
+}
+
+interface NodeLayout {
+	x: number;
+	y: number;
+	totalWidth: number;
+	height: number;
+	textStartX: number;
+	iconX: number;
+	iconY: number;
+}
+
 export class DrawingUtils {
+	/**
+	 * Calculates common node dimensions based on global scale and selection state
+	 */
+	private static calculateNodeDimensions(globalScale: number, isSelected: boolean): NodeDimensions {
+		const scale = (value: number) => value / globalScale;
+		return {
+			scale,
+			cornerRadius: scale(6),
+			padding: scale(8),
+			iconSize: scale(16),
+			outlineWidth: scale(isSelected ? 2 : 1.5),
+			leftBorderWidth: scale(6),
+		};
+	}
+
+	/**
+	 * Applies shadow effects based on node state
+	 */
+	private static applyShadow(
+		ctx: CanvasRenderingContext2D,
+		isSelected: boolean,
+		isHighlighted: boolean,
+		selectedShadowColor: string,
+	) {
+		if (isSelected) {
+			ctx.shadowColor = selectedShadowColor;
+			ctx.shadowOffsetX = 5;
+			ctx.shadowOffsetY = 5;
+			ctx.shadowBlur = 10;
+		} else if (isHighlighted) {
+			ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+			ctx.shadowOffsetX = 3;
+			ctx.shadowOffsetY = 3;
+			ctx.shadowBlur = 8;
+		}
+	}
+
+	/**
+	 * Clears shadow effects
+	 */
+	private static clearShadow(ctx: CanvasRenderingContext2D, isSelected: boolean, isHighlighted: boolean) {
+		if (isSelected || isHighlighted) {
+			ctx.shadowColor = 'transparent';
+			ctx.shadowOffsetX = 0;
+			ctx.shadowOffsetY = 0;
+			ctx.shadowBlur = 0;
+		}
+	}
+
+	/**
+	 * Draws the main node background and border
+	 */
+	private static drawNodeBackground(
+		ctx: CanvasRenderingContext2D,
+		layout: NodeLayout,
+		dimensions: NodeDimensions,
+		style: GraphNodeThemeSet,
+		isSelected: boolean,
+		isHighlighted: boolean,
+	) {
+		const { x, y, totalWidth, height } = layout;
+		const { cornerRadius, outlineWidth } = dimensions;
+
+		// Set fill and stroke styles
+		ctx.fillStyle = style.nodeBackground;
+		ctx.strokeStyle = style.nodeBorder;
+		ctx.lineWidth = outlineWidth;
+
+		// Apply shadow
+		DrawingUtils.applyShadow(ctx, isSelected, isHighlighted, style.selectedShadowColor);
+
+		// Draw background
+		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, totalWidth, height, cornerRadius);
+		ctx.fill();
+
+		// Clear shadow before stroke
+		DrawingUtils.clearShadow(ctx, isSelected, isHighlighted);
+
+		// Draw border
+		ctx.stroke();
+	}
+
+	/**
+	 * Draws the colored left border
+	 */
+	private static drawLeftBorder(
+		ctx: CanvasRenderingContext2D,
+		layout: NodeLayout,
+		dimensions: NodeDimensions,
+		leftBorderColor: string,
+	) {
+		const { x, y, totalWidth, height } = layout;
+		const { cornerRadius, leftBorderWidth } = dimensions;
+
+		ctx.fillStyle = leftBorderColor;
+		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, leftBorderWidth, height, {
+			tl: cornerRadius,
+			tr: 0,
+			br: 0,
+			bl: cornerRadius,
+		});
+		ctx.fill();
+	}
+
+	/**
+	 * Draws the node icon
+	 */
+	private static drawNodeIcon(
+		ctx: CanvasRenderingContext2D,
+		layout: NodeLayout,
+		dimensions: NodeDimensions,
+		iconColor: string,
+		iconName: string,
+	) {
+		const { iconX, iconY } = layout;
+		const { iconSize } = dimensions;
+		DrawingUtils.drawMaterialIcon(ctx, iconX, iconY, iconSize, iconColor, iconName);
+	}
+
+	/**
+	 * Sets up text rendering context and returns text positioning
+	 */
+	private static setupTextRendering(ctx: CanvasRenderingContext2D): void {
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'middle';
+	}
+
+	/**
+	 * Creates a complete node layout object with all positioning calculations
+	 */
+	private static createNodeLayout(
+		x: number,
+		y: number,
+		totalWidth: number,
+		height: number,
+		dimensions: NodeDimensions,
+	): NodeLayout {
+		const { padding, iconSize, leftBorderWidth } = dimensions;
+
+		return {
+			x,
+			y,
+			totalWidth,
+			height,
+			textStartX: x - totalWidth / 2 + padding + iconSize + padding,
+			iconX: leftBorderWidth / 2 + x - totalWidth / 2 + padding + iconSize / 2,
+			iconY: y,
+		};
+	}
+
 	/**
 	 * Draws a rounded rectangle on the canvas
 	 */
@@ -88,6 +258,8 @@ export class DrawingUtils {
 	static getTheme(
 		node: ForceDirectedGraphNode,
 		themeColors: ReturnType<typeof useTheme>['themeColors'],
+		isHighlighted?: boolean,
+		hasHighlights?: boolean,
 	): GraphNodeThemeSet {
 		const { type } = node;
 
@@ -109,24 +281,53 @@ export class DrawingUtils {
 			selectedShadowColor: 'rgba(0, 0, 0, 0.2)',
 		};
 
-		const getColourSet = (colourSet: { primary: string; secondary: string; light: string }) => ({
-			...baseTheme,
-			nodeBorder: colourSet.secondary,
-			nodeLeftBorder: colourSet.secondary,
-			resourceIndicatorColor: colourSet.primary,
-			resourceTypeIconColor: colourSet.secondary,
-			selectedBackground: colourSet.light,
-			selectedBorder: colourSet.primary,
-			selectedLeftBorder: colourSet.primary,
-			selectedShadowColor: colourSet.secondary,
-		});
+		const getColourSet = (colourSet: { primary: string; secondary: string; light: string }) => {
+			const baseColors = {
+				...baseTheme,
+				nodeBorder: colourSet.secondary,
+				nodeLeftBorder: colourSet.secondary,
+				resourceIndicatorColor: colourSet.primary,
+				resourceTypeIconColor: colourSet.secondary,
+				selectedBackground: colourSet.light,
+				selectedBorder: colourSet.primary,
+				selectedLeftBorder: colourSet.primary,
+				selectedShadowColor: colourSet.secondary,
+			};
+
+			// Apply highlight/dim effects
+			if (isHighlighted) {
+				// Enhanced colors for highlighted nodes
+				return {
+					...baseColors,
+					nodeBackground: colourSet.light,
+					nodeBorder: colourSet.primary,
+					nodeLeftBorder: colourSet.primary,
+					resourceIndicatorColor: colourSet.primary,
+					resourceTypeIconColor: colourSet.primary,
+					nodeText: themeColors.neutral[900],
+				};
+			} else if (hasHighlights) {
+				// Dimmed colors for non-highlighted nodes when highlights are present
+				return {
+					...baseColors,
+					nodeBackground: themeColors.neutral[50],
+					nodeBorder: themeColors.neutral[200],
+					nodeLeftBorder: themeColors.neutral[300],
+					resourceIndicatorColor: themeColors.neutral[400],
+					resourceTypeIconColor: themeColors.neutral[400],
+					nodeText: themeColors.neutral[500],
+				};
+			}
+
+			return baseColors;
+		};
 
 		// Resource type specific colors using semantic theme colors
 		switch (type) {
 			case 'role': {
 				return {
 					...getColourSet({
-						primary: themeColors.accent[500],
+						primary: themeColors.accent[500], // Blue - professional/work
 						secondary: themeColors.accent[300],
 						light: themeColors.accent[50],
 					}),
@@ -135,20 +336,36 @@ export class DrawingUtils {
 			}
 
 			case 'skill': {
+				// Get skill level-specific icon
+				const level = node.level || 'intermediate';
+				let skillIcon: string;
+				switch (level) {
+					case 'expert':
+						skillIcon = 'star';
+						break;
+					case 'advanced':
+						skillIcon = 'bolt';
+						break;
+					case 'intermediate':
+					default:
+						skillIcon = 'auto_awesome';
+						break;
+				}
+				
 				return {
 					...getColourSet({
-						primary: themeColors.error[500],
+						primary: themeColors.error[500], // Red - skills/expertise
 						secondary: themeColors.error[300],
 						light: themeColors.error[50],
 					}),
-					resourceIndicatorIcon: 'star', // Will be overridden by skill level
+					resourceIndicatorIcon: skillIcon,
 				};
 			}
 
 			case 'project': {
 				return {
 					...getColourSet({
-						primary: themeColors.primary[500],
+						primary: themeColors.primary[500], // Purple - creative projects
 						secondary: themeColors.primary[300],
 						light: themeColors.primary[50],
 					}),
@@ -156,58 +373,47 @@ export class DrawingUtils {
 				};
 			}
 
-			case 'award': {
-				return {
-					...getColourSet({
-						primary: themeColors.neutral[500],
-						secondary: themeColors.neutral[300],
-						light: themeColors.neutral[50],
-					}),
-					resourceIndicatorIcon: 'smart_toy',
-				};
-			}
-
-			case 'cert': {
-				return {
-					...getColourSet({
-						primary: themeColors.secondary[500],
-						secondary: themeColors.secondary[300],
-						light: themeColors.secondary[50],
-					}),
-					resourceIndicatorIcon: 'widgets',
-				};
-			}
-
-			case 'education': {
-				return {
-					...getColourSet({
-						primary: themeColors.accent[500],
-						secondary: themeColors.accent[300],
-						light: themeColors.accent[50],
-					}),
-					resourceIndicatorIcon: 'lan',
-				};
-			}
-
 			case 'person': {
 				return {
 					...getColourSet({
-						primary: themeColors.success[500],
-						secondary: themeColors.success[300],
-						light: themeColors.success[50],
+						primary: themeColors.secondary[500], // Teal - person/identity
+						secondary: themeColors.secondary[300],
+						light: themeColors.secondary[50],
 					}),
-					resourceIndicatorIcon: 'palette',
+					resourceIndicatorIcon: 'person',
 				};
 			}
 
 			case 'timeline-month': {
 				return {
 					...getColourSet({
-						primary: themeColors.success[500],
+						primary: themeColors.secondary[500], // Teal - timeline/dates
+						secondary: themeColors.secondary[300],
+						light: themeColors.secondary[50],
+					}),
+					resourceIndicatorIcon: 'calendar_today',
+				};
+			}
+
+			case 'story': {
+				return {
+					...getColourSet({
+						primary: themeColors.warning[500], // Orange - stories/experiences
+						secondary: themeColors.warning[300],
+						light: themeColors.warning[50],
+					}),
+					resourceIndicatorIcon: 'auto_stories',
+				};
+			}
+
+			case 'value': {
+				return {
+					...getColourSet({
+						primary: themeColors.success[500], // Green - values/principles
 						secondary: themeColors.success[300],
 						light: themeColors.success[50],
 					}),
-					resourceIndicatorIcon: 'calendar_today',
+					resourceIndicatorIcon: 'favorite',
 				};
 			}
 
@@ -227,115 +433,78 @@ export class DrawingUtils {
 	/**
 	 * Main function to draw custom nodes based on their type
 	 */
-	static drawCustomNode = (ctx: CanvasRenderingContext2D, globalScale: number, settings: CustomNodeSettings) => {
+	static drawCustomNode = (
+		ctx: CanvasRenderingContext2D,
+		globalScale: number,
+		settings: CustomNodeSettings,
+		hasHighlights = false,
+	) => {
 		const { node, themeColors, isSelected } = settings;
 		const { x, y, itemName, type } = node;
 
-		const calculatedTheme = DrawingUtils.getTheme(node, themeColors);
+		const calculatedTheme = DrawingUtils.getTheme(node, themeColors, node.isHighlighted, hasHighlights);
+		const currentStyle = isSelected
+			? {
+					...calculatedTheme,
+					nodeBackground: calculatedTheme.selectedBackground,
+					nodeBorder: calculatedTheme.selectedBorder,
+					nodeLeftBorder: calculatedTheme.selectedLeftBorder,
+				}
+			: calculatedTheme;
 
-		// --- Styles ---
-		const styles = {
-			selected: {
-				...calculatedTheme,
-				nodeBackground: calculatedTheme.selectedBackground,
-				nodeBorder: calculatedTheme.selectedBorder,
-				nodeLeftBorder: calculatedTheme.selectedLeftBorder,
-			},
-			unselected: {
-				...calculatedTheme,
-			},
-		};
+		// Get shared dimensions
+		const dimensions = DrawingUtils.calculateNodeDimensions(globalScale, isSelected);
 
-		const currentStyle = isSelected ? styles.selected : styles.unselected;
+		// --- Handle single-line rendering for non-highlighted nodes when highlights exist ---
+		if (hasHighlights && !node.isHighlighted) {
+			// Use default single-line rendering for non-highlighted nodes
+			// (default rendering code below handles this)
+		} else {
+			// --- Handle type-specific rendering for highlighted nodes or when no highlights exist ---
+			if (type === 'role') {
+				return DrawingUtils.drawRoleNode(ctx, settings, currentStyle, calculatedTheme, dimensions);
+			}
 
-		// --- Dimensions ---
-		const scale = (value: number) => value / globalScale;
-		const cornerRadius = scale(6);
-		const padding = scale(8);
-		const iconSize = scale(16);
-		const outlineWidth = scale(isSelected ? 2 : 1.5);
-		const leftBorderWidth = scale(6);
+			if (type === 'skill') {
+				return DrawingUtils.drawSkillNode(ctx, settings, currentStyle, calculatedTheme, dimensions);
+			}
 
-		// --- Handle Role-specific rendering ---
-		if (type === 'role') {
-			return DrawingUtils.drawRoleNode(ctx, globalScale, settings, currentStyle, calculatedTheme);
-		}
-
-		// --- Handle Skill-specific rendering ---
-		if (type === 'skill') {
-			return DrawingUtils.drawSkillNode(ctx, globalScale, settings, currentStyle, calculatedTheme);
-		}
-
-		// --- Handle Project-specific rendering ---
-		if (type === 'project') {
-			return DrawingUtils.drawProjectNode(ctx, globalScale, settings, currentStyle, calculatedTheme);
+			if (type === 'project') {
+				return DrawingUtils.drawProjectNode(ctx, settings, currentStyle, calculatedTheme, dimensions);
+			}
 		}
 
 		// --- Default node rendering ---
-		const height = scale(25);
+		const height = dimensions.scale(25);
 
-		// --- Text ---
-		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
+		// Calculate text width
+		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
 		const nameTextWidth = ctx.measureText(itemName).width;
+		const totalWidth =
+			dimensions.padding + dimensions.iconSize + dimensions.padding + nameTextWidth + dimensions.padding;
 
-		// --- Calculate total width ---
-		const totalWidth = padding + iconSize + padding + nameTextWidth + padding; // Extra padding at the end
+		// Create layout
+		const layout = DrawingUtils.createNodeLayout(x, y, totalWidth, height, dimensions);
 
-		// --- Draw main body ---
-		ctx.fillStyle = currentStyle.nodeBackground;
-		ctx.strokeStyle = currentStyle.nodeBorder;
-		ctx.lineWidth = outlineWidth;
+		// Draw node components using shared functions
+		DrawingUtils.drawNodeBackground(ctx, layout, dimensions, currentStyle, isSelected, !!node.isHighlighted);
+		DrawingUtils.drawLeftBorder(ctx, layout, dimensions, currentStyle.nodeLeftBorder);
 
-		if (isSelected) {
-			ctx.shadowColor = currentStyle.selectedShadowColor;
-			ctx.shadowOffsetX = 5; // 5 pixels to the right
-			ctx.shadowOffsetY = 5; // 5 pixels downwards
-			ctx.shadowBlur = 10; // 10 pixels of blur
-		}
-
-		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, totalWidth, height, cornerRadius);
-		ctx.fill();
-
-		if (isSelected) {
-			ctx.shadowColor = 'transparent'; // Reset shadow before stroke
-			ctx.shadowOffsetX = 0;
-			ctx.shadowOffsetY = 0;
-			ctx.shadowBlur = 0;
-		}
-
-		ctx.stroke();
-
-		// --- Draw left colored border ---
-		ctx.fillStyle = currentStyle.nodeLeftBorder;
-		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, leftBorderWidth, height, {
-			tl: cornerRadius,
-			tr: 0,
-			br: 0,
-			bl: cornerRadius,
-		});
-		ctx.fill();
-
-		// --- Draw Icon ---
-		const iconX = leftBorderWidth / 2 + x - totalWidth / 2 + padding + iconSize / 2;
-		const iconY = y + scale(0.5); // Center vertically
-		DrawingUtils.drawMaterialIcon(
+		// Draw icon (with slight Y adjustment for default nodes)
+		const iconLayout = { ...layout, iconY: y + dimensions.scale(0.5) };
+		DrawingUtils.drawNodeIcon(
 			ctx,
-			iconX,
-			iconY,
-			iconSize,
+			iconLayout,
+			dimensions,
 			currentStyle.resourceTypeIconColor,
 			calculatedTheme.resourceIndicatorIcon,
 		);
 
-		// --- Draw Text ---
-		ctx.textAlign = 'left';
-		ctx.textBaseline = 'middle';
-
-		// Item name
+		// Draw text
+		DrawingUtils.setupTextRendering(ctx);
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
-		const nameX = x - totalWidth / 2 + padding + iconSize + padding;
-		ctx.fillText(itemName, nameX, y);
+		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.fillText(itemName, layout.textStartX, y);
 
 		return {
 			width: totalWidth,
@@ -348,100 +517,55 @@ export class DrawingUtils {
 	 */
 	private static drawRoleNode = (
 		ctx: CanvasRenderingContext2D,
-		globalScale: number,
 		settings: CustomNodeSettings,
 		currentStyle: GraphNodeThemeSet,
 		calculatedTheme: GraphNodeThemeSet,
+		dimensions: NodeDimensions,
 	) => {
 		const { node, isSelected } = settings;
-		const { x, y, itemName, company, position } = node;
+		const { x, y, company, position } = node;
 
-		// --- Parse role label into title and company ---
+		const height = dimensions.scale(40); // Taller for two lines
 
-		// --- Dimensions ---
-		const scale = (value: number) => value / globalScale;
-		const height = scale(40); // Taller for two lines with more padding
-		const cornerRadius = scale(6);
-		const padding = scale(8);
-		const iconSize = scale(16);
-		const outlineWidth = scale(isSelected ? 2 : 1.5);
-		const leftBorderWidth = scale(6);
-		const lineSpacing = scale(3);
-
-		// --- Text measurements ---
-		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
+		// Text measurements
+		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
 		const titleTextWidth = ctx.measureText(position).width;
 
-		ctx.font = `normal ${scale(12)}px 'Lato', sans-serif`;
+		ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
 		const companyTextWidth = ctx.measureText(company).width;
 
 		// Use the wider text to determine node width
 		const maxTextWidth = Math.max(titleTextWidth, companyTextWidth);
-		const totalWidth = padding + iconSize + padding + maxTextWidth + padding;
+		const totalWidth =
+			dimensions.padding + dimensions.iconSize + dimensions.padding + maxTextWidth + dimensions.padding;
 
-		// --- Draw main body ---
-		ctx.fillStyle = currentStyle.nodeBackground;
-		ctx.strokeStyle = currentStyle.nodeBorder;
-		ctx.lineWidth = outlineWidth;
-
-		if (isSelected) {
-			ctx.shadowColor = currentStyle.selectedShadowColor;
-			ctx.shadowOffsetX = 5;
-			ctx.shadowOffsetY = 5;
-			ctx.shadowBlur = 10;
-		}
-
-		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, totalWidth, height, cornerRadius);
-		ctx.fill();
-
-		if (isSelected) {
-			ctx.shadowColor = 'transparent';
-			ctx.shadowOffsetX = 0;
-			ctx.shadowOffsetY = 0;
-			ctx.shadowBlur = 0;
-		}
-
-		ctx.stroke();
-
-		// --- Draw left colored border ---
-		ctx.fillStyle = currentStyle.nodeLeftBorder;
-		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, leftBorderWidth, height, {
-			tl: cornerRadius,
-			tr: 0,
-			br: 0,
-			bl: cornerRadius,
-		});
-		ctx.fill();
-
-		// --- Draw Icon ---
-		const iconX = leftBorderWidth / 2 + x - totalWidth / 2 + padding + iconSize / 2;
-		const iconY = y; // Center vertically
-		DrawingUtils.drawMaterialIcon(
+		// Create layout and draw shared components
+		const layout = DrawingUtils.createNodeLayout(x, y, totalWidth, height, dimensions);
+		DrawingUtils.drawNodeBackground(ctx, layout, dimensions, currentStyle, isSelected, !!node.isHighlighted);
+		DrawingUtils.drawLeftBorder(ctx, layout, dimensions, currentStyle.nodeLeftBorder);
+		DrawingUtils.drawNodeIcon(
 			ctx,
-			iconX,
-			iconY,
-			iconSize,
+			layout,
+			dimensions,
 			currentStyle.resourceTypeIconColor,
 			calculatedTheme.resourceIndicatorIcon,
 		);
 
-		// --- Draw Text ---
-		ctx.textAlign = 'left';
-		ctx.textBaseline = 'middle';
-		const textStartX = x - totalWidth / 2 + padding + iconSize + padding;
+		// Draw role-specific text
+		DrawingUtils.setupTextRendering(ctx);
 
 		// Role title (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
-		const titleY = y - scale(8);
-		ctx.fillText(position, textStartX, titleY);
+		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		const titleY = y - dimensions.scale(8);
+		ctx.fillText(position, layout.textStartX, titleY);
 
 		// Company name (secondary text)
 		if (company) {
-			ctx.fillStyle = currentStyle.resourceTypeIconColor; // Use icon color for secondary text
-			ctx.font = `normal ${scale(12)}px 'Lato', sans-serif`;
-			const companyY = y + scale(8);
-			ctx.fillText(company, textStartX, companyY);
+			ctx.fillStyle = currentStyle.resourceTypeIconColor;
+			ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+			const companyY = y + dimensions.scale(8);
+			ctx.fillText(company, layout.textStartX, companyY);
 		}
 
 		return {
@@ -451,14 +575,29 @@ export class DrawingUtils {
 	};
 
 	/**
+	 * Gets level display text for skills
+	 */
+	private static getLevelDisplay = (level: string): string => {
+		switch (level) {
+			case 'expert':
+				return 'Expert';
+			case 'advanced':
+				return 'Advanced';
+			case 'intermediate':
+			default:
+				return 'Intermediate';
+		}
+	};
+
+	/**
 	 * Draws a skill-specific node with level and tags
 	 */
 	private static drawSkillNode = (
 		ctx: CanvasRenderingContext2D,
-		globalScale: number,
 		settings: CustomNodeSettings,
 		currentStyle: GraphNodeThemeSet,
 		calculatedTheme: GraphNodeThemeSet,
+		dimensions: NodeDimensions,
 	) => {
 		const { node, isSelected } = settings;
 		const { x, y, itemName } = node;
@@ -468,100 +607,47 @@ export class DrawingUtils {
 		const tags = node.tags || [];
 		const primaryTag = tags[0] || '';
 
-		// Get level-specific icon and display text
-		const getLevelInfo = (level: string) => {
-			switch (level) {
-				case 'expert':
-					return { icon: 'star', display: 'Expert' };
-				case 'advanced':
-					return { icon: 'bolt', display: 'Advanced' };
-				case 'intermediate':
-					return { icon: 'auto_awesome', display: 'Intermediate' };
-				default:
-					return { icon: 'auto_awesome', display: 'Intermediate' };
-			}
-		};
-
-		const levelInfo = getLevelInfo(level);
+		const levelDisplay = DrawingUtils.getLevelDisplay(level);
 		const subtitle = primaryTag
-			? `${levelInfo.display} • ${primaryTag.charAt(0).toUpperCase() + primaryTag.slice(1)}`
-			: levelInfo.display;
+			? `${levelDisplay} • ${primaryTag.charAt(0).toUpperCase() + primaryTag.slice(1)}`
+			: levelDisplay;
 
-		// --- Dimensions ---
-		const scale = (value: number) => value / globalScale;
-		const height = scale(40); // Same as role nodes
-		const cornerRadius = scale(6);
-		const padding = scale(8);
-		const iconSize = scale(16);
-		const outlineWidth = scale(isSelected ? 2 : 1.5);
-		const leftBorderWidth = scale(6);
+		const height = dimensions.scale(40); // Same as role nodes
 
-		// --- Text measurements ---
-		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
+		// Text measurements
+		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
 		const skillTextWidth = ctx.measureText(itemName).width;
 
-		ctx.font = `normal ${scale(12)}px 'Lato', sans-serif`;
+		ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
 		const subtitleTextWidth = ctx.measureText(subtitle).width;
 
 		// Use the wider text to determine node width
 		const maxTextWidth = Math.max(skillTextWidth, subtitleTextWidth);
-		const totalWidth = padding + iconSize + padding + maxTextWidth + padding;
+		const totalWidth =
+			dimensions.padding + dimensions.iconSize + dimensions.padding + maxTextWidth + dimensions.padding;
 
-		// --- Draw main body ---
-		ctx.fillStyle = currentStyle.nodeBackground;
-		ctx.strokeStyle = currentStyle.nodeBorder;
-		ctx.lineWidth = outlineWidth;
+		// Create layout and draw shared components
+		const layout = DrawingUtils.createNodeLayout(x, y, totalWidth, height, dimensions);
+		DrawingUtils.drawNodeBackground(ctx, layout, dimensions, currentStyle, isSelected, !!node.isHighlighted);
+		DrawingUtils.drawLeftBorder(ctx, layout, dimensions, currentStyle.nodeLeftBorder);
 
-		if (isSelected) {
-			ctx.shadowColor = currentStyle.selectedShadowColor;
-			ctx.shadowOffsetX = 5;
-			ctx.shadowOffsetY = 5;
-			ctx.shadowBlur = 10;
-		}
+		// Draw skill icon (from theme)
+		DrawingUtils.drawNodeIcon(ctx, layout, dimensions, currentStyle.resourceTypeIconColor, calculatedTheme.resourceIndicatorIcon);
 
-		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, totalWidth, height, cornerRadius);
-		ctx.fill();
-
-		if (isSelected) {
-			ctx.shadowColor = 'transparent';
-			ctx.shadowOffsetX = 0;
-			ctx.shadowOffsetY = 0;
-			ctx.shadowBlur = 0;
-		}
-
-		ctx.stroke();
-
-		// --- Draw left colored border ---
-		ctx.fillStyle = currentStyle.nodeLeftBorder;
-		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, leftBorderWidth, height, {
-			tl: cornerRadius,
-			tr: 0,
-			br: 0,
-			bl: cornerRadius,
-		});
-		ctx.fill();
-
-		// --- Draw Level Icon (instead of resource type icon) ---
-		const iconX = leftBorderWidth / 2 + x - totalWidth / 2 + padding + iconSize / 2;
-		const iconY = y; // Center vertically
-		DrawingUtils.drawMaterialIcon(ctx, iconX, iconY, iconSize, currentStyle.resourceTypeIconColor, levelInfo.icon);
-
-		// --- Draw Text ---
-		ctx.textAlign = 'left';
-		ctx.textBaseline = 'middle';
-		const textStartX = x - totalWidth / 2 + padding + iconSize + padding;
+		// Draw skill-specific text
+		DrawingUtils.setupTextRendering(ctx);
 
 		// Skill name (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
-		const skillY = y - scale(8); // Move up for subtitle
-		ctx.fillText(itemName, textStartX, skillY);
+		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		const skillY = y - dimensions.scale(8); // Move up for subtitle
+		ctx.fillText(itemName, layout.textStartX, skillY);
 
 		// Level + tag (secondary text)
-		ctx.fillStyle = currentStyle.resourceTypeIconColor; // Use icon color for secondary text
-		ctx.font = `normal ${scale(12)}px 'Lato', sans-serif`;
-		const subtitleY = y + scale(8);
-		ctx.fillText(subtitle, textStartX, subtitleY);
+		ctx.fillStyle = currentStyle.resourceTypeIconColor;
+		ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+		const subtitleY = y + dimensions.scale(8);
+		ctx.fillText(subtitle, layout.textStartX, subtitleY);
 
 		return {
 			width: totalWidth,
@@ -574,10 +660,10 @@ export class DrawingUtils {
 	 */
 	private static drawProjectNode = (
 		ctx: CanvasRenderingContext2D,
-		globalScale: number,
 		settings: CustomNodeSettings,
 		currentStyle: GraphNodeThemeSet,
 		calculatedTheme: GraphNodeThemeSet,
+		dimensions: NodeDimensions,
 	) => {
 		const { node, isSelected } = settings;
 		const { x, y, itemName } = node;
@@ -614,82 +700,43 @@ export class DrawingUtils {
 		const keyTags = getKeyTags();
 		const subtitle = [timePeriod, keyTags].filter(Boolean).join(' • ');
 
-		// --- Dimensions ---
-		const scale = (value: number) => value / globalScale;
-		const height = scale(40); // Same as role and skill nodes
-		const cornerRadius = scale(6);
-		const padding = scale(8);
-		const iconSize = scale(16);
-		const outlineWidth = scale(isSelected ? 2 : 1.5);
-		const leftBorderWidth = scale(6);
+		const height = dimensions.scale(40); // Same as role and skill nodes
 
-		// --- Text measurements ---
-		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
+		// Text measurements
+		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
 		const projectTextWidth = ctx.measureText(itemName).width;
 
-		ctx.font = `normal ${scale(12)}px 'Lato', sans-serif`;
+		ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
 		const subtitleTextWidth = subtitle ? ctx.measureText(subtitle).width : 0;
 
 		// Use the wider text to determine node width
 		const maxTextWidth = Math.max(projectTextWidth, subtitleTextWidth);
-		const totalWidth = padding + iconSize + padding + maxTextWidth + padding;
+		const totalWidth =
+			dimensions.padding + dimensions.iconSize + dimensions.padding + maxTextWidth + dimensions.padding;
 
-		// --- Draw main body ---
-		ctx.fillStyle = currentStyle.nodeBackground;
-		ctx.strokeStyle = currentStyle.nodeBorder;
-		ctx.lineWidth = outlineWidth;
+		// Create layout and draw shared components
+		const layout = DrawingUtils.createNodeLayout(x, y, totalWidth, height, dimensions);
+		DrawingUtils.drawNodeBackground(ctx, layout, dimensions, currentStyle, isSelected, !!node.isHighlighted);
+		DrawingUtils.drawLeftBorder(ctx, layout, dimensions, currentStyle.nodeLeftBorder);
 
-		if (isSelected) {
-			ctx.shadowColor = currentStyle.selectedShadowColor;
-			ctx.shadowOffsetX = 5;
-			ctx.shadowOffsetY = 5;
-			ctx.shadowBlur = 10;
-		}
+		// Draw project icon
+		DrawingUtils.drawNodeIcon(ctx, layout, dimensions, currentStyle.resourceTypeIconColor, 'rocket_launch');
 
-		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, totalWidth, height, cornerRadius);
-		ctx.fill();
-
-		if (isSelected) {
-			ctx.shadowColor = 'transparent';
-			ctx.shadowOffsetX = 0;
-			ctx.shadowOffsetY = 0;
-			ctx.shadowBlur = 0;
-		}
-
-		ctx.stroke();
-
-		// --- Draw left colored border ---
-		ctx.fillStyle = currentStyle.nodeLeftBorder;
-		DrawingUtils.drawRoundRect(ctx, x - totalWidth / 2, y - height / 2, leftBorderWidth, height, {
-			tl: cornerRadius,
-			tr: 0,
-			br: 0,
-			bl: cornerRadius,
-		});
-		ctx.fill();
-
-		// --- Draw Project Icon ---
-		const iconX = leftBorderWidth / 2 + x - totalWidth / 2 + padding + iconSize / 2;
-		const iconY = y; // Center vertically
-		DrawingUtils.drawMaterialIcon(ctx, iconX, iconY, iconSize, currentStyle.resourceTypeIconColor, 'rocket_launch');
-
-		// --- Draw Text ---
-		ctx.textAlign = 'left';
-		ctx.textBaseline = 'middle';
-		const textStartX = x - totalWidth / 2 + padding + iconSize + padding;
+		// Draw project-specific text
+		DrawingUtils.setupTextRendering(ctx);
 
 		// Project name (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = `normal ${scale(14)}px 'Lato', sans-serif`;
-		const projectY = subtitle ? y - scale(8) : y; // Move up if there's a subtitle
-		ctx.fillText(itemName, textStartX, projectY);
+		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		const projectY = subtitle ? y - dimensions.scale(8) : y; // Move up if there's a subtitle
+		ctx.fillText(itemName, layout.textStartX, projectY);
 
 		// Time + tags (secondary text)
 		if (subtitle) {
-			ctx.fillStyle = currentStyle.resourceTypeIconColor; // Use icon color for secondary text
-			ctx.font = `normal ${scale(12)}px 'Lato', sans-serif`;
-			const subtitleY = y + scale(8);
-			ctx.fillText(subtitle, textStartX, subtitleY);
+			ctx.fillStyle = currentStyle.resourceTypeIconColor;
+			ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+			const subtitleY = y + dimensions.scale(8);
+			ctx.fillText(subtitle, layout.textStartX, subtitleY);
 		}
 
 		return {

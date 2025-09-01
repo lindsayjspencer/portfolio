@@ -19,12 +19,19 @@ import {
 	type ForceDirectedGraphData,
 	isExtendedNodeObject,
 } from './Common';
-import type { DirectiveType } from '~/lib/DirectiveTool';
 import { ZoomUtils, type ZoomPadding } from './ZoomUtils';
 import { LinkRenderUtils } from './LinkRenderUtils';
 import { GraphDataUtils } from './GraphDataUtils';
 import { InteractionUtils, type TooltipData, type NodeSelectionState } from './InteractionUtils';
-import { GRAPH_BOUNDS, ZOOM_CONFIG, DEFAULT_ZOOM_PADDING, FORCE_CONFIG, RENDER_CONFIG, UI_CONFIG, calculateResponsiveMinZoom } from './constants';
+import {
+	GRAPH_BOUNDS,
+	ZOOM_CONFIG,
+	DEFAULT_ZOOM_PADDING,
+	FORCE_CONFIG,
+	RENDER_CONFIG,
+	UI_CONFIG,
+	calculateResponsiveMinZoom,
+} from './constants';
 
 interface ForceDirectedGraphProps
 	extends ForceGraphProps<
@@ -36,7 +43,6 @@ interface ForceDirectedGraphProps
 	rootId?: string;
 	zoomPadding?: ZoomPadding;
 	getNodeTooltip?: (node: ForceDirectedGraphNode) => TippyProps | null;
-	displayMode: DirectiveType['mode'];
 	starfieldStartVisible?: boolean; // whether starfield should start visible (for stable state)
 	onStarfieldReady?: (fadeController: {
 		fadeIn: (duration: number) => void;
@@ -68,7 +74,6 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 		dagMode,
 		zoomPadding,
 		getNodeTooltip,
-		displayMode,
 		starfieldStartVisible = false,
 		onStarfieldReady,
 		...rest
@@ -110,10 +115,10 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 	// FPS counter ref
 	const fpsCounterRef = useRef<FpsCounterRef>(null);
 
-	const nodeRenderFunction = useMemo(
-		() => LinkRenderUtils.getNodeRenderFunction(hoverNodeId, selectedNodes, themeColors),
-		[hoverNodeId, selectedNodes, themeColors],
-	);
+	const nodeRenderFunction = useMemo(() => {
+		const hasHighlights = graphData.nodes.some(node => node.isHighlighted);
+		return LinkRenderUtils.getNodeRenderFunction(hoverNodeId, selectedNodes, themeColors, hasHighlights);
+	}, [hoverNodeId, selectedNodes, themeColors, graphData.nodes]);
 
 	const linkParticleRenderFunction = useMemo(
 		() => LinkRenderUtils.getLinkParticleRenderFunction(themeColors),
@@ -158,7 +163,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 		const graphWidth = width ?? (typeof window !== 'undefined' ? window.innerWidth : 800);
 		const graphHeight = height ?? (typeof window !== 'undefined' ? window.innerHeight : 600);
 		const newMinZoom = calculateResponsiveMinZoom(graphWidth, graphHeight);
-		
+
 		if (newMinZoom !== minZoom) {
 			setMinZoom(newMinZoom);
 			// Trigger auto zoom when minimum zoom changes to re-fit the view

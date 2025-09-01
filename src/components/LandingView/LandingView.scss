@@ -3,18 +3,11 @@
 	inset: 0;
 	width: 100%;
 	height: 100%;
-	background-color: var(--color-neutral-50);
 	overflow: hidden;
-	
+
 	// Disable all interactions for landing view
 	pointer-events: none;
 	user-select: none;
-
-	// Dark theme support
-	:global(.theme-corporate) &,
-	:global(.theme-elegant) & {
-		background-color: var(--color-neutral-900);
-	}
 
 	// Transition phases
 	&--entering {
@@ -33,13 +26,21 @@
 }
 
 @keyframes fadeIn {
-	from { opacity: 0; }
-	to { opacity: 1; }
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
 @keyframes fadeOut {
-	from { opacity: 1; }
-	to { opacity: 0; }
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
 }
 
 // Reduced motion support

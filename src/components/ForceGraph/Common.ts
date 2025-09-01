@@ -11,6 +11,7 @@ export interface ForceDirectedGraphData {
 export type ForceDirectedGraphNode = Node & {
 	itemName: string;
 	selectable?: boolean;
+	isHighlighted?: boolean;
 };
 
 export interface ForceDirectedGraphLink {

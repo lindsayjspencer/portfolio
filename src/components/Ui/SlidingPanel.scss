@@ -21,7 +21,7 @@
 
 .sliding-panel {
 	// Container for the entire sliding panel system
-	
+
 	// Backdrop - visible on desktop for visual separation
 	&-backdrop {
 		position: fixed;
@@ -32,16 +32,16 @@
 		background-color: rgba(0, 0, 0, 0.3);
 		z-index: 40;
 		backdrop-filter: blur(2px);
-		
+
 		// One-time fade-in animation
 		animation: fadeIn 0.3s ease-in-out forwards;
-		
+
 		// Hide on mobile since panel covers everything anyway
 		@media (max-width: 767px) {
 			display: none;
 		}
 	}
-	
+
 	// Main panel container
 	&-main {
 		position: fixed;
@@ -51,28 +51,28 @@
 		background-color: var(--color-background, #ffffff);
 		border-left: 1px solid var(--color-neutral-200, #e5e7eb);
 		z-index: 50;
-		
+
 		// One-time slide-in animation
 		animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		
+
 		// Shadow for depth
 		box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
-		
+
 		// Layout
 		display: flex;
 		flex-direction: column;
-		
+
 		// Responsive width
 		width: 100vw;
 		@media (min-width: 768px) {
 			width: 300px;
 		}
-		
+
 		@media (max-width: 768px) {
 			box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
 		}
 	}
-	
+
 	// Header section
 	&-header {
 		display: flex;
@@ -80,24 +80,20 @@
 		justify-content: space-between;
 		padding: 1rem;
 		border-bottom: 1px solid var(--color-neutral-200, #e5e7eb);
-		background: linear-gradient(
-			to bottom,
-			var(--color-background, #ffffff),
-			var(--color-neutral-50, #f9fafb)
-		);
-		
+		background: linear-gradient(to bottom, var(--color-background, #ffffff), var(--color-neutral-50, #f9fafb));
+
 		// Mobile adjustments
 		@media (max-width: 768px) {
 			padding: 1.25rem;
 		}
-		
+
 		.panel-title {
 			font-size: 1.125rem;
 			font-weight: 600;
 			color: var(--color-neutral-900, #111827);
 			margin: 0;
 		}
-		
+
 		.close-button {
 			padding: 0.5rem;
 			border: none;
@@ -109,17 +105,17 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			
+
 			&:hover {
 				background-color: var(--color-accent-100, #f0f9ff);
 				color: var(--color-neutral-700, #374151);
 				transform: scale(1.05);
 			}
-			
+
 			&:active {
 				transform: scale(0.95);
 			}
-			
+
 			// Mobile touch targets
 			@media (max-width: 768px) {
 				padding: 0.75rem;
@@ -128,58 +124,72 @@
 			}
 		}
 	}
-	
+
 	// Content area
 	&-content {
 		flex: 1;
 		overflow-y: auto;
 		padding: 1rem;
-		
+
 		// Firefox scrollbar
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-neutral-300, #d1d5db) transparent;
-		
+
 		// Custom scrollbar
 		&::-webkit-scrollbar {
 			width: 6px;
 		}
-		
+
 		&::-webkit-scrollbar-track {
 			background: transparent;
 		}
-		
+
 		&::-webkit-scrollbar-thumb {
 			background-color: var(--color-neutral-300, #d1d5db);
 			border-radius: 3px;
-			
+
 			&:hover {
 				background-color: var(--color-neutral-400, #9ca3af);
 			}
 		}
-		
+
 		.custom-content {
 			color: var(--color-neutral-900, #111827);
 		}
-		
+
 		@media (max-width: 768px) {
 			padding: 1.25rem;
 			-webkit-overflow-scrolling: touch;
 		}
 	}
-	
+
 	// Node content specific styles
 	&-node-content {
+		.node-type-badge {
+			display: inline-flex;
+			align-items: center;
+			padding: 0.375rem 0.75rem;
+			font-size: 0.75rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			border-radius: 6px;
+			margin-bottom: 1rem;
+			border: 1px solid;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+		}
+
 		.node-section {
 			border-left: 2px solid var(--color-accent-200, #bae6fd);
 			padding-left: 0.75rem;
 			margin-left: 0.25rem;
 			margin-bottom: 1.5rem;
-			
+
 			&:last-child {
 				margin-bottom: 0;
 			}
 		}
-		
+
 		.section-title {
 			font-size: 0.875rem;
 			font-weight: 500;
@@ -188,23 +198,23 @@
 			text-transform: uppercase;
 			letter-spacing: 0.05em;
 		}
-		
+
 		.section-text {
 			font-size: 0.875rem;
 			color: var(--color-neutral-900, #111827);
 			line-height: 1.5;
 			margin: 0;
-			
+
 			&.description-text {
 				white-space: pre-wrap;
 			}
 		}
-		
+
 		.node-tags {
 			display: flex;
 			flex-wrap: wrap;
 			gap: 0.25rem;
-			
+
 			.tag {
 				display: inline-block;
 				padding: 0.25rem 0.5rem;
@@ -213,26 +223,25 @@
 				font-size: 0.75rem;
 				border-radius: 4px;
 				transition: all 0.2s ease-in-out;
-				
+
 				&:hover {
 					background-color: var(--color-accent-200, #bae6fd);
-					transform: translateY(-1px);
 				}
 			}
 		}
-		
+
 		.node-links {
 			display: flex;
 			flex-direction: column;
 			gap: 0.25rem;
-			
+
 			.link-item {
 				position: relative;
 				font-size: 0.875rem;
 				color: var(--color-primary-600, #2563eb);
 				text-decoration: none;
 				transition: all 0.2s ease-in-out;
-				
+
 				&:before {
 					content: '';
 					position: absolute;
@@ -243,40 +252,40 @@
 					background-color: var(--color-primary-500, #3b82f6);
 					transition: width 0.3s ease-in-out;
 				}
-				
+
 				&:hover {
 					color: var(--color-primary-700, #1d4ed8);
-					
+
 					&:before {
 						width: 100%;
 					}
 				}
 			}
 		}
-		
+
 		.node-metrics {
 			display: flex;
 			flex-direction: column;
 			gap: 0.5rem;
-			
+
 			.metric-item {
 				padding: 0.5rem 0.75rem;
 				background-color: var(--color-neutral-50, #f9fafb);
 				border-radius: 6px;
 				border-left: 3px solid var(--color-success-400, #4ade80);
 				font-size: 0.875rem;
-				
+
 				.metric-label {
 					font-weight: 500;
 					color: var(--color-neutral-900, #111827);
 				}
-				
+
 				.metric-value {
 					color: var(--color-neutral-600, #4b5563);
 				}
 			}
 		}
-		
+
 		.skill-level-badge {
 			display: inline-flex;
 			align-items: center;
@@ -285,19 +294,19 @@
 			border-radius: 4px;
 			text-transform: capitalize;
 			font-weight: 500;
-			
+
 			&.expert {
 				background-color: var(--color-success-100, #dcfce7);
 				color: var(--color-success-700, #15803d);
 				border: 1px solid var(--color-success-300, #86efac);
 			}
-			
+
 			&.advanced {
 				background-color: var(--color-primary-100, #dbeafe);
 				color: var(--color-primary-700, #1d4ed8);
 				border: 1px solid var(--color-primary-300, #93c5fd);
 			}
-			
+
 			&.intermediate {
 				background-color: var(--color-accent-100, #f0f9ff);
 				color: var(--color-accent-700, #0369a1);
@@ -313,11 +322,11 @@
 		&-main {
 			animation: none !important;
 		}
-		
+
 		&-backdrop {
 			animation: none !important;
 		}
-		
+
 		.close-button,
 		.tag,
 		.link-item {
