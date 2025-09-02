@@ -96,7 +96,6 @@ export function UrlStateSync() {
 		// Special case: for the default landing state, clean the URL to '/'
 		const isDefaultLanding =
 			dWithTheme.mode === 'landing' &&
-			(dWithTheme.data as any)?.variant === 'neutral' &&
 			Array.isArray((dWithTheme.data as any)?.highlights) &&
 			(dWithTheme.data as any)?.highlights.length === 0 &&
 			((dWithTheme.data as any)?.narration ?? '') === '';

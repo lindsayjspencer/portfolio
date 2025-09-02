@@ -33,6 +33,7 @@ export type MaterialIconName =
 	| 'delete'
 	| 'save'
 	| 'download'
+	| 'file_download'
 	| 'upload'
 	| 'share'
 	| 'copy'

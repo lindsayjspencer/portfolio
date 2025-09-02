@@ -271,6 +271,10 @@ export interface PortfolioState {
 export type PortfolioStoreApi = StoreApi<PortfolioState>;
 
 export function createPortfolioStore(initialDirective: Directive): PortfolioStoreApi {
+	if (initialDirective.mode === 'landing') {
+		// clear the narration
+		initialDirective.data.narration = '';
+	}
 	return createStore<PortfolioState>((set) => ({
 		directive: initialDirective,
 		messages: [],

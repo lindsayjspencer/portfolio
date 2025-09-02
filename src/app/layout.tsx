@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 					rel="stylesheet"
 					href={
 						'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200' +
-						'&icon_names=' +
+						'&icon.names=' +
 						[
 							// DOM icons rendered via <MaterialIcon variant="outlined" />
 							'arrow_upward',
@@ -60,6 +60,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 							'chevron_right',
 							'close',
 							'description',
+							'file_download',
 							'diversity_3',
 							'fit_page',
 							'group',
@@ -78,7 +79,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 					rel="stylesheet"
 					href={
 						'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200' +
-						'&icon_names=' +
+						'&icon.names=' +
 						[
 							// Canvas-drawn icons via DrawingUtils (rounded family)
 							'anchor',

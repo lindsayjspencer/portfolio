@@ -3,6 +3,7 @@ import type { TransitionPhase, TransitionCallbacks } from '~/lib/ViewTransitions
 import './ResumeView.scss';
 import { StreamingText } from '../Ui/StreamingText';
 import Tag from '~/components/Ui/Tag';
+import { MaterialIcon } from '~/components/Ui';
 
 interface ResumeViewProps {
 	transitionPhase?: TransitionPhase;
@@ -35,8 +36,6 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 		}
 	}, [transitionPhase]);
 
-	const handlePrint = () => window.print();
-
 	return (
 		<div
 			className="resume-view"
@@ -45,11 +44,19 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 				transition: `opacity ${transitionDuration}ms ease-in-out`,
 			}}
 		>
-			<div className="container">
-				<button onClick={handlePrint} className="print-btn">
-					Download PDF
-				</button>
+			<div className="resume-download-container">
+				<a
+					className="resume-download-trigger"
+					href="/docs/resume.pdf"
+					download="Lindsay-Spencer-Resume.pdf"
+					aria-label="Download resume PDF"
+					title="Download resume PDF"
+				>
+					<MaterialIcon name="file_download" size={16} />
+				</a>
+			</div>
 
+			<div className="container">
 				<StreamingText as="header">
 					<StreamingText as="h1">Lindsay Spencer</StreamingText>
 					<StreamingText as="div" className="meta">
