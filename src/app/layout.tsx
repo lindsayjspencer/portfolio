@@ -46,17 +46,56 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 					href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=block"
 					rel="stylesheet"
 				/>
+				{/* Subset Material Symbols to only the icons we actually use to reduce payload */}
 				<link
 					rel="stylesheet"
-					href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+					href={
+						'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200' +
+						'&icon_names=' +
+						[
+							// DOM icons rendered via <MaterialIcon variant="outlined" />
+							'arrow_upward',
+							'auto_awesome',
+							'bookmark',
+							'chevron_right',
+							'close',
+							'description',
+							'diversity_3',
+							'fit_page',
+							'group',
+							'info',
+							'insights',
+							'lightbulb',
+							'more_horiz',
+							'public',
+							'search',
+							'speed',
+						].join(',') +
+						'&display=block'
+					}
 				/>
 				<link
 					rel="stylesheet"
-					href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
-				/>
-				<link
-					rel="stylesheet"
-					href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+					href={
+						'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200' +
+						'&icon_names=' +
+						[
+							// Canvas-drawn icons via DrawingUtils (rounded family)
+							'anchor',
+							'auto_awesome',
+							'auto_stories',
+							'bolt',
+							'calendar_today',
+							'extension',
+							'favorite',
+							'person',
+							'rocket_launch',
+							'sell',
+							'star',
+							'work',
+						].join(',') +
+						'&display=block'
+					}
 				/>
 				<link
 					href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"

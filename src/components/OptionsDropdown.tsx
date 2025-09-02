@@ -1,4 +1,5 @@
 import { MaterialIcon } from '~/components/Ui';
+import { useRouter } from 'next/navigation';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useTheme } from '~/contexts/theme-context';
 import './OptionsDropdown.scss';
@@ -73,8 +74,10 @@ const MENU_OPTIONS: MenuOption[] = [
 ];
 
 export function OptionsDropdown() {
+	const router = useRouter();
 	const { themeName, availableThemes, setTheme } = useTheme();
 	const currentDirective = usePortfolioStore((state) => state.directive);
+	const clearMessages = usePortfolioStore((s) => s.clearMessages);
 	const applyDirective = useApplyDirective();
 	const messages = usePortfolioStore((state) => state.messages);
 
@@ -285,6 +288,20 @@ export function OptionsDropdown() {
 								</DropdownMenu.SubContent>
 							</DropdownMenu.Portal>
 						</DropdownMenu.Sub>
+
+						<div className="dropdown-separator" />
+
+						{/* Home reset: clears chat and resets directive; UrlStateSync will clean URL to '/' */}
+						<DropdownMenu.Item
+							className="mode-button"
+							onSelect={() => {
+								clearMessages();
+								// Also clear the URL immediately
+								router.replace('/');
+							}}
+						>
+							Go Home (clear chat)
+						</DropdownMenu.Item>
 					</DropdownMenu.Content>
 				</DropdownMenu.Portal>
 			</DropdownMenu.Root>

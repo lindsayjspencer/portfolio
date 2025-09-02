@@ -4,11 +4,7 @@ import React, { useEffect } from 'react';
 import { useFontLoading } from '~/hooks/useFontLoading';
 import { LoadingOverlay } from './LoadingOverlay';
 
-const MATERIAL_FONT_FAMILIES = [
-	'Material Symbols Outlined',
-	'Material Symbols Rounded',
-	'Material Symbols Sharp',
-] as const;
+const MATERIAL_FONT_FAMILIES = ['Material Symbols Outlined', 'Material Symbols Rounded'] as const;
 
 export interface IconPreloaderProps {
 	/** Children to render after fonts are loaded */

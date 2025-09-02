@@ -174,7 +174,8 @@ export function clusterByCommunity(graph: Graph, skillGraph: SkillGraph): SkillC
  */
 export function createSkillClusters(graph: Graph, data: SkillsDirective): SkillCluster[] {
 	const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
-	const filtered = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
+	// const filtered = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
+	const filtered = allSkills;
 
 	if (filtered.length === 0) {
 		return [];
@@ -198,7 +199,8 @@ export function createSkillClusters(graph: Graph, data: SkillsDirective): SkillC
  */
 export function skillsToForceGraph(graph: Graph, data: SkillsDirective): ForceDirectedGraphData {
 	const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
-	const filtered = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
+	// const filtered = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
+	const filtered = allSkills;
 
 	// Build skill graph for co-occurrence data
 	const skillGraph = buildSkillGraph(graph, filtered);
@@ -269,7 +271,8 @@ function isNeighborOfHighlighted(skillId: string, links: Record<string, number>,
  */
 export function createSkillMatrix(graph: Graph, data: SkillsDirective): SkillMatrix {
 	const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
-	const skills = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
+	// const skills = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
+	const skills = allSkills;
 
 	const projects = filterNodesByType<ProjectNode>(graph.nodes, 'project').sort(
 		(a, b) => (b.years?.[1] ?? 0) - (a.years?.[1] ?? 0),

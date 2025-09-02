@@ -121,6 +121,17 @@ export function ViewTransitionManager() {
 		isTransitioning: true,
 	});
 
+	// Debug: observe the current stable snapshot after any state change
+	const stableSnapshot = useMemo(
+		() => transitionState.instances.find((i) => i.phase === 'stable')?.dataSnapshot,
+		[transitionState],
+	);
+	useEffect(() => {
+		if (!stableSnapshot) return;
+		const variant = 'variant' in stableSnapshot ? (stableSnapshot as any).variant : undefined;
+		const highlights = (stableSnapshot as any)?.directive?.data?.highlights;
+	}, [stableSnapshot]);
+
 	const transitionCallbacks = useRef<Map<string, TransitionCallbacks>>(new Map());
 	const transitionTimeouts = useRef<NodeJS.Timeout[]>([]);
 	// Guard to suppress repeated transitions to the same target
@@ -214,14 +225,16 @@ export function ViewTransitionManager() {
 			modesWithVariants.has(prevMode) && 'variant' in prevSnapshot
 				? (prevSnapshot as { variant?: string }).variant
 				: undefined;
-		const nextVariant =
+		// Read variant from the new directive, but treat missing as "unchanged"
+		const nextVariantRaw =
 			modesWithVariants.has(nextMode) && 'variant' in directive.data
 				? (directive.data as { variant?: string }).variant
 				: undefined;
 
 		// If mode or variant changed, start a transition (but avoid loops to same target)
-		if (prevMode !== nextMode || prevVariant !== nextVariant) {
-			const nextKey = `${nextMode}:${nextVariant ?? ''}`;
+		// Only transition if mode actually changes or variant is explicitly different
+		if (prevMode !== nextMode || (nextVariantRaw !== undefined && prevVariant !== nextVariantRaw)) {
+			const nextKey = `${nextMode}:${nextVariantRaw ?? prevVariant ?? ''}`;
 			if (lastTransitionKeyRef.current === nextKey) {
 				return;
 			}
@@ -231,15 +244,18 @@ export function ViewTransitionManager() {
 		}
 
 		// Same view; just refresh the snapshot to reflect intra-view directive changes (e.g., highlights, narration)
-		// Same view; just refresh the snapshot to reflect intra-view directive changes (e.g., highlights, narration)
 		// Skip if directive hasn't changed to avoid unnecessary state churn
 		const prevDirective = prevSnapshot.directive;
 		const directiveChanged = JSON.stringify(prevDirective) !== JSON.stringify(directive);
-		if (!directiveChanged) return;
+		if (!directiveChanged) {
+			return;
+		}
 		const nextSnapshot = createDataSnapshot(graph, directive);
 		setTransitionState((prev) => {
 			const stableIdx = prev.instances.findIndex((i) => i.phase === 'stable');
-			if (stableIdx === -1 || prev.isTransitioning) return prev;
+			if (stableIdx === -1 || prev.isTransitioning) {
+				return prev;
+			}
 			const prevStable = prev.instances[stableIdx]!;
 			const updatedStable: ViewInstanceState = {
 				mode: prevStable.mode,
@@ -255,7 +271,6 @@ export function ViewTransitionManager() {
 	}, [directive, transitionState.isTransitioning]);
 
 	const startTransition = async (newMode: Directive['mode']) => {
-		console.log('transitioning to ', newMode);
 		const currentInstances = transitionState.instances;
 		const stableInstance = currentInstances.find((i) => i.phase === 'stable');
 

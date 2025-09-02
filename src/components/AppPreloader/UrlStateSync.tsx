@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import {
@@ -29,6 +29,22 @@ export function UrlStateSync() {
 	const lastEncodedRef = useRef<string | null>(null);
 	const lastKeyRef = useRef<string | null>(null);
 	const applyingFromUrlRef = useRef(false);
+
+	// Derive a lightweight signature so in-place directive mutations still trigger this effect
+	const writeSignature = useMemo(() => {
+		if (!directive) return '';
+		const v = 'variant' in directive.data ? (directive.data as any).variant : undefined;
+		const highlights = (directive.data as any)?.highlights ?? [];
+		const narration = (directive.data as any)?.narration ?? '';
+		const theme = (directive.data as any)?.theme ?? themeName;
+		return JSON.stringify({ m: directive.mode, v, h: highlights, n: narration, t: theme });
+	}, [
+		directive?.mode,
+		(directive as any)?.data?.variant,
+		(directive as any)?.data?.highlights,
+		(directive as any)?.data?.narration,
+		themeName,
+	]);
 
 	// Write back to URL on directive changes (debounced)
 	useEffect(() => {
@@ -76,11 +92,31 @@ export function UrlStateSync() {
 
 		const nextKey = modeVariantKey(dWithTheme);
 		const prevKey = lastKeyRef.current;
-		lastEncodedRef.current = encoded;
-		lastKeyRef.current = nextKey;
 
-		const url = `/?state=${encoded}`;
+		// Special case: for the default landing state, clean the URL to '/'
+		const isDefaultLanding =
+			dWithTheme.mode === 'landing' &&
+			(dWithTheme.data as any)?.variant === 'neutral' &&
+			Array.isArray((dWithTheme.data as any)?.highlights) &&
+			(dWithTheme.data as any)?.highlights.length === 0 &&
+			((dWithTheme.data as any)?.narration ?? '') === '';
+
+		const url = isDefaultLanding ? '/' : `/?state=${encoded}`;
 		const push = prevKey && prevKey !== nextKey;
+
+		// If mode/variant changed, write immediately (no debounce) to avoid being starved by rapid intra-view updates
+		if (prevKey !== nextKey) {
+			try {
+				const current = new URLSearchParams(window.location.search).get('state');
+				if (current !== encoded) {
+					if (push && !isDefaultLanding) router.push(url);
+					else router.replace(url);
+				}
+			} catch {}
+			lastEncodedRef.current = encoded;
+			lastKeyRef.current = nextKey;
+			return;
+		}
 
 		const t = setTimeout(() => {
 			// Re-check current to avoid redundant writes if state changed again during debounce
@@ -89,11 +125,13 @@ export function UrlStateSync() {
 				if (current === encoded) return;
 			} catch {}
 
-			if (push) router.push(url);
+			if (push && !isDefaultLanding) router.push(url);
 			else router.replace(url);
+			lastEncodedRef.current = encoded;
+			lastKeyRef.current = nextKey;
 		}, 250);
 		return () => clearTimeout(t);
-	}, [directive, router, themeName]);
+	}, [writeSignature, directive, router, themeName]);
 
 	// Handle back/forward (popstate)
 	useEffect(() => {

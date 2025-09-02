@@ -78,15 +78,6 @@ Config file format (JSON):
       "warning": "#f59e0b",
       "error": "#ef4444"
     },
-    "corporate": {
-      "primary": "#1f2937",
-      "secondary": "#374151",
-      "accent": "#4f46e5",
-      "neutral": "#6b7280",
-      "success": "#059669",
-      "warning": "#d97706",
-      "error": "#dc2626"
-    }
   },
   "output": {
     "typescript": "./src/lib/themes.ts",

@@ -1,0 +1,119 @@
+.suggestion-chips {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, calc(-50% + 150px));
+	z-index: 10;
+	pointer-events: auto;
+	transition: opacity 400ms ease-out;
+
+	&.landing-mode {
+		opacity: 1;
+	}
+
+	&.exiting {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.chips-container {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		align-items: center;
+		justify-content: center;
+		max-width: 600px;
+	}
+
+	.suggestion-chip {
+		align-items: center;
+		padding: 0.5rem 1rem;
+		background-color: var(--color-accent-100);
+		color: var(--color-accent-700);
+		border-radius: 999px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		line-height: 1.2;
+		cursor: pointer;
+		border: none;
+		transition: all 200ms ease-out;
+		opacity: 0;
+		transform: translateY(20px);
+		white-space: nowrap;
+		animation: slideUpFadeIn 500ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+
+		// Staggered animation delay for each chip
+		&:nth-child(1) {
+			animation-delay: 300ms;
+			background-color: var(--color-primary-100);
+			color: var(--color-primary-700);
+
+			&:hover:not(:disabled) {
+				background-color: var(--color-primary-200);
+			}
+		}
+
+		&:nth-child(2) {
+			animation-delay: 400ms;
+			background-color: var(--color-secondary-100);
+			color: var(--color-secondary-700);
+
+			&:hover:not(:disabled) {
+				background-color: var(--color-secondary-200);
+			}
+		}
+
+		&:nth-child(3) {
+			animation-delay: 500ms;
+			background-color: var(--color-accent-100);
+			color: var(--color-accent-700);
+
+			&:hover:not(:disabled) {
+				background-color: var(--color-accent-200);
+			}
+		}
+
+		&:hover:not(:disabled) {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		}
+
+		&:active:not(:disabled) {
+			transform: translateY(0);
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+}
+
+@keyframes slideUpFadeIn {
+	0% {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (max-width: 768px) {
+	.suggestion-chips {
+		transform: translate(-50%, calc(-50% + 135px));
+		padding: 0 20px;
+		width: 100%;
+		box-sizing: border-box;
+
+		.chips-container {
+			max-width: 100%;
+		}
+
+		.suggestion-chip {
+			font-size: 0.8125rem;
+			padding: 0.375rem 0.75rem;
+		}
+	}
+}

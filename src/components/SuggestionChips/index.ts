@@ -1,0 +1,1 @@
+export { SuggestionChips } from './SuggestionChips';

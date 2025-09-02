@@ -11,6 +11,7 @@
 	&.landing-mode {
 		bottom: calc(50% - 2rem);
 		transform: translate(-50%, 50%);
+		transition: all 0.4s ease-in-out;
 	}
 
 	.chat-form {

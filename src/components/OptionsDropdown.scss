@@ -51,7 +51,6 @@
 	}
 
 	// Dark theme support
-	:global(.theme-corporate) &,
 	:global(.theme-elegant) & {
 		.options-dropdown-trigger {
 			background-color: rgba(0, 0, 0, 0.2);
@@ -143,18 +142,18 @@
 
 		&.submenu-trigger {
 			padding-right: 10px;
-			
+
 			.submenu-arrow {
 				opacity: 0.6;
 			}
 		}
-		
+
 		// Resume button styling
 		> span {
 			margin-left: 8px;
 		}
 	}
-	
+
 	.dropdown-separator {
 		height: 1px;
 		background-color: var(--color-neutral-200);

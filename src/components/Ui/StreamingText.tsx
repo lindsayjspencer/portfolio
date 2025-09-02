@@ -354,7 +354,6 @@ export function StreamingText({
 		if (autoStart) {
 			if (canUngarble) {
 				// Start ungarbling immediately
-				console.log('[StreamingText] Starting ungarbling for:', computedPlan[0]);
 				const text = (computedPlan[0] as { type: 'text_stream'; content: string }).content;
 				setTargetText(text);
 				setIsUngarbling(true);

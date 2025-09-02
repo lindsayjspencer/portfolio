@@ -5,11 +5,12 @@ import './page.scss';
 import { OptionsDropdown } from '~/components/OptionsDropdown';
 import { ChatContainer } from '~/components/ChatContainer';
 import { WelcomeMessage } from '~/components/WelcomeMessage';
+import { SuggestionChips } from '~/components/SuggestionChips';
 import { SlidingPanel } from '~/components/Ui/SlidingPanel';
 import { UrlStateInitializer } from '~/components/AppPreloader/UrlStateInitializer';
 import { UrlStateLogger } from '~/components/AppPreloader/UrlStateLogger';
 import { UrlStateSync } from '~/components/AppPreloader/UrlStateSync';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PortfolioStoreProvider } from '~/lib/PortfolioStoreProvider';
 import type { Directive } from '~/lib/ai/directiveTools';
 
@@ -42,6 +43,9 @@ export default function HomePage() {
 
 					{/* Welcome message - manages its own visibility */}
 					<WelcomeMessage />
+
+					{/* Suggestion chips - only visible in landing mode */}
+					<SuggestionChips />
 
 					{/* Floating chat input at bottom */}
 					<ChatContainer />

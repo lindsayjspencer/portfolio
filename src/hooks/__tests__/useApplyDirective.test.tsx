@@ -35,11 +35,7 @@ function TestHarness({
 	);
 }
 
-function renderWithProviders(
-	ui: React.ReactElement,
-	initialDirective: Directive,
-	theme: 'cold' | 'corporate' = 'cold',
-) {
+function renderWithProviders(ui: React.ReactElement, initialDirective: Directive, theme: 'cold' | 'elegant' = 'cold') {
 	return render(
 		<ThemeProvider initialTheme={theme}>
 			<PortfolioStoreProvider initialDirective={initialDirective}>{ui}</PortfolioStoreProvider>
@@ -69,14 +65,14 @@ describe('useApplyDirective', () => {
 		const { getByTestId } = renderWithProviders(
 			<TestHarness id="t1" next={next} onApplied={onApplied} />,
 			initial,
-			'corporate',
+			'elegant',
 		);
 
 		await act(async () => {
 			getByTestId('apply-t1').click();
 		});
 
-		expect(getByTestId('theme-t1').textContent).toBe('corporate');
+		expect(getByTestId('theme-t1').textContent).toBe('elegant');
 	});
 
 	it('inherits narration when incoming directive narration is empty', async () => {

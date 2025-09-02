@@ -178,7 +178,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 				)}
 
 				{/* Show regular narrative */}
-				{directive.data.narration && !pendingClarify && (
+				{directive.data.narration && !pendingClarify && !isLoading && (
 					<StreamingText speed={2} className="streaming-text">
 						{directive.data.narration}
 					</StreamingText>

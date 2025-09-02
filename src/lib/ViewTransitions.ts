@@ -256,6 +256,20 @@ export const COMPONENT_TRANSITION_TIMINGS = {
 
 // ===== Data Processing Utility Functions =====
 
+/**
+ * Create a deep clone of a value. Uses structuredClone when available (Node 18+/modern browsers),
+ * falling back to JSON for plain data. This is used to freeze the directive inside a snapshot
+ * so later in-place mutations (e.g., highlights array) don't mutate past snapshots.
+ */
+function deepClone<T>(value: T): T {
+	const sc: ((value: unknown) => unknown) | undefined = (globalThis as any)?.structuredClone;
+	if (typeof sc === 'function') {
+		return sc(value) as T;
+	}
+	// Fallback suitable for Directive's plain data
+	return JSON.parse(JSON.stringify(value)) as T;
+}
+
 function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence[] {
 	const values = filterNodesByType<ValueNode>(graph.nodes, 'value');
 	const allRoles = filterNodesByType<RoleNode>(graph.nodes, 'role');
@@ -339,7 +353,7 @@ function filterNodesByTags(nodes: Node[], tags?: string[]): Node[] {
  */
 export function createDataSnapshot(graph: Graph, directive: Directive): DataSnapshot {
 	const baseData = {
-		directive,
+		directive: deepClone(directive),
 		timestamp: Date.now(),
 	};
 

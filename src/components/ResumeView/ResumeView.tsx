@@ -122,7 +122,7 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 							</StreamingText>
 							<StreamingText as="ul">
 								<StreamingText as="li">
-									Owned <StreamingText as="strong">Markets & Events Platform</StreamingText>{' '}
+									Owned <StreamingText as="strong">Markets & Events Platform</StreamingText>&nbsp;
 									end-to-end, scaling 1 → 36 markets across AU.
 								</StreamingText>
 								<StreamingText as="li">

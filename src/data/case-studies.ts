@@ -28,7 +28,7 @@ export const CASE_STUDIES: Record<string, CaseStudy> = {
 				kind: 'bullets',
 				title: 'Highlights',
 				items: [
-					'Interactive 2D/3D force-directed graph for dependency/version planning',
+					'Interactive 2D force-directed graph for dependency/version planning',
 					'Batch cascade planner to apply compatible version updates safely',
 					'Performance-focused rendering and interaction for large graphs',
 				],
@@ -39,30 +39,9 @@ export const CASE_STUDIES: Record<string, CaseStudy> = {
 				items: ['React', 'TypeScript', 'Three.js'],
 			},
 			{
-				kind: 'image',
-				title: 'Cascade planner',
-				image: {
-					src: '/images/case-studies/dep-graph-versions/cascade-planner.webp',
-					alt: 'Cascade planning UI screenshot',
-					caption: 'Plan and preview cascades across resource versions.',
-				},
-			},
-			{
 				kind: 'metrics',
 				metrics: [{ label: 'Efficiency gain', value: '3–4h tasks → <1m' }],
 			},
-			{
-				kind: 'gallery',
-				title: 'Details',
-				images: [
-					{ src: '/images/case-studies/dep-graph-versions/detail-1.webp', alt: 'Detail 1' },
-					{ src: '/images/case-studies/dep-graph-versions/detail-2.webp', alt: 'Detail 2' },
-				],
-			},
-		],
-		gallery: [
-			{ src: '/images/case-studies/dep-graph-versions/thumb-1.webp', alt: 'Thumbnail 1' },
-			{ src: '/images/case-studies/dep-graph-versions/thumb-2.webp', alt: 'Thumbnail 2' },
 		],
 	},
 

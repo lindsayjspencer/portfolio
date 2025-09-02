@@ -52,7 +52,6 @@
 		}
 
 		// Dark theme support
-		:global(.theme-corporate) &,
 		:global(.theme-elegant) & {
 			.auto-zoom-button {
 				background-color: rgba(0, 0, 0, 0.2);
@@ -206,7 +205,6 @@
 	}
 
 	// Dark mode support for the entire component
-	:global(.theme-corporate) &,
 	:global(.theme-elegant) & {
 		.graph-loading {
 			color: var(--color-neutral-400);
@@ -305,7 +303,6 @@
 		}
 
 		// Dark theme support
-		:global(.theme-corporate) &,
 		:global(.theme-elegant) & {
 			.zoom-button {
 				background-color: rgba(0, 0, 0, 0.2);
