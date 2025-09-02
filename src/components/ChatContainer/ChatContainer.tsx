@@ -10,12 +10,10 @@ import { handleChatSubmit } from '~/lib/chat-actions';
 import { useState } from 'react';
 
 export interface ChatContainerProps {
-	hasHadInteraction: boolean;
-	landingMode: boolean;
 	onSubmitSuccess?: () => void;
 }
 
-export function ChatContainer({ landingMode, onSubmitSuccess }: ChatContainerProps) {
+export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	const {
 		input,
 		narrative,
@@ -30,6 +28,9 @@ export function ChatContainer({ landingMode, onSubmitSuccess }: ChatContainerPro
 		pendingClarify,
 		setPendingClarify,
 	} = usePortfolioStore();
+	
+	const hasHadInteraction = messages.length > 0;
+	const landingMode = directive.mode === 'landing' && !hasHadInteraction;
 
 	const { setTheme } = useTheme();
 	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);

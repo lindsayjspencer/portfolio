@@ -1,0 +1,183 @@
+.values-evidence-card {
+	background: #fff;
+	border: 1px solid var(--color-neutral-200);
+	border-radius: 12px;
+	padding: 20px 24px;
+	// Remove persistent shadow to align with Projects cards rhythm
+	// Hover/raise is applied to tiles (click targets)
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+
+	&__header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	&__title {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+
+		h2 {
+			margin: 0;
+			font-size: 1.35rem;
+			font-weight: 700;
+			color: var(--color-neutral-900);
+		}
+
+		.values-evidence-card__icon {
+			color: var(--color-primary-600);
+		}
+	}
+
+	&__chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	&__summary {
+		position: relative;
+		max-width: 70ch;
+		margin: 0;
+		color: var(--color-neutral-650, var(--color-neutral-600));
+
+		p {
+			margin: 0;
+			font-size: 0.95rem;
+			line-height: 1.5;
+			display: -webkit-box;
+			-webkit-line-clamp: 3;
+			line-clamp: 3;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+		}
+
+		&.is-expanded p {
+			-webkit-line-clamp: unset;
+			line-clamp: unset;
+		}
+	}
+
+	&__read-more {
+		background: none;
+		border: none;
+		color: var(--color-primary-600);
+		font-size: 0.85rem;
+		font-weight: 600;
+		padding: 0;
+		margin-top: 6px;
+		cursor: pointer;
+	}
+
+	&__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 14px;
+	}
+
+	&__tile-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	&__tile-type {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--color-neutral-500);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+	}
+
+	&__tile {
+		background: var(--color-neutral-0);
+		border: 1px solid var(--color-neutral-200);
+		border-radius: 10px;
+		padding: 14px;
+		min-height: 112px; // equalise height across role/project/story at ~3 lines
+		transition:
+			transform 0.15s ease,
+			box-shadow 0.15s ease,
+			border-color 0.15s ease,
+			background 0.15s ease;
+		cursor: pointer;
+		outline: none;
+
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+			border-color: var(--color-primary-300);
+		}
+
+		&:focus-visible {
+			box-shadow: 0 0 0 2px var(--color-primary-300);
+		}
+
+		&--dim {
+			opacity: 0.5;
+		}
+
+		&--highlighted {
+			box-shadow: 0 0 0 2px var(--color-secondary-300);
+			border-color: var(--color-secondary-500);
+		}
+	}
+
+	&__tile-title {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--color-neutral-900);
+		margin: 0 0 4px 0;
+		// Clamp long titles to a single line with ellipsis
+		overflow: hidden;
+		text-overflow: ellipsis;
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		line-clamp: 1;
+		-webkit-box-orient: vertical;
+	}
+
+	&__tile-meta {
+		font-size: 0.8rem;
+		color: var(--color-neutral-500);
+		margin-bottom: 6px;
+	}
+
+	&__tile-text {
+		font-size: 0.9rem;
+		color: var(--color-neutral-700);
+		margin: 0;
+		// Clamp body text to 3 lines with ellipsis
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	&__tile-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 8px;
+	}
+
+	&__tile--story {
+		border-left: 3px solid var(--color-primary-200);
+	}
+
+	&__footer-space {
+		height: 2px;
+	}
+
+	@media (max-width: 768px) {
+		padding: 16px;
+	}
+}

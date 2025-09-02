@@ -7,11 +7,7 @@ import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { filterNodesByType } from '~/lib/ViewTransitions';
 import type { SkillNode, ProjectNode } from '~/lib/PortfolioStore';
 
-interface TopNavBarProps {
-	currentDirective: Directive;
-	onDirectiveChange: (directive: Directive) => void;
-	landingMode: boolean;
-}
+// Component no longer needs props as it accesses store directly
 
 // Define the menu structure with variants
 type MenuOption = {
@@ -75,9 +71,15 @@ const MENU_OPTIONS: MenuOption[] = [
 	{ mode: 'resume', label: 'Resume' },
 ];
 
-export function OptionsDropdown({ currentDirective, onDirectiveChange, landingMode }: TopNavBarProps) {
+export function OptionsDropdown() {
 	const { themeName, availableThemes, setTheme } = useTheme();
 	const graph = usePortfolioStore((state) => state.graph);
+	const currentDirective = usePortfolioStore((state) => state.directive);
+	const setDirective = usePortfolioStore((state) => state.setDirective);
+	const messages = usePortfolioStore((state) => state.messages);
+	
+	const hasHadInteraction = messages.length > 0;
+	const landingMode = currentDirective.mode === 'landing' && !hasHadInteraction;
 
 	function getTwoRandomIds<T extends { id: string }>(items: T[]): [string, string] {
 		if (!items || items.length === 0) return ['', ''];
@@ -234,7 +236,7 @@ export function OptionsDropdown({ currentDirective, onDirectiveChange, landingMo
 															key={variant.value}
 															className={`mode-button ${isActive ? 'active' : ''}`}
 															onSelect={() =>
-																onDirectiveChange(
+																setDirective(
 																	createDirective(option.mode, variant.value),
 																)
 															}
@@ -253,7 +255,7 @@ export function OptionsDropdown({ currentDirective, onDirectiveChange, landingMo
 									<DropdownMenu.Item
 										key={option.mode}
 										className={`mode-button ${currentDirective.mode === option.mode ? 'active' : ''}`}
-										onSelect={() => onDirectiveChange(createDirective(option.mode))}
+										onSelect={() => setDirective(createDirective(option.mode))}
 									>
 										{option.label}
 									</DropdownMenu.Item>

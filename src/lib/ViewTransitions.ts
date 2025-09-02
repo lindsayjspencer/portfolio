@@ -262,27 +262,52 @@ function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence
 	const allProjects = filterNodesByType<ProjectNode>(graph.nodes, 'project');
 	const allStories = filterNodesByType<StoryNode>(graph.nodes, 'story');
 
+	// Treat these relations as valid "evidence-like" connections to a value
+	const evidenceLike = new Set<Graph['edges'][number]['rel']>(['evidence', 'impacted']);
+
 	return values.map((value) => {
-		// Find edges that point TO this value with evidence relationship
-		const evidenceEdges = graph.edges.filter((edge) => edge.target === value.id && edge.rel === 'evidence');
+		// Gather direct evidence edges pointing TO this value
+		const evidenceEdges = graph.edges.filter((edge) => edge.target === value.id && evidenceLike.has(edge.rel));
 
-		const roles: RoleNode[] = [];
-		const projects: ProjectNode[] = [];
-		const stories: StoryNode[] = [];
+		// Use Sets to dedupe
+		const roleIds = new Set<string>();
+		const projectIds = new Set<string>();
+		const storyIds = new Set<string>();
 
-		// Categorize evidence by type
-		evidenceEdges.forEach((edge) => {
+		// Categorize direct evidence by source type
+		for (const edge of evidenceEdges) {
 			const sourceNode = graph.nodes.find((n) => n.id === edge.source);
-			if (!sourceNode) return;
+			if (!sourceNode) continue;
 
-			if (sourceNode.type === 'role') {
-				roles.push(sourceNode as RoleNode);
-			} else if (sourceNode.type === 'project') {
-				projects.push(sourceNode as ProjectNode);
-			} else if (sourceNode.type === 'story') {
-				stories.push(sourceNode as StoryNode);
+			if (sourceNode.type === 'role') roleIds.add(sourceNode.id);
+			else if (sourceNode.type === 'project') projectIds.add(sourceNode.id);
+			else if (sourceNode.type === 'story') storyIds.add(sourceNode.id);
+		}
+
+		// Also include stories that happened during any of the roles/projects that evidence this value
+		const happenedDuring = graph.edges.filter((e) => e.rel === 'happened_during');
+		for (const edge of happenedDuring) {
+			// story -> (role|project)
+			const storyNode = graph.nodes.find((n) => n.id === edge.source);
+			if (!storyNode || storyNode.type !== 'story') continue;
+
+			if (roleIds.has(edge.target) || projectIds.has(edge.target)) {
+				storyIds.add(storyNode.id);
 			}
-		});
+		}
+
+		// Materialize nodes from ids
+		const roles: RoleNode[] = Array.from(roleIds)
+			.map((id) => allRoles.find((r) => r.id === id))
+			.filter(Boolean) as RoleNode[];
+
+		const projects: ProjectNode[] = Array.from(projectIds)
+			.map((id) => allProjects.find((p) => p.id === id))
+			.filter(Boolean) as ProjectNode[];
+
+		const stories: StoryNode[] = Array.from(storyIds)
+			.map((id) => allStories.find((s) => s.id === id))
+			.filter(Boolean) as StoryNode[];
 
 		return {
 			valueId: value.id,

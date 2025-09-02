@@ -71,7 +71,17 @@ export type MaterialIconName =
 	| 'phone'
 	| 'email'
 	| 'notifications'
-	| 'notifications_off';
+	| 'notifications_off'
+	// Values view icons (extended)
+	| 'diversity_3'
+	| 'group'
+	| 'insights'
+	| 'monitor_heart'
+	| 'speed'
+	| 'brush'
+	| 'lightbulb'
+	| 'public'
+	| 'auto_awesome';
 
 // Size variants (alias for consistency)
 export type IconSize = ComponentSize;

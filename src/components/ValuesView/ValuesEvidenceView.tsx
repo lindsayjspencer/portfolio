@@ -1,10 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './ValuesEvidenceView.scss';
 import type { TransitionPhase, TransitionCallbacks, ValuesEvidenceSnapshot } from '~/lib/ViewTransitions';
 import { StreamingText } from '../Ui/StreamingText';
-import Tag from '~/components/Ui/Tag';
+import ValuesEvidenceCard from './ValuesEvidenceCard';
+import type {
+	RoleEvidence as RoleTileData,
+	ProjectEvidence as ProjectTileData,
+	StoryEvidence as StoryTileData,
+} from './ValuesEvidenceCard';
+import { usePortfolioStore } from '~/lib/PortfolioStore';
 
 interface ValuesEvidenceViewProps {
 	dataSnapshot: ValuesEvidenceSnapshot;
@@ -19,6 +25,7 @@ export function ValuesEvidenceView({
 }: ValuesEvidenceViewProps) {
 	const [contentOpacity, setContentOpacity] = useState(transitionPhase === 'stable' ? 1 : 0);
 	const [transitionDuration, setTransitionDuration] = useState(400);
+	const { openPanel, graph } = usePortfolioStore();
 
 	useEffect(() => {
 		if (onRegisterCallbacks) {
@@ -42,6 +49,31 @@ export function ValuesEvidenceView({
 		}
 	}, [transitionPhase]);
 
+	const highlights = useMemo(
+		() => dataSnapshot.directive.data.highlights ?? [],
+		[dataSnapshot.directive.data.highlights],
+	);
+
+	const iconForValue = (label: string): string => {
+		const l = label.toLowerCase();
+		if (l.includes('mentor') || l.includes('community')) return 'diversity_3';
+		if (l.includes('quality') || l.includes('observ')) return 'insights';
+		if (l.includes('design') || l.includes('perform')) return 'speed';
+		if (l.includes('innov') || l.includes('emerging')) return 'lightbulb';
+		if (l.includes('open') || l.includes('oss') || l.includes('source')) return 'public';
+		return 'auto_awesome';
+	};
+
+	const onOpen = (nodeId: string) => {
+		const node = graph.nodes.find((n) => n.id === nodeId);
+		if (!node) return;
+		openPanel({
+			type: 'node',
+			title: node.label,
+			data: { ...node, itemName: node.label },
+		});
+	};
+
 	return (
 		<div
 			className="values-evidence-view"
@@ -58,108 +90,64 @@ export function ValuesEvidenceView({
 					</StreamingText>
 				</header>
 
-				<StreamingText as="main" className="values-evidence-view__content">
-					{dataSnapshot.evidence.map((valueEvidence, index) => (
-						<StreamingText
-							key={valueEvidence.valueId}
-							as="section"
-							className="values-evidence-view__value-section"
-						>
-							<StreamingText as="div" className="values-evidence-view__value-header">
-								<StreamingText as="h2">{valueEvidence.valueLabel}</StreamingText>
-								{valueEvidence.valueSummary && (
-									<StreamingText as="p" className="value-summary">
-										{valueEvidence.valueSummary}
-									</StreamingText>
-								)}
-							</StreamingText>
+				<main className="values-evidence-view__content">
+					{dataSnapshot.evidence.map((val) => {
+						const valueNode = dataSnapshot.values.find((v) => v.id === val.valueId);
+						const evidence: Array<RoleTileData | ProjectTileData | StoryTileData> = [
+							...val.roles.map(
+								(r) =>
+									({
+										type: 'role',
+										id: r.id,
+										title: r.label,
+										when: `${r.period?.start ?? ''}—${r.period?.end === 'present' ? 'Present' : (r.period?.end ?? '')}`,
+										snippet: r.summary ?? '',
+									}) satisfies RoleTileData,
+							),
+							...val.projects.map(
+								(p) =>
+									({
+										type: 'project',
+										id: p.id,
+										name: p.label,
+										blurb: p.summary ?? '',
+										tags: p.tags ?? [],
+										linkLabel: p.links && p.links[0] ? p.links[0].title : undefined,
+									}) satisfies ProjectTileData,
+							),
+							...val.stories.map(
+								(s) =>
+									({
+										type: 'story',
+										id: s.id,
+										headline: s.label,
+										snippet: s.summary ?? '',
+									}) satisfies StoryTileData,
+							),
+						];
 
-							<StreamingText as="div" className="values-evidence-view__evidence-grid">
-								{/* Roles Evidence */}
-								{valueEvidence.roles.length > 0 && (
-									<StreamingText as="div" className="evidence-category">
-										<StreamingText as="h3">Professional Experience</StreamingText>
-										<StreamingText as="div" className="evidence-items">
-											{valueEvidence.roles.map((role) => (
-												<StreamingText
-													key={role.id}
-													as="div"
-													className="evidence-item role-item"
-												>
-													<StreamingText as="h4">{role.label}</StreamingText>
-													<StreamingText as="div" className="meta">
-														{role.period?.start} –{' '}
-														{role.period?.end === 'present' ? 'Present' : role.period?.end}
-													</StreamingText>
-													{role.summary && (
-														<StreamingText as="p">{role.summary}</StreamingText>
-													)}
-												</StreamingText>
-											))}
-										</StreamingText>
-									</StreamingText>
-								)}
+						// If the directive emphasizes stories, surface them first
+						const orderedEvidence = dataSnapshot.emphasizeStories
+							? evidence
+									.slice()
+									.sort((a, b) => (a.type === 'story' ? -1 : 0) - (b.type === 'story' ? -1 : 0))
+							: evidence;
 
-								{/* Projects Evidence */}
-								{valueEvidence.projects.length > 0 && (
-									<StreamingText as="div" className="evidence-category">
-										<StreamingText as="h3">Key Projects</StreamingText>
-										<StreamingText as="div" className="evidence-items">
-											{valueEvidence.projects.map((project) => (
-												<StreamingText
-													key={project.id}
-													as="div"
-													className="evidence-item project-item"
-												>
-													<StreamingText as="h4">{project.label}</StreamingText>
-													{project.summary && (
-														<StreamingText as="p">{project.summary}</StreamingText>
-													)}
-													{project.tags && project.tags.length > 0 && (
-														<StreamingText as="div" className="tags">
-															{project.tags.map((tag) => (
-																<StreamingText key={tag} as="span">
-																	<Tag
-																		tone="primary"
-																		variant="subtle"
-																		shape="rounded"
-																	>
-																		{tag}
-																	</Tag>
-																</StreamingText>
-															))}
-														</StreamingText>
-													)}
-												</StreamingText>
-											))}
-										</StreamingText>
-									</StreamingText>
-								)}
-
-								{/* Stories Evidence */}
-								{valueEvidence.stories.length > 0 && (
-									<StreamingText as="div" className="evidence-category">
-										<StreamingText as="h3">Notable Stories</StreamingText>
-										<StreamingText as="div" className="evidence-items">
-											{valueEvidence.stories.map((story) => (
-												<StreamingText
-													key={story.id}
-													as="div"
-													className="evidence-item story-item"
-												>
-													<StreamingText as="h4">{story.label}</StreamingText>
-													{story.summary && (
-														<StreamingText as="p">{story.summary}</StreamingText>
-													)}
-												</StreamingText>
-											))}
-										</StreamingText>
-									</StreamingText>
-								)}
-							</StreamingText>
-						</StreamingText>
-					))}
-				</StreamingText>
+						return (
+							<ValuesEvidenceCard
+								key={val.valueId}
+								id={val.valueId}
+								icon={iconForValue(val.valueLabel)}
+								title={val.valueLabel}
+								tags={valueNode?.tags ?? []}
+								summary={val.valueSummary ?? ''}
+								evidence={orderedEvidence}
+								highlightIds={highlights}
+								onOpen={onOpen}
+							/>
+						);
+					})}
+				</main>
 			</div>
 		</div>
 	);

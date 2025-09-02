@@ -14,21 +14,16 @@ import {
 	COMPONENT_TRANSITION_TIMINGS,
 	createDataSnapshot,
 } from '~/lib/ViewTransitions';
-import type { Graph } from '~/lib/PortfolioStore';
+import { usePortfolioStore } from '~/lib/PortfolioStore';
 import './ViewTransitionManager.scss';
 import './CompareLegends.scss';
-import type { Directive } from '~/lib/ai/directiveTools';
 import { FORCE_CONFIG } from '../ForceGraph/constants';
 import type {
 	CompareSkillsSnapshot,
 	CompareProjectsSnapshot,
 	CompareFrontendVsBackendSnapshot,
 } from '~/lib/ViewTransitions';
-
-interface ViewTransitionManagerProps {
-	directive: Directive;
-	graph: Graph;
-}
+import type { Directive } from '~/lib/ai/directiveTools';
 
 // Inline legend components for compare views
 function CompareSkillsLegend({ dataSnapshot }: { dataSnapshot: CompareSkillsSnapshot }) {
@@ -106,7 +101,9 @@ function CompareFrontendVsBackendLegend({ dataSnapshot }: { dataSnapshot: Compar
 	);
 }
 
-export function ViewTransitionManager({ directive, graph }: ViewTransitionManagerProps) {
+export function ViewTransitionManager() {
+	const directive = usePortfolioStore((state) => state.directive);
+	const graph = usePortfolioStore((state) => state.graph);
 	const currentMode = directive.mode;
 	// Create initial data snapshot using utility
 	const initialDataSnapshot = useMemo(() => createDataSnapshot(graph, directive), [graph, directive]);

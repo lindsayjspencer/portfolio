@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePortfolioStore } from '~/lib/PortfolioStore';
 import './WelcomeMessage.scss';
 
-export interface WelcomeMessageProps {
-	landingMode: boolean;
-}
-
-export function WelcomeMessage({ landingMode }: WelcomeMessageProps) {
+export function WelcomeMessage() {
+	const directive = usePortfolioStore((state) => state.directive);
+	const messages = usePortfolioStore((state) => state.messages);
+	const hasHadInteraction = messages.length > 0;
+	const landingMode = directive.mode === 'landing' && !hasHadInteraction;
 	const [shouldRender, setShouldRender] = useState(landingMode);
 	const [isAnimating, setIsAnimating] = useState(false);
 
