@@ -1,6 +1,6 @@
-import type { NodeObject } from 'react-force-graph-2d';
+import type { ForceGraphMethods, NodeObject, LinkObject } from 'react-force-graph-2d';
 import type { TippyProps } from '@tippyjs/react';
-import type { ForceDirectedGraphNode } from './Common';
+import type { ForceDirectedGraphNode, ForceDirectedGraphLink } from './Common';
 import { ZoomUtils } from './ZoomUtils';
 import type { PanelContent } from '~/lib/PortfolioStore';
 
@@ -34,7 +34,7 @@ export class InteractionUtils {
 
 			// Check if node is selectable (default to true for backwards compatibility)
 			const isSelectable = node.selectable !== false;
-			
+
 			if (!isSelectable) {
 				// Node is not selectable, do nothing
 				return;
@@ -51,7 +51,7 @@ export class InteractionUtils {
 			} else {
 				// Select this node only
 				setSelectedNodes(new Set([node.id]));
-				
+
 				// Open panel with node details
 				if (openPanel) {
 					openPanel({
@@ -61,7 +61,7 @@ export class InteractionUtils {
 						onClose: () => {
 							// Deselect the node when panel is closed
 							setSelectedNodes(new Set());
-						}
+						},
 					});
 				}
 			}
@@ -74,13 +74,10 @@ export class InteractionUtils {
 	/**
 	 * Handles background click to clear selection
 	 */
-	static handleBackgroundClick(
-		selectionState: NodeSelectionState,
-		onCanvasInteraction: () => void,
-	) {
+	static handleBackgroundClick(selectionState: NodeSelectionState, onCanvasInteraction: () => void) {
 		onCanvasInteraction();
 		selectionState.setSelectedNodes(new Set());
-		
+
 		// Close panel when clicking background
 		if (selectionState.closePanel) {
 			selectionState.closePanel();
@@ -91,9 +88,15 @@ export class InteractionUtils {
 	 * Updates tooltip data based on hovered node
 	 */
 	static updateTooltip(
-		node: NodeObject<NodeObject<ForceDirectedGraphNode>> | null,
+		node: NodeObject<ForceDirectedGraphNode> | null,
 		getNodeTooltip: ((node: ForceDirectedGraphNode) => TippyProps | null) | undefined,
-		forceGraphRef: React.RefObject<any>,
+		forceGraphRef: React.MutableRefObject<
+			| ForceGraphMethods<
+					NodeObject<ForceDirectedGraphNode>,
+					LinkObject<ForceDirectedGraphNode, ForceDirectedGraphLink>
+			  >
+			| undefined
+		>,
 	): TooltipData | null {
 		if (!node || typeof node.x !== 'number' || typeof node.y !== 'number' || !getNodeTooltip) {
 			return null;
@@ -124,7 +127,13 @@ export class InteractionUtils {
 		setHoverNodeId: (id: string | null) => void,
 		setTooltipData: (data: TooltipData | null) => void,
 		getNodeTooltip: ((node: ForceDirectedGraphNode) => TippyProps | null) | undefined,
-		forceGraphRef: React.RefObject<any>,
+		forceGraphRef: React.MutableRefObject<
+			| ForceGraphMethods<
+					NodeObject<ForceDirectedGraphNode>,
+					LinkObject<ForceDirectedGraphNode, ForceDirectedGraphLink>
+			  >
+			| undefined
+		>,
 	) {
 		const nodeId = node ? node.id : null;
 		setHoverNodeId(nodeId);
@@ -136,10 +145,7 @@ export class InteractionUtils {
 	/**
 	 * Handles hover state changes for links
 	 */
-	static handleLinkHover(
-		link: any,
-		setHoverLinkId: (id: string | null) => void,
-	) {
+	static handleLinkHover(link: ForceDirectedGraphLink | null, setHoverLinkId: (id: string | null) => void) {
 		setHoverLinkId(link?.id ?? null);
 	}
 
@@ -170,21 +176,14 @@ export class InteractionUtils {
 	/**
 	 * Determines if a node should be rendered in the current frame based on selection/hover state
 	 */
-	static shouldRenderNode(
-		nodeId: string,
-		selectedNodes: Set<string>,
-		hoverNodeId: string | null,
-	): boolean {
+	static shouldRenderNode(nodeId: string, selectedNodes: Set<string>, hoverNodeId: string | null): boolean {
 		return selectedNodes.has(nodeId) || nodeId === hoverNodeId;
 	}
 
 	/**
 	 * Handles keyboard interactions for the graph
 	 */
-	static handleKeyDown(
-		event: KeyboardEvent,
-		selectionState: NodeSelectionState,
-	) {
+	static handleKeyDown(event: KeyboardEvent, selectionState: NodeSelectionState) {
 		switch (event.key) {
 			case 'Escape':
 				// Clear selection on Escape

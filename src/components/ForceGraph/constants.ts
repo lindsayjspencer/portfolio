@@ -17,22 +17,22 @@ export const GRAPH_BOUNDS = {
 export const ZOOM_CONFIG = {
 	/** Duration for zoom-to-fit animations in milliseconds */
 	zoomToFitTime: 1000,
-	
+
 	/** How often to check and apply auto-zoom (fraction of zoomToFitTime) */
 	autoZoomInterval: 1000 / 3, // zoomToFitTime / 3
-	
+
 	/** Delay before disabling auto-zoom after graph changes */
 	autoZoomDisableDelay: 2000,
-	
+
 	/** Maximum zoom level (10x) */
 	maxZoom: 10,
-	
+
 	/** Base minimum zoom level for desktop */
 	baseMinZoom: 1.5,
-	
+
 	/** Mobile breakpoint width in pixels */
 	mobileBreakpoint: 768,
-	
+
 	/** Mobile minimum zoom multiplier (smaller = more zoomed out) */
 	mobileZoomFactor: 0.4,
 } as const;
@@ -44,12 +44,12 @@ export const ZOOM_CONFIG = {
 export const calculateResponsiveMinZoom = (width: number, height: number): number => {
 	// Use the smaller dimension to determine if we're on mobile
 	const smallerDimension = Math.min(width, height);
-	
+
 	if (smallerDimension < ZOOM_CONFIG.mobileBreakpoint) {
 		// Mobile: allow more zoom out
 		return ZOOM_CONFIG.baseMinZoom * ZOOM_CONFIG.mobileZoomFactor;
 	}
-	
+
 	// Desktop: use base minimum zoom
 	return ZOOM_CONFIG.baseMinZoom;
 };
@@ -70,8 +70,8 @@ export const DEFAULT_ZOOM_PADDING: ZoomPadding = {
  */
 export const FORCE_CONFIG = {
 	/** Collision detection radius for DAG mode */
-	collisionRadius: 20,
-	
+	collisionRadius: 40,
+
 	/** Simulation cooldown time in milliseconds */
 	cooldownTime: 3000,
 } as const;
@@ -85,13 +85,13 @@ export const RENDER_CONFIG = {
 		starCount: 1200,
 		color: 200, // RGB value (200, 200, 200)
 	},
-	
+
 	/** Link particle animation speeds */
 	particleSpeed: {
 		highlighted: 0.0015,
 		normal: 0.0001,
 	},
-	
+
 	/** Link width configurations */
 	linkWidth: {
 		hovered: 5,
@@ -109,7 +109,7 @@ export const UI_CONFIG = {
 		offset: [0, 24] as [number, number],
 		duration: [0, 0] as [number, number],
 	},
-	
+
 	/** Auto-zoom spinner size */
 	spinnerSize: 16,
 } as const;

@@ -4,6 +4,7 @@ import type {
 	ForceDirectedGraphLink,
 	ForceDirectedGraphData,
 	ExtendedNodeObject,
+	Bounds,
 } from './Common';
 import { ZOOM_CONFIG } from './constants';
 
@@ -124,12 +125,7 @@ export class ZoomUtils {
 	/**
 	 * Clamps coordinates within bounds with a margin to prevent edge snapping
 	 */
-	static clampWithMargin(
-		x: number,
-		y: number,
-		bounds: { minX: number; maxX: number; minY: number; maxY: number },
-		margin: number = 2,
-	) {
+	static clampWithMargin(x: number, y: number, bounds: Bounds, margin: number = 2) {
 		return {
 			x: Math.min(Math.max(x, bounds.minX + margin), bounds.maxX - margin),
 			y: Math.min(Math.max(y, bounds.minY + margin), bounds.maxY - margin),

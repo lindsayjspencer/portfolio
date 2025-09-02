@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { forceCollide } from 'd3-force-3d';
 import { ForceGraphView } from '~/components/ForceGraph/ForceGraphView';
-import { ProjectsView } from '~/components/ProjectsView/ProjectsView';
 import { ProjectsGridView } from '~/components/ProjectsView/ProjectsGridView';
 import { ProjectsCaseStudyView } from '~/components/ProjectsView/ProjectsCaseStudyView';
 import { SkillsView } from '~/components/SkillsView/SkillsView';
-import { SkillsMatrixView } from '~/components/SkillsView/SkillsMatrixView';
+import SkillsMatrixView from '~/components/SkillsMatrixView/SkillsMatrixView';
 import { ValuesView } from '~/components/ValuesView/ValuesView';
 import { ValuesEvidenceView } from '~/components/ValuesView/ValuesEvidenceView';
 import { CompareView } from '~/components/CompareView/CompareView';
@@ -20,6 +20,7 @@ import {
 import type { Graph } from '~/lib/PortfolioStore';
 import './ViewTransitionManager.scss';
 import type { Directive } from '~/lib/ai/directiveTools';
+import { FORCE_CONFIG } from '../ForceGraph/constants';
 
 interface ViewTransitionManagerProps {
 	directive: Directive;
@@ -202,6 +203,12 @@ export function ViewTransitionManager({ directive, graph }: ViewTransitionManage
 								dagLevelDistance={100}
 								warmupTicks={80}
 								cooldownTime={2000}
+								onCollisionForceSetup={(forceGraphRef) => {
+									// Custom collision setup with full access to force graph ref
+									if (forceGraphRef) {
+										forceGraphRef.d3Force('collision', forceCollide(FORCE_CONFIG.collisionRadius));
+									}
+								}}
 								{...commonProps}
 							/>
 						);
@@ -214,7 +221,6 @@ export function ViewTransitionManager({ directive, graph }: ViewTransitionManage
 			case 'skills':
 				switch (dataSnapshot.variant) {
 					case 'clusters':
-						// TODO: Create SkillsClustersView component
 						return (
 							<ForceGraphView
 								key={instance.key}
@@ -223,7 +229,17 @@ export function ViewTransitionManager({ directive, graph }: ViewTransitionManage
 							/>
 						);
 					case 'matrix':
-						return <SkillsMatrixView key={instance.key} {...commonProps} />;
+						return (
+							<SkillsMatrixView
+								key={instance.key}
+								matrix={dataSnapshot.matrix}
+								highlights={dataSnapshot.directive.data.highlights}
+								background="gradient-neutral"
+								// Available options: 'none', 'gradient-neutral', 'gradient-colored', 'gradient-fade',
+								// 'pattern-dots', 'pattern-grid', 'pattern-diagonal', 'pattern-noise', 'floating-icons'
+								{...commonProps}
+							/>
+						);
 				}
 				break;
 

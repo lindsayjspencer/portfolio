@@ -42,3 +42,6 @@ export const isExtendedNodeObject = (node: NodeObject<ForceDirectedGraphNode>): 
 		typeof (node as ExtendedNodeObject).backgroundDimensions?.height === 'number'
 	);
 };
+
+// Shared geometry types
+export type Bounds = { minX: number; maxX: number; minY: number; maxY: number };

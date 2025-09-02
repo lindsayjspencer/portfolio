@@ -8,17 +8,16 @@ import { getAdditionOrder, getRemovalOrder } from '~/lib/NodeAnimationLayers';
 import { useMutableGraphData } from './UseMutableGraphData';
 import type { TransitionCallbacks, TransitionPhase } from '~/lib/ViewTransitions';
 import dynamic from 'next/dynamic';
+import type { ForceDirectedGraphProps } from './ForceDirectedGraph';
 
 const ForceDirectedGraph = dynamic(() => import('./ForceDirectedGraph'), {
 	ssr: false,
 });
 
-interface EnhancedForceGraphProps {
+interface EnhancedForceGraphProps extends Omit<ForceDirectedGraphProps, 'nodeData'> {
 	graphData: ForceDirectedGraphData;
 	transitionPhase?: TransitionPhase;
 	onRegisterCallbacks?: (callbacks: TransitionCallbacks) => void;
-	// Pass through any additional props to ForceDirectedGraph
-	[key: string]: any;
 }
 
 export function ForceGraphView({

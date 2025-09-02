@@ -97,7 +97,7 @@ interface EnhancedAskResult {
 	responseType: 'directive' | 'clarify' | 'narration';
 }
 
-export async function Ask(messages: ModelMessage[], currentDirective: any | null): Promise<EnhancedAskResult> {
+export async function Ask(messages: ModelMessage[], currentDirective: Directive | null): Promise<EnhancedAskResult> {
 	const portfolioContext = formatPortfolioAsMarkdown();
 
 	const SYSTEM_PROMPT = `You are an AI assistant for Lindsay Spencer's interactive portfolio. Your job is to help users explore their background through a dynamic graph visualization.

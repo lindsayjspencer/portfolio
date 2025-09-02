@@ -1,11 +1,37 @@
 'use client';
 
 import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react';
+import type { Bounds } from './Common';
 
 type GL = WebGLRenderingContext;
 
+type StarLocations = {
+	u_matrix: WebGLUniformLocation | null;
+	u_resolution: WebGLUniformLocation | null;
+	u_time: WebGLUniformLocation | null;
+	u_color: WebGLUniformLocation | null;
+	u_bounds_min: WebGLUniformLocation | null;
+	u_bounds_max: WebGLUniformLocation | null;
+	u_globalAlpha: WebGLUniformLocation | null;
+	a_position: number;
+	a_size: number;
+	a_alpha: number;
+	a_velocity: number;
+};
+
+type LinkLocations = {
+	u_matrix: WebGLUniformLocation | null;
+	u_resolution: WebGLUniformLocation | null;
+	u_color: WebGLUniformLocation | null;
+	u_bounds_min: WebGLUniformLocation | null;
+	u_bounds_max: WebGLUniformLocation | null;
+	u_globalAlpha: WebGLUniformLocation | null;
+	a_position: number;
+	a_alpha: number;
+};
+
 interface Props {
-	bounds: { minX: number; maxX: number; minY: number; maxY: number };
+	bounds: Bounds;
 	starCount?: number;
 	color?: string; // "r,g,b"
 	linkDistance?: number; // screen px
@@ -206,8 +232,8 @@ export default function Starfield({
 	/* programs + locations */
 	const starProgRef = useRef<WebGLProgram | null>(null);
 	const linkProgRef = useRef<WebGLProgram | null>(null);
-	const starLocRef = useRef<any>(null);
-	const linkLocRef = useRef<any>(null);
+	const starLocRef = useRef<StarLocations | null>(null);
+	const linkLocRef = useRef<LinkLocations | null>(null);
 
 	/* static star VBOs */
 	const starPosBuf = useRef<WebGLBuffer | null>(null);
@@ -220,14 +246,9 @@ export default function Starfield({
 	const linkVertCountRef = useRef(0);
 
 	/* VAOs (if available) */
-	type VAOExt = {
-		createVertexArrayOES: () => any;
-		bindVertexArrayOES: (vao: any) => void;
-		deleteVertexArrayOES: (vao: any) => void;
-	};
-	const vaoExtRef = useRef<VAOExt | null>(null);
-	const starVaoRef = useRef<any>(null);
-	const linkVaoRef = useRef<any>(null);
+	const vaoExtRef = useRef<OES_vertex_array_object | null>(null);
+	const starVaoRef = useRef<WebGLVertexArrayObjectOES | null>(null);
+	const linkVaoRef = useRef<WebGLVertexArrayObjectOES | null>(null);
 
 	/* CPU arrays */
 	const positionsRef = useRef<Float32Array | null>(null);
@@ -597,7 +618,7 @@ export default function Starfield({
 			}
 
 			/* stars */
-			const starLoc = starLocRef.current;
+			const starLoc = starLocRef.current!;
 			gl.useProgram(starProg);
 			const { minX, minY, maxX, maxY } = expandedBounds; // keep same bounds as links
 			gl.uniformMatrix3fv(starLoc.u_matrix, false, mPar);
@@ -647,7 +668,7 @@ export default function Starfield({
 		}
 		glRef.current = gl;
 
-		vaoExtRef.current = gl.getExtension('OES_vertex_array_object') as any;
+		vaoExtRef.current = gl.getExtension('OES_vertex_array_object') as OES_vertex_array_object | null;
 
 		const starProg = createProgram(gl, STAR_VS, STAR_FS);
 		const linkProg = createProgram(gl, LINK_VS, LINK_FS);
@@ -707,7 +728,7 @@ export default function Starfield({
 		velocitiesRef.current = vel;
 
 		// static star buffers
-		const starLoc = starLocRef.current;
+		const starLoc = starLocRef.current!;
 		gl.useProgram(starProg);
 
 		starPosBuf.current = gl.createBuffer();

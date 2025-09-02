@@ -261,17 +261,3 @@ export function getFilteredForceGraphData(
 
 	return portfolioToForceGraph(filteredGraph, directive);
 }
-
-// Helper to update node emphasis based on highlights
-export function updateNodeEmphasis(data: ForceDirectedGraphData, highlights?: string[]): ForceDirectedGraphData {
-	if (!highlights || highlights.length === 0) {
-		return data;
-	}
-
-	const highlightSet = new Set(highlights);
-
-	// You could modify node properties here for emphasis
-	// For now, the highlighting is handled by the component itself
-
-	return data;
-}

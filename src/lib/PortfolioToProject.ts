@@ -332,10 +332,3 @@ function validateRadialDAG(data: ForceDirectedGraphData, expectedRootId: string)
 		throw new Error(`Radial DAG validation failed: cycle detected. Unprocessed nodes: [${unprocessed.join(', ')}]`);
 	}
 }
-
-/**
- * Utility function to filter nodes by type (reused from ViewTransitions)
- */
-export function filterNodesByType<T extends { type: string }>(nodes: { type: string }[], type: T['type']): T[] {
-	return nodes.filter((node) => node.type === type) as T[];
-}

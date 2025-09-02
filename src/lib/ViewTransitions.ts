@@ -5,10 +5,10 @@ import {
 	toProjectCard,
 	buildCaseStudyViewModel,
 	portfolioToRadialProjects,
-	filterNodesByType,
 	type ProjectCard,
 	type CaseStudyViewModel,
 } from './PortfolioToProject';
+import { createSkillClusters, createSkillMatrix, skillsToForceGraph } from './PortfolioToSkills';
 import type {
 	Directive,
 	TimelineDirective,
@@ -26,11 +26,22 @@ export type TransitionPhase = 'entering' | 'stable' | 'exiting';
 // ===== Data Processing Utility Types =====
 
 export interface SkillCluster {
-	// TODO: Implement skill cluster structure
+	id: string; // stable key, e.g. domain name or "cluster-1"
+	label: string; // display label
+	skillIds: string[]; // member skills
+	centroid?: { x: number; y: number }; // computed later (renderer)
+	score?: number; // optional aggregate (usage/recency)
+	color?: string; // renderer tint
 }
 
 export interface SkillMatrix {
-	// TODO: Implement skill matrix structure
+	rows: { id: string; label: string; level?: 'expert' | 'advanced' | 'intermediate' }[]; // skills
+	cols: { id: string; label: string; yearEnd?: number }[]; // projects
+	values: number[][]; // rows × cols
+	rowTotals?: number[]; // sum per skill
+	colTotals?: number[]; // sum per project
+	rowOrder?: number[]; // optional permutation for clustered ordering
+	colOrder?: number[];
 }
 
 export interface ValueEvidence {
@@ -242,16 +253,6 @@ export const COMPONENT_TRANSITION_TIMINGS = {
 
 // ===== Data Processing Utility Functions =====
 
-function createSkillClusters(graph: Graph, data: SkillsDirective): SkillCluster[] {
-	// TODO: Implement skill clustering logic
-	return [];
-}
-
-function createSkillMatrix(graph: Graph, data: SkillsDirective): SkillMatrix {
-	// TODO: Implement skill matrix logic
-	return {};
-}
-
 function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence[] {
 	// TODO: Implement value evidence processing
 	return [];
@@ -315,15 +316,14 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 			const pinnedIds = new Set<string>(directive.data.pinned ?? []);
 
 			// Transform projects to enriched ProjectCards
-			const allProjects = allProjectNodes.map((project) =>
-				toProjectCard(project, graph, highlights, pinnedIds)
-			);
+			const allProjects = allProjectNodes.map((project) => toProjectCard(project, graph, highlights, pinnedIds));
 
 			// Sort projects: pinned → start date (newest first) → alphabetical
-			allProjects.sort((a, b) =>
-				(Number(b.isPinned) - Number(a.isPinned)) ||
-				((b.yearStart ?? 0) - (a.yearStart ?? 0)) ||
-				a.label.localeCompare(b.label)
+			allProjects.sort(
+				(a, b) =>
+					Number(b.isPinned) - Number(a.isPinned) ||
+					(b.yearStart ?? 0) - (a.yearStart ?? 0) ||
+					a.label.localeCompare(b.label),
 			);
 
 			const pinnedProjects = allProjects.filter((p) => p.isPinned);
@@ -356,7 +356,7 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						const fallback = allProjectNodes
 							.slice()
 							.sort((a, b) => (b.years?.[1] ?? 0) - (a.years?.[1] ?? 0))[0];
-						
+
 						return fromHighlights ?? fromPinned ?? fallback;
 					})();
 
@@ -391,7 +391,7 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						...baseData,
 						mode: 'skills',
 						variant: 'clusters',
-						forceGraphData: portfolioToForceGraph(graph, directive),
+						forceGraphData: skillsToForceGraph(graph, directive.data),
 						skills: filteredSkills,
 						clusters: createSkillClusters(graph, directive.data),
 						focusLevel: directive.data.focusLevel,
@@ -518,7 +518,18 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 			};
 
 		default:
-			// Fallback - should never reach here with proper typing
-			throw new Error(`Unknown directive mode: ${(directive as any).mode}`);
+			return assertNever(directive);
 	}
+}
+
+/**
+ * Utility function to filter nodes by type (reused from ViewTransitions)
+ */
+export function filterNodesByType<T extends { type: string }>(nodes: { type: string }[], type: T['type']): T[] {
+	return nodes.filter((node) => node.type === type) as T[];
+}
+
+function assertNever(x: never): never {
+	// Fallback - should never reach here with proper typing
+	throw new Error('Unknown directive mode');
 }

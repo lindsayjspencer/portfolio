@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import type { ForceGraphMethods, ForceGraphProps, LinkObject, NodeObject } from 'react-force-graph-2d';
-import { forceCollide } from 'd3-force-3d';
 import Store, { useStoreState } from 'react-granular-store';
 import Tippy, { type TippyProps } from '@tippyjs/react';
 import useInterval from '~/hooks/UseInterval';
@@ -32,8 +31,9 @@ import {
 	UI_CONFIG,
 	calculateResponsiveMinZoom,
 } from './constants';
+import { forceCollide } from 'd3-force-3d';
 
-interface ForceDirectedGraphProps
+export interface ForceDirectedGraphProps
 	extends ForceGraphProps<
 		NodeObject<ForceDirectedGraphNode>,
 		LinkObject<ForceDirectedGraphNode, ForceDirectedGraphLink>
@@ -43,13 +43,20 @@ interface ForceDirectedGraphProps
 	rootId?: string;
 	zoomPadding?: ZoomPadding;
 	getNodeTooltip?: (node: ForceDirectedGraphNode) => TippyProps | null;
+	onCollisionForceSetup?: (
+		forceGraphRef:
+			| ForceGraphMethods<
+					NodeObject<ForceDirectedGraphNode>,
+					LinkObject<ForceDirectedGraphNode, ForceDirectedGraphLink>
+			  >
+			| undefined,
+	) => void;
 	starfieldStartVisible?: boolean; // whether starfield should start visible (for stable state)
 	onStarfieldReady?: (fadeController: {
 		fadeIn: (duration: number) => void;
 		fadeOut: (duration: number) => void;
 		resetAlpha: (alpha: number) => void;
 	}) => void;
-	ringLabels?: Array<{ radius: number; label: string; }>;
 }
 
 export class ForceDirectedGraphStore extends Store<{ selectedNodes: Set<string> }> {
@@ -75,9 +82,9 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 		dagMode,
 		zoomPadding,
 		getNodeTooltip,
+		onCollisionForceSetup,
 		starfieldStartVisible = false,
 		onStarfieldReady,
-		ringLabels,
 		...rest
 	} = props;
 
@@ -102,13 +109,13 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 		>();
 
 	useEffect(() => {
-		if (dagMode !== undefined) {
-			// add collision force
-			forceGraph.current?.d3Force('collision', forceCollide(FORCE_CONFIG.collisionRadius));
+		if (onCollisionForceSetup) {
+			// Let parent component handle collision force setup completely
+			onCollisionForceSetup(forceGraph.current);
 		} else {
-			forceGraph.current?.d3Force('collision', null);
+			forceGraph.current?.d3Force('collision', forceCollide(10));
 		}
-	}, [dagMode]);
+	}, [dagMode, onCollisionForceSetup]);
 
 	const [hoverNodeId, setHoverNodeId] = useState<string | null>(null);
 	const [hoverLinkId, setHoverLinkId] = useState<string | null>(null);
@@ -118,7 +125,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 	const fpsCounterRef = useRef<FpsCounterRef>(null);
 
 	const nodeRenderFunction = useMemo(() => {
-		const hasHighlights = graphData.nodes.some(node => node.isHighlighted);
+		const hasHighlights = graphData.nodes.some((node) => node.isHighlighted);
 		return LinkRenderUtils.getNodeRenderFunction(hoverNodeId, selectedNodes, themeColors, hasHighlights);
 	}, [hoverNodeId, selectedNodes, themeColors, graphData.nodes]);
 
@@ -194,7 +201,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 
 	// Update tooltip position when node is hovered
 	const updateTooltip = useCallback(
-		(node: NodeObject<NodeObject<ForceDirectedGraphNode>> | null) => {
+		(node: NodeObject<ForceDirectedGraphNode> | null) => {
 			const tooltipData = InteractionUtils.updateTooltip(node, getNodeTooltip, forceGraph);
 			setTooltipData(tooltipData);
 		},
@@ -280,46 +287,6 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 					const transform = ctx.getTransform();
 					if (webglRenderRef.current) {
 						webglRenderRef.current(transform);
-					}
-
-					// Draw ring labels for radial DAG mode
-					if (ringLabels && ringLabels.length > 0) {
-						ctx.save();
-						
-						// Set up ring label styling
-						const labelFontSize = Math.max(12, 16 / globalScale);
-						ctx.font = `${labelFontSize}px Inter, sans-serif`;
-						ctx.fillStyle = themeColors.neutral[500];
-						ctx.textAlign = 'center';
-						ctx.textBaseline = 'middle';
-						ctx.globalAlpha = 0.6;
-						
-						// Draw each ring label
-						for (const { radius, label } of ringLabels) {
-							// Position label at the top of each ring
-							const x = 0; // Center of graph
-							const y = -radius; // Top of ring
-							
-							// Add a subtle background for better readability
-							const textWidth = ctx.measureText(label).width;
-							const padding = 4;
-							
-							ctx.globalAlpha = 0.3;
-							ctx.fillStyle = themeColors.neutral[50];
-							ctx.fillRect(
-								x - textWidth / 2 - padding,
-								y - labelFontSize / 2 - padding,
-								textWidth + padding * 2,
-								labelFontSize + padding * 2
-							);
-							
-							// Draw the label text
-							ctx.globalAlpha = 0.7;
-							ctx.fillStyle = themeColors.neutral[600];
-							ctx.fillText(label, x, y);
-						}
-						
-						ctx.restore();
 					}
 				}}
 				onRenderFramePost={(ctx, globalScale) => {

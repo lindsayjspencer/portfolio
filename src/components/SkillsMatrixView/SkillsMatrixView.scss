@@ -1,0 +1,789 @@
+// Main Skills Matrix View - matching Projects grid structure
+.skills-matrix-view {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 3.5rem 2rem 10rem 2rem;
+	padding-bottom: calc(var(--chat-container-height) + 2rem) !important;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+
+	&__container {
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+
+	&__header {
+		margin-bottom: 2rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-end;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+
+	&__title-section {
+		flex: 1;
+	}
+
+	&__title {
+		font-size: 2.5rem;
+		font-weight: 700;
+		color: var(--color-neutral-900);
+		margin: 0 0 0.5rem 0;
+		line-height: 1.2;
+	}
+
+	&__subtitle {
+		font-size: 1rem;
+		color: var(--color-neutral-600);
+		margin: 0;
+		font-weight: 400;
+	}
+
+	&__legend {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		font-size: 0.875rem;
+		color: var(--color-neutral-600);
+	}
+
+	&__content {
+		background: var(--color-neutral-50);
+		border-radius: 12px;
+		border: 1px solid var(--color-neutral-200);
+		box-shadow:
+			0 1px 3px 0 rgba(0, 0, 0, 0.1),
+			0 1px 2px 0 rgba(0, 0, 0, 0.06);
+		overflow: hidden;
+		position: relative;
+
+		// Background options for the right side area
+		&::after {
+			content: '';
+			position: absolute;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			width: 100%;
+			z-index: 0;
+			pointer-events: none;
+		}
+
+		// Option 1: Gradient fills
+		&--gradient-neutral::after {
+			background: linear-gradient(
+				135deg,
+				rgba(248, 250, 252, 0) 0%,
+				rgba(241, 245, 249, 0.3) 30%,
+				rgba(226, 232, 240, 0.5) 70%,
+				rgba(203, 213, 225, 0.7) 100%
+			);
+		}
+
+		&--gradient-colored::after {
+			background: linear-gradient(
+				135deg,
+				rgba(var(--color-primary-50-rgb, 239, 246, 255), 0) 0%,
+				rgba(var(--color-primary-100-rgb, 219, 234, 254), 0.3) 30%,
+				rgba(var(--color-primary-200-rgb, 191, 219, 254), 0.5) 70%,
+				rgba(var(--color-primary-300-rgb, 147, 197, 253), 0.7) 100%
+			);
+		}
+
+		&--gradient-fade::after {
+			background: linear-gradient(
+				90deg,
+				rgba(248, 250, 252, 0.8) 0%,
+				rgba(241, 245, 249, 0.4) 40%,
+				rgba(226, 232, 240, 0.2) 70%,
+				rgba(226, 232, 240, 0) 100%
+			);
+		}
+
+		// Option 2: Subtle patterns/noise
+		&--pattern-dots::after {
+			background-image: radial-gradient(circle at 1px 1px, var(--color-primary-400) 1px, transparent 0);
+			background-size: 20px 20px;
+			opacity: 0.06;
+		}
+
+		&--pattern-grid::after {
+			background-image:
+				linear-gradient(var(--color-primary-500) 1px, transparent 1px),
+				linear-gradient(90deg, var(--color-primary-500) 1px, transparent 1px);
+			background-size: 24px 24px;
+			opacity: 0.05;
+		}
+
+		&--pattern-diagonal::after {
+			background-image: repeating-linear-gradient(
+				45deg,
+				transparent,
+				transparent 8px,
+				var(--color-primary-400) 8px,
+				var(--color-primary-400) 9px
+			);
+			opacity: 0.07;
+		}
+
+		&--pattern-noise::after {
+			background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+			opacity: 0.08;
+		}
+
+		// Option 3: Floating icons/glyphs
+		&--floating-icons {
+			&::after {
+				background: none;
+			}
+
+			.floating-icons {
+				position: absolute;
+				top: 0;
+				right: 0;
+				bottom: 0;
+				width: 50%;
+				overflow: hidden;
+				pointer-events: none;
+				z-index: 0;
+			}
+
+			.floating-icon {
+				position: absolute;
+				color: var(--color-primary-200);
+				font-size: 1.5rem;
+				opacity: 0.08;
+				animation: float 8s ease-in-out infinite;
+				font-family: 'JetBrains Mono', monospace;
+
+				&:nth-child(1) {
+					top: 15%;
+					left: 20%;
+					animation-delay: 0s;
+				}
+				&:nth-child(2) {
+					top: 45%;
+					left: 70%;
+					animation-delay: -2s;
+				}
+				&:nth-child(3) {
+					top: 75%;
+					left: 30%;
+					animation-delay: -4s;
+				}
+				&:nth-child(4) {
+					top: 25%;
+					left: 80%;
+					animation-delay: -1s;
+				}
+				&:nth-child(5) {
+					top: 65%;
+					left: 15%;
+					animation-delay: -3s;
+				}
+				&:nth-child(6) {
+					top: 35%;
+					left: 50%;
+					animation-delay: -5s;
+				}
+				&:nth-child(7) {
+					top: 85%;
+					left: 75%;
+					animation-delay: -2.5s;
+				}
+				&:nth-child(8) {
+					top: 10%;
+					left: 45%;
+					animation-delay: -4.5s;
+				}
+			}
+		}
+
+		// Instructional message for empty space
+		.empty-space-message {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			text-align: center;
+			color: var(--color-neutral-400);
+			pointer-events: none;
+			z-index: 0;
+			width: 200px;
+
+			.icon {
+				font-size: 2rem;
+				margin-bottom: 0.5rem;
+				opacity: 0.6;
+			}
+
+			.title {
+				font-size: 0.875rem;
+				font-weight: 600;
+				margin-bottom: 0.25rem;
+				color: var(--color-neutral-500);
+			}
+
+			.subtitle {
+				font-size: 0.75rem;
+				line-height: 1.3;
+				opacity: 0.8;
+			}
+		}
+	}
+
+	// Animation for floating icons
+	@keyframes float {
+		0%,
+		100% {
+			transform: translateY(0px) rotate(0deg);
+		}
+		25% {
+			transform: translateY(-8px) rotate(2deg);
+		}
+		50% {
+			transform: translateY(-4px) rotate(-1deg);
+		}
+		75% {
+			transform: translateY(-12px) rotate(1deg);
+		}
+	}
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.legend-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 3px;
+	display: inline-block;
+
+	&--match {
+		background: var(--color-primary-600);
+	}
+
+	&--empty {
+		background: var(--color-neutral-200);
+	}
+}
+
+// Skills Matrix Table - refined styling
+.skills-matrix-table {
+	--cell: 32px;
+	--gap: 1px;
+	--hdrH: 100px;
+	--rowHdrW: 200px;
+	--accent: var(--color-primary-600);
+	--empty: var(--color-neutral-50);
+	--grid: var(--color-neutral-200);
+	--row-hover: var(--color-neutral-100);
+	--col-hover: var(--color-primary-50);
+
+	width: 100%;
+	overflow: auto;
+	position: relative;
+	z-index: 1;
+}
+
+.skills-matrix-table table {
+	border-collapse: separate;
+	border-spacing: 0;
+	width: max-content;
+}
+
+.skills-matrix-table thead th {
+	position: sticky;
+	top: 0;
+	background: white;
+	z-index: 2;
+	height: var(--hdrH);
+	border-bottom: 2px solid var(--grid);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+	overflow: visible;
+}
+
+.skills-matrix-table .row-hdr-spacer {
+	position: sticky;
+	left: 0;
+	min-width: var(--rowHdrW);
+	width: var(--rowHdrW);
+	background: white;
+	z-index: 3;
+	border-right: 2px solid var(--grid);
+}
+
+.skills-matrix-table .row-hdr {
+	position: sticky;
+	left: 0;
+	max-width: var(--rowHdrW);
+	background: white;
+	text-align: right;
+	padding: 8px 16px 8px 12px;
+	font-weight: 600;
+	font-size: 0.875rem;
+	color: var(--color-neutral-900);
+	white-space: nowrap;
+	z-index: 1;
+	border-right: 2px solid var(--grid);
+	transition: background-color 0.15s ease;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+
+	&:hover {
+		background: var(--row-hover);
+	}
+
+	.skill-name {
+		flex: 1;
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+
+	.row-total {
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--color-neutral-500);
+		background: var(--color-neutral-100);
+		border-radius: 12px;
+		padding: 2px 6px;
+		min-width: 20px;
+		text-align: center;
+		flex-shrink: 0;
+	}
+
+	&.hl .row-total {
+		background: var(--color-primary-100);
+		color: var(--accent);
+	}
+}
+
+.skills-matrix-table .col-hdr {
+	min-width: var(--cell);
+	width: var(--cell);
+	text-align: center;
+	vertical-align: bottom;
+	color: var(--color-neutral-700);
+	padding: 8px 2px;
+	position: relative;
+	transition: background-color 0.15s ease;
+	overflow: visible; // Allow text to bleed out
+
+	// Base z-index - earlier columns (left) get higher z-index
+	&:nth-child(1) {
+		z-index: 100;
+	}
+	&:nth-child(2) {
+		z-index: 90;
+	}
+	&:nth-child(3) {
+		z-index: 80;
+	}
+	&:nth-child(4) {
+		z-index: 70;
+	}
+	&:nth-child(5) {
+		z-index: 60;
+	}
+	&:nth-child(6) {
+		z-index: 50;
+	}
+	&:nth-child(7) {
+		z-index: 40;
+	}
+	&:nth-child(8) {
+		z-index: 30;
+	}
+	&:nth-child(9) {
+		z-index: 20;
+	}
+	&:nth-child(n + 10) {
+		z-index: 10;
+	}
+
+	&.hl {
+		color: var(--accent);
+		font-weight: 600;
+		// Highlighted columns also maintain left-to-right priority
+		&:nth-child(1) {
+			z-index: 200;
+		}
+		&:nth-child(2) {
+			z-index: 190;
+		}
+		&:nth-child(3) {
+			z-index: 180;
+		}
+		&:nth-child(4) {
+			z-index: 170;
+		}
+		&:nth-child(5) {
+			z-index: 160;
+		}
+		&:nth-child(6) {
+			z-index: 150;
+		}
+		&:nth-child(7) {
+			z-index: 140;
+		}
+		&:nth-child(8) {
+			z-index: 130;
+		}
+		&:nth-child(9) {
+			z-index: 120;
+		}
+		&:nth-child(n + 10) {
+			z-index: 110;
+		}
+
+		.rot {
+			color: var(--accent);
+			font-weight: 600;
+		}
+	}
+}
+
+.skills-matrix-table .col-hdr .rot {
+	position: absolute;
+	bottom: 28px;
+	left: 50%;
+	text-align: left;
+	transform: rotate(-60deg);
+	transform-origin: left bottom;
+	white-space: nowrap;
+	font-weight: 500;
+	font-size: 0.7rem;
+	line-height: 1;
+	max-width: 80px; // Constrain to reasonable length
+	width: 80px; // Fixed width for clipping
+	text-overflow: ellipsis;
+	overflow: hidden; // Clip text that exceeds max-width
+	text-shadow:
+		0 0 2px white,
+		0 0 4px white; // Subtle outline for readability
+	background: linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3));
+	padding: 1px 2px;
+	border-radius: 2px;
+}
+
+.skills-matrix-table .col-hdr .col-total {
+	position: absolute;
+	bottom: 4px;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 0.6rem;
+	font-weight: 500;
+	color: var(--color-neutral-500);
+	background: var(--color-neutral-100);
+	border-radius: 8px;
+	padding: 1px 4px;
+	min-width: 14px;
+	text-align: center;
+}
+
+.skills-matrix-table .col-hdr.hl .col-total {
+	background: var(--color-primary-100);
+	color: var(--accent);
+}
+
+.skills-matrix-table td.cell {
+	width: var(--cell);
+	height: var(--cell);
+	border-right: var(--gap) solid var(--grid);
+	border-bottom: var(--gap) solid var(--grid);
+	background: var(--empty);
+	padding: 0;
+	cursor: default;
+	position: relative;
+	transition: background-color 0.15s ease;
+}
+
+.skills-matrix-table td.cell.empty {
+	background: var(--color-neutral-50);
+
+	&:hover {
+		background: var(--color-neutral-100);
+	}
+}
+
+.skills-matrix-table td.cell.match {
+	background: var(--color-primary-25, var(--color-primary-50));
+	cursor: pointer;
+
+	&:hover {
+		background: var(--color-primary-100);
+		transform: scale(1.05);
+		z-index: 1;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+}
+
+.skills-matrix-table td.cell .dot {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 8px;
+	height: 8px;
+	background: var(--accent);
+	border-radius: 50%;
+	transition: all 0.15s ease;
+}
+
+.skills-matrix-table td.cell.match:hover .dot {
+	width: 12px;
+	height: 12px;
+	background: var(--color-primary-700);
+}
+
+.skills-matrix-table .hl {
+	color: var(--accent);
+}
+
+// Emphasized cells (highlighted rows/columns)
+.skills-matrix-table .emph.match {
+	background: var(--color-primary-100);
+
+	.dot {
+		background: var(--color-primary-700);
+		width: 10px;
+		height: 10px;
+	}
+}
+
+// Tooltip styling to match ForceDirectedGraph
+.skills-matrix-tooltip {
+	.tippy-box {
+		background-color: rgba(0, 0, 0, 0.9);
+		border-radius: 0.5rem;
+		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+		color: white;
+		padding: 6px 8px;
+		font-size: 12px;
+		line-height: 1.2;
+	}
+
+	.tooltip-content {
+		text-align: left;
+
+		.skill-name {
+			font-weight: 600;
+			margin-bottom: 2px;
+		}
+
+		.project-name {
+			opacity: 0.8;
+		}
+	}
+}
+
+// Loading state
+.skills-matrix--loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
+	color: var(--color-neutral-600);
+	font-size: 14px;
+}
+
+// Empty state
+.skills-matrix--empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
+	color: var(--color-neutral-600);
+	text-align: center;
+
+	h3 {
+		margin: 0 0 8px 0;
+		font-size: 16px;
+		font-weight: 500;
+		color: var(--color-neutral-900);
+	}
+
+	p {
+		margin: 0;
+		font-size: 14px;
+	}
+}
+
+// Responsive Design - matching ProjectsGridView breakpoints
+@media (max-width: 768px) {
+	.skills-matrix-view {
+		padding: 4rem 1rem 6rem 1rem;
+		padding-bottom: calc(var(--chat-container-height) + 2rem);
+
+		&__container {
+			width: 100%;
+			max-width: 100%;
+			margin: 0;
+		}
+
+		&__title {
+			font-size: 2rem;
+		}
+
+		&__subtitle {
+			font-size: 0.875rem;
+		}
+
+		&__header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1.5rem;
+		}
+
+		&__legend {
+			align-self: flex-end;
+			font-size: 0.75rem;
+		}
+	}
+
+	.skills-matrix-table {
+		// Smaller cell size on tablets
+		--cell: 28px;
+		--rowHdrW: 160px;
+		--hdrH: 80px;
+
+		.col-hdr .rot {
+			font-size: 0.65rem;
+			max-width: 60px;
+			width: 60px;
+			bottom: 20px;
+		}
+
+		.row-hdr {
+			font-size: 0.8rem;
+			padding: 6px 12px 6px 8px;
+
+			.skill-name {
+				font-size: 0.8rem;
+			}
+
+			.row-total {
+				font-size: 0.65rem;
+				padding: 1px 4px;
+				min-width: 16px;
+			}
+		}
+
+		.col-total {
+			font-size: 0.55rem;
+			padding: 1px 3px;
+			min-width: 12px;
+		}
+	}
+}
+
+// Very small screens (mobile)
+@media (max-width: 480px) {
+	.skills-matrix-view {
+		padding: 3rem 0.75rem 6rem 0.75rem;
+
+		&__title {
+			font-size: 1.75rem;
+		}
+
+		&__subtitle {
+			font-size: 0.8rem;
+		}
+
+		&__header {
+			gap: 1rem;
+		}
+
+		&__legend {
+			font-size: 0.7rem;
+			gap: 1rem;
+		}
+	}
+
+	.skills-matrix-table {
+		// Even smaller on mobile
+		--cell: 24px;
+		--rowHdrW: 140px;
+		--hdrH: 70px;
+
+		.col-hdr .rot {
+			font-size: 0.6rem;
+			max-width: 50px;
+			width: 50px;
+			bottom: 16px;
+		}
+
+		.row-hdr {
+			font-size: 0.75rem;
+			padding: 4px 8px 4px 6px;
+
+			.skill-name {
+				font-size: 0.75rem;
+			}
+
+			.row-total {
+				font-size: 0.6rem;
+				padding: 1px 3px;
+				min-width: 14px;
+			}
+		}
+
+		.col-total {
+			font-size: 0.5rem;
+			padding: 1px 2px;
+			min-width: 10px;
+		}
+	}
+}
+
+// Large screens optimization
+@media (min-width: 1200px) {
+	.skills-matrix-view {
+		&__container {
+			max-width: 1400px;
+		}
+	}
+
+	.skills-matrix-table {
+		// Slightly larger cells on desktop
+		--cell: 36px;
+		--rowHdrW: 220px;
+		--hdrH: 110px;
+
+		.col-hdr .rot {
+			font-size: 0.75rem;
+			max-width: 90px;
+			width: 90px;
+			bottom: 30px;
+		}
+
+		.row-hdr {
+			padding: 10px 18px 10px 14px;
+
+			.row-total {
+				font-size: 0.75rem;
+				padding: 2px 7px;
+				min-width: 22px;
+			}
+		}
+
+		.col-total {
+			font-size: 0.65rem;
+			padding: 2px 5px;
+			min-width: 16px;
+		}
+	}
+}
