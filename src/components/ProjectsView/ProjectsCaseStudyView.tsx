@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import type { TransitionPhase, TransitionCallbacks, DataSnapshot } from '~/lib/ViewTransitions';
 import './ProjectsCaseStudyView.scss';
+import Tag from '~/components/Ui/Tag';
 
 interface ProjectsCaseStudyViewProps {
 	transitionPhase: TransitionPhase;
@@ -41,8 +42,10 @@ export function ProjectsCaseStudyView({
 					{caseStudy.tech && caseStudy.tech.length > 0 && (
 						<ul className="pcs-tech">
 							{caseStudy.tech.slice(0, 8).map((t) => (
-								<li key={t} className="pcs-chip">
-									{t}
+								<li key={t}>
+									<Tag tone="primary" variant="subtle" shape="rounded" size="md" bordered darker>
+										{t}
+									</Tag>
 								</li>
 							))}
 						</ul>

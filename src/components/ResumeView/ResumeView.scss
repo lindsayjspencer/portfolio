@@ -71,7 +71,7 @@
 		color: var(--primary);
 		border-bottom: 1px solid var(--color-neutral-200);
 		padding-bottom: 0.25rem;
-		
+
 		&:first-of-type {
 			margin-top: 0;
 		}
@@ -123,14 +123,6 @@
 		margin: 0.5rem 0 1rem 0;
 	}
 
-	.tag {
-		background: var(--color-neutral-200);
-		color: var(--color-neutral-800);
-		padding: 0.25rem 0.5rem;
-		border-radius: 0.25rem;
-		font-size: 0.8rem;
-	}
-
 	.value {
 		margin-bottom: 1rem;
 	}
@@ -160,25 +152,29 @@
 	// Hide UI/host chrome
 	.options-dropdown-container,
 	.chat-container,
-	.print-btn { display: none !important; }
+	.print-btn {
+		display: none !important;
+	}
 
 	* {
 		overflow: visible !important;
-		&::-webkit-scrollbar { display: none !important; }
+		&::-webkit-scrollbar {
+			display: none !important;
+		}
 	}
 
 	// Page setup: A4 for AU, minimal margins
 	@page {
-		size: A4;              // was "letter"
-		margin: 10mm;          // tighter than 0.5in
+		size: A4; // was "letter"
+		margin: 10mm; // tighter than 0.5in
 	}
 
 	.resume-view {
 		position: static !important;
 		background: #fff !important;
 		color: #000 !important;
-		font-size: 10.5pt !important;   // slightly smaller base
-		line-height: 1.35 !important;   // denser lines
+		font-size: 10.5pt !important; // slightly smaller base
+		line-height: 1.35 !important; // denser lines
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 
@@ -187,68 +183,92 @@
 			margin: 0 !important;
 			padding: 0 !important;
 			grid-template-columns: 2fr 1fr; // keep two columns to shorten height
-			gap: 1rem;                      // was 1.5rem
+			gap: 1rem; // was 1.5rem
 		}
 
 		header {
-			border-bottom: 1px solid #000;  // lighter rule
+			border-bottom: 1px solid #000; // lighter rule
 			padding-bottom: 0.4rem;
 			margin-bottom: 0.5rem;
 
 			h1 {
-				font-size: 18pt;            // was 20pt
+				font-size: 18pt; // was 20pt
 				margin: 0 0 0.1rem 0;
 				color: #000;
 			}
-			.meta { font-size: 9pt; color: #444; }
+			.meta {
+				font-size: 9pt;
+				color: #444;
+			}
 		}
 
 		h2 {
-			font-size: 11pt;               // was 12pt
+			font-size: 11pt; // was 12pt
 			color: #000;
 			border-bottom: 1px solid #ccc;
 			margin: 0.6rem 0 0.35rem 0;
 			padding-bottom: 0.15rem;
 		}
 
-		h3 { font-size: 9.5pt; page-break-inside: avoid; }
+		h3 {
+			font-size: 9.5pt;
+			page-break-inside: avoid;
+		}
 
-		.meta { font-size: 8.5pt; color: #555; }
+		.meta {
+			font-size: 8.5pt;
+			color: #555;
+		}
 
 		.role,
 		.project,
 		.value {
 			page-break-inside: avoid;
-			margin-bottom: 0.4rem;        // was 0.5–1rem
+			margin-bottom: 0.4rem; // was 0.5–1rem
 		}
 
 		ul {
 			margin: 0.15rem 0 0.35rem 0.9rem; // tighter lists
-			li { margin-bottom: 0.12rem; font-size: 9.5pt; }
+			li {
+				margin-bottom: 0.12rem;
+				font-size: 9.5pt;
+			}
 		}
 
-		.tag {
-			background: #f2f2f2;
-			color: #333;
-			border: 1px solid #ddd;
-			padding: 0.1rem 0.25rem;
-			font-size: 7.5pt;
+		// Ensure Tag components print crisply
+		.ui-tag {
+			background: #f2f2f2 !important;
+			color: #333 !important;
+			border: 1px solid #ddd !important;
+			padding: 0.1rem 0.25rem !important;
+			font-size: 7.5pt !important;
+			box-shadow: none !important;
 		}
 
-		.sidebar { font-size: 8.5pt; }
+		.sidebar {
+			font-size: 8.5pt;
+		}
 	}
 
 	/* Compact content rules (hide lower-priority bits to keep to 1 page) */
 	/* 1) Limit bullets per role to the strongest two points */
-	.resume-view main .role ul li:nth-child(n+3) { display: none; }
+	.resume-view main .role ul li:nth-child(n + 3) {
+		display: none;
+	}
 
 	/* 2) Show fewer projects (first 3) */
-	.resume-view main .project:nth-child(n+4) { display: none; }
+	.resume-view main .project:nth-child(n + 4) {
+		display: none;
+	}
 
 	/* 3) Trim Values (show first 3) */
-	.resume-view .sidebar .value:nth-child(n+4) { display: none; }
+	.resume-view .sidebar .value:nth-child(n + 4) {
+		display: none;
+	}
 
 	/* 4) Prevent awkward page breaks */
 	.resume-view main section,
-	.resume-view .sidebar section { break-inside: avoid; }
+	.resume-view .sidebar section {
+		break-inside: avoid;
+	}
 }

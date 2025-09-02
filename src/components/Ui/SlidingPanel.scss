@@ -214,20 +214,6 @@
 			display: flex;
 			flex-wrap: wrap;
 			gap: 0.25rem;
-
-			.tag {
-				display: inline-block;
-				padding: 0.25rem 0.5rem;
-				background-color: var(--color-accent-100, #e0f7fa);
-				color: var(--color-accent-700, #0e7490);
-				font-size: 0.75rem;
-				border-radius: 4px;
-				transition: all 0.2s ease-in-out;
-
-				&:hover {
-					background-color: var(--color-accent-200, #bae6fd);
-				}
-			}
 		}
 
 		.node-links {
@@ -328,7 +314,7 @@
 		}
 
 		.close-button,
-		.tag,
+		.ui-tag,
 		.link-item {
 			transition: none !important;
 		}

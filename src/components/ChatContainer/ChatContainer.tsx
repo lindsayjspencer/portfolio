@@ -139,7 +139,7 @@ export function ChatContainer({ landingMode, onSubmitSuccess }: ChatContainerPro
 
 		const resizeObserver = new ResizeObserver(updateChatHeight);
 		resizeObserver.observe(container);
-		
+
 		// Initial measurement
 		updateChatHeight();
 

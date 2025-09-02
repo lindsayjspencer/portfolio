@@ -1,0 +1,169 @@
+.ui-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	white-space: nowrap;
+	font-weight: 400;
+	line-height: 1;
+	user-select: none;
+	cursor: default;
+	transition: all 0.2s ease-in-out;
+
+	// Base sizes
+	&--size-sm {
+		font-size: 0.75rem;
+		padding: 0.25rem 0.5rem;
+	}
+	&--size-md {
+		font-size: 0.8125rem;
+		padding: 0.375rem 0.625rem;
+	}
+
+	// Shapes
+	&--shape-rounded {
+		border-radius: 4px;
+	}
+	&--shape-pill {
+		border-radius: 999px;
+	}
+
+	// Shape-specific padding to differentiate "rounded" from "pill"
+	&--shape-rounded {
+		&.ui-tag--size-sm {
+			padding: 0.2rem 0.45rem;
+		}
+		&.ui-tag--size-md {
+			padding: 0.3rem 0.55rem;
+		}
+	}
+	&--shape-pill {
+		&.ui-tag--size-sm {
+			padding: 0.28rem 0.65rem;
+		}
+		&.ui-tag--size-md {
+			padding: 0.4rem 0.8rem;
+		}
+	}
+
+	// Variants
+	// Subtle defaults to lighter (100/200); --darker switches to 200/300
+	&--variant-subtle {
+		background-color: var(--color-tag-bg-100);
+		color: var(--color-tag-700);
+		font-weight: 400;
+
+		&:hover {
+			background-color: var(--color-tag-bg-200);
+		}
+
+		&.ui-tag--darker {
+			background-color: var(--color-tag-bg-200);
+			&:hover {
+				background-color: var(--color-tag-bg-300);
+			}
+		}
+	}
+
+	&--variant-solid {
+		background-color: var(--color-tag-600);
+		color: #fff;
+		font-weight: 500;
+
+		&:hover {
+			filter: brightness(1.05);
+		}
+	}
+
+	&--variant-outline {
+		background-color: transparent;
+		color: var(--color-tag-700);
+		border: 1px solid var(--color-tag-bg-200);
+		font-weight: 500;
+
+		&:hover {
+			background-color: var(--color-tag-bg-50);
+		}
+	}
+
+	// Tones override CSS variables used above where appropriate
+	&--tone-accent {
+		--color-tag-bg-50: var(--color-accent-50, #f0f9ff);
+		--color-tag-bg-100: var(--color-accent-100, #e0f7fa);
+		--color-tag-bg-200: var(--color-accent-200, #bae6fd);
+		--color-tag-bg-300: var(--color-accent-300, #7dd3fc);
+		--color-tag-600: var(--color-accent-600, #0284c7);
+		--color-tag-700: var(--color-accent-700, #0369a1);
+	}
+	&--tone-primary {
+		--color-tag-bg-50: var(--color-primary-50, #eff6ff);
+		--color-tag-bg-100: var(--color-primary-100, #dbeafe);
+		--color-tag-bg-200: var(--color-primary-200, #bfdbfe);
+		--color-tag-bg-300: var(--color-primary-300, #9cbcfb);
+		--color-tag-600: var(--color-primary-600, #2563eb);
+		--color-tag-700: var(--color-primary-700, #1d4ed8);
+	}
+	&--tone-secondary {
+		--color-tag-bg-50: var(--color-secondary-50, #f5f9fb);
+		--color-tag-bg-100: var(--color-secondary-100, #ebf4f7);
+		--color-tag-bg-200: var(--color-secondary-200, #cee3eb);
+		--color-tag-bg-300: var(--color-secondary-300, #b0d2e0);
+		--color-tag-600: var(--color-secondary-600, #18728c);
+		--color-tag-700: var(--color-secondary-700, #1b5567);
+	}
+	&--tone-neutral {
+		--color-tag-bg-50: var(--color-neutral-50, #f9fafb);
+		--color-tag-bg-100: var(--color-neutral-100, #f3f4f6);
+		--color-tag-bg-200: var(--color-neutral-200, #e5e7eb);
+		--color-tag-bg-300: var(--color-neutral-300, #d1d5db);
+		--color-tag-600: var(--color-neutral-600, #4b5563);
+		--color-tag-700: var(--color-neutral-700, #374151);
+	}
+	&--tone-success {
+		--color-tag-bg-50: var(--color-success-50, #ecfdf5);
+		--color-tag-bg-100: var(--color-success-100, #dcfce7);
+		--color-tag-bg-200: var(--color-success-200, #bbf7d0);
+		--color-tag-bg-300: var(--color-success-300, #86efac);
+		--color-tag-600: var(--color-success-600, #16a34a);
+		--color-tag-700: var(--color-success-700, #15803d);
+	}
+	&--tone-warning {
+		--color-tag-bg-50: var(--color-warning-50, #fffbeb);
+		--color-tag-bg-100: var(--color-warning-100, #fef3c7);
+		--color-tag-bg-200: var(--color-warning-200, #fde68a);
+		--color-tag-bg-300: var(--color-warning-300, #facc15);
+		--color-tag-600: var(--color-warning-600, #d97706);
+		--color-tag-700: var(--color-warning-700, #b45309);
+	}
+	&--tone-danger {
+		--color-tag-bg-50: var(--color-danger-50, #fef2f2);
+		--color-tag-bg-100: var(--color-danger-100, #fee2e2);
+		--color-tag-bg-200: var(--color-danger-200, #fecaca);
+		--color-tag-bg-300: var(--color-danger-300, #fca5a5);
+		--color-tag-600: var(--color-danger-600, #dc2626);
+		--color-tag-700: var(--color-danger-700, #b91c1c);
+	}
+
+	// Variants pick up colors from the tone-specific CSS variables above
+
+	// Interactive states
+	&--selected {
+		outline: 0;
+		box-shadow: 0 0 0 2px var(--color-tag-bg-200) inset;
+	}
+	&--disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	// Optional border accent for non-outline variants
+	&--bordered:not(.ui-tag--variant-outline) {
+		border: 1px solid var(--color-tag-bg-200);
+	}
+
+	// Anchor and button resets (don't override variant background/border)
+	&:where(a),
+	&:where(button) {
+		text-decoration: none;
+		cursor: pointer;
+	}
+}

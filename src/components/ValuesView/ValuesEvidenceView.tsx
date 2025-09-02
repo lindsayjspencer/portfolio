@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import './ValuesEvidenceView.scss';
 import type { TransitionPhase, TransitionCallbacks, ValuesEvidenceSnapshot } from '~/lib/ViewTransitions';
 import { StreamingText } from '../Ui/StreamingText';
+import Tag from '~/components/Ui/Tag';
 
 interface ValuesEvidenceViewProps {
 	dataSnapshot: ValuesEvidenceSnapshot;
@@ -11,7 +12,11 @@ interface ValuesEvidenceViewProps {
 	onRegisterCallbacks?: (callbacks: TransitionCallbacks) => void;
 }
 
-export function ValuesEvidenceView({ dataSnapshot, transitionPhase = 'stable', onRegisterCallbacks }: ValuesEvidenceViewProps) {
+export function ValuesEvidenceView({
+	dataSnapshot,
+	transitionPhase = 'stable',
+	onRegisterCallbacks,
+}: ValuesEvidenceViewProps) {
 	const [contentOpacity, setContentOpacity] = useState(transitionPhase === 'stable' ? 1 : 0);
 	const [transitionDuration, setTransitionDuration] = useState(400);
 
@@ -113,8 +118,14 @@ export function ValuesEvidenceView({ dataSnapshot, transitionPhase = 'stable', o
 													{project.tags && project.tags.length > 0 && (
 														<StreamingText as="div" className="tags">
 															{project.tags.map((tag) => (
-																<StreamingText key={tag} as="span" className="tag">
-																	{tag}
+																<StreamingText key={tag} as="span">
+																	<Tag
+																		tone="primary"
+																		variant="subtle"
+																		shape="rounded"
+																	>
+																		{tag}
+																	</Tag>
 																</StreamingText>
 															))}
 														</StreamingText>

@@ -9,3 +9,4 @@ export {
 export { Spinner, type SpinnerProps } from './Spinner';
 export { LoadingOverlay, type LoadingOverlayProps } from './LoadingOverlay';
 export { IconPreloader, type IconPreloaderProps } from './IconPreloader';
+export { default as Tag } from './Tag';

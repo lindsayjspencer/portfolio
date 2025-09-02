@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { TransitionPhase, TransitionCallbacks } from '~/lib/ViewTransitions';
 import './ResumeView.scss';
 import { StreamingText } from '../Ui/StreamingText';
+import Tag from '~/components/Ui/Tag';
 
 interface ResumeViewProps {
 	transitionPhase?: TransitionPhase;
@@ -192,41 +193,65 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 					<StreamingText as="section">
 						<StreamingText as="h2">Skills</StreamingText>
 						<StreamingText as="div" className="skill-tags">
-							<StreamingText as="span" className="tag">
-								React
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									React
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								TypeScript
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									TypeScript
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								CSS
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									CSS
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								Three.js
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									Three.js
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								Node.js
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									Node.js
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								.NET
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									.NET
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								PHP
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									PHP
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								MySQL
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									MySQL
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								Postgres
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									Postgres
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								Docker
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									Docker
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								Linux
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									Linux
+								</Tag>
 							</StreamingText>
-							<StreamingText as="span" className="tag">
-								LLM Apps
+							<StreamingText as="span">
+								<Tag tone="primary" variant="subtle" shape="rounded">
+									LLM Apps
+								</Tag>
 							</StreamingText>
 						</StreamingText>
 					</StreamingText>

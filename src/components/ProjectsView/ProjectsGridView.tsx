@@ -3,6 +3,7 @@ import type { TransitionPhase, TransitionCallbacks, ProjectsGridSnapshot } from 
 import type { ProjectCard } from '~/lib/PortfolioToProject';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import './ProjectsGridView.scss';
+import Tag from '~/components/Ui/Tag';
 
 interface ProjectsGridViewProps {
 	dataSnapshot: ProjectsGridSnapshot;
@@ -18,13 +19,11 @@ interface ProjectCardComponentProps {
 function ProjectCardComponent({ project, onClick }: ProjectCardComponentProps) {
 	const formatPeriod = (project: ProjectCard) => {
 		if (project.yearStart && project.yearEnd) {
-			return project.yearEnd === new Date().getFullYear() 
-				? `${project.yearStart}–Present` 
+			return project.yearEnd === new Date().getFullYear()
+				? `${project.yearStart}–Present`
 				: `${project.yearStart}–${project.yearEnd}`;
 		}
-		return project.period 
-			? `${project.period.start}–${project.period.end}` 
-			: '—';
+		return project.period ? `${project.period.start}–${project.period.end}` : '—';
 	};
 
 	const formatDuration = (durationMonths?: number) => {
@@ -36,15 +35,13 @@ function ProjectCardComponent({ project, onClick }: ProjectCardComponentProps) {
 	};
 
 	return (
-		<div 
+		<div
 			className={`project-card ${project.isPinned ? 'project-card--pinned' : ''} ${project.isHighlighted ? 'project-card--highlighted' : ''}`}
 			onClick={() => onClick(project)}
 		>
 			<div className="project-card__header">
 				<h3 className="project-card__title">{project.label}</h3>
-				{project.isPinned && (
-					<div className="project-card__pin-badge">★</div>
-				)}
+				{project.isPinned && <div className="project-card__pin-badge">★</div>}
 			</div>
 
 			<div className="project-card__period">
@@ -57,21 +54,19 @@ function ProjectCardComponent({ project, onClick }: ProjectCardComponentProps) {
 				)}
 			</div>
 
-			{project.summary && (
-				<p className="project-card__summary">{project.summary}</p>
-			)}
+			{project.summary && <p className="project-card__summary">{project.summary}</p>}
 
 			{project.primaryTech.length > 0 && (
 				<div className="project-card__tech">
 					{project.primaryTech.slice(0, 4).map((tech, index) => (
-						<span key={index} className="project-card__tech-chip">
+						<Tag key={index} tone="primary" variant="subtle" shape="rounded" size="md">
 							{tech}
-						</span>
+						</Tag>
 					))}
 					{project.primaryTech.length > 4 && (
-						<span className="project-card__tech-chip project-card__tech-chip--more">
+						<Tag tone="neutral" variant="subtle" shape="rounded" size="md">
 							+{project.primaryTech.length - 4}
-						</span>
+						</Tag>
 					)}
 				</div>
 			)}
@@ -84,25 +79,26 @@ function ProjectCardComponent({ project, onClick }: ProjectCardComponentProps) {
 						</span>
 					)}
 					{project.impactScore && project.impactScore > 0 && (
-						<span className="project-card__stat">
-							Impact: {project.impactScore}
-						</span>
+						<span className="project-card__stat">Impact: {project.impactScore}</span>
 					)}
 				</div>
 
 				{project.links && project.links.length > 0 && (
 					<div className="project-card__links">
 						{project.links.slice(0, 2).map((link, index) => (
-							<a 
+							<Tag
 								key={index}
 								href={link.href}
-								className="project-card__link"
-								onClick={(e) => e.stopPropagation()}
+								tone="primary"
+								variant="subtle"
+								size="md"
+								shape="rounded"
 								target="_blank"
 								rel="noopener noreferrer"
+								onClick={(e) => e.stopPropagation()}
 							>
 								{link.title}
-							</a>
+							</Tag>
 						))}
 					</div>
 				)}
@@ -122,10 +118,10 @@ export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCall
 				if (containerRef.current) {
 					containerRef.current.style.opacity = '0';
 					containerRef.current.style.transform = 'translateY(20px)';
-					
+
 					// Trigger reflow
 					containerRef.current.offsetHeight;
-					
+
 					containerRef.current.style.transition = `opacity ${duration}ms ease-out, transform ${duration}ms ease-out`;
 					containerRef.current.style.opacity = '1';
 					containerRef.current.style.transform = 'translateY(0)';
@@ -158,10 +154,7 @@ export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCall
 	const { projects, pinnedProjects } = dataSnapshot;
 
 	return (
-		<div 
-			ref={containerRef} 
-			className={`projects-grid-view projects-grid-view--${transitionPhase}`}
-		>
+		<div ref={containerRef} className={`projects-grid-view projects-grid-view--${transitionPhase}`}>
 			<div className="projects-grid-view__container">
 				<div className="projects-grid-view__header">
 					<h1 className="projects-grid-view__title">Projects</h1>
@@ -172,27 +165,17 @@ export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCall
 						<h2 className="projects-grid-view__section-title">Featured Projects</h2>
 						<div className="projects-grid-view__grid projects-grid-view__grid--pinned">
 							{pinnedProjects.map((project: ProjectCard) => (
-								<ProjectCardComponent
-									key={project.id}
-									project={project}
-									onClick={handleProjectClick}
-								/>
+								<ProjectCardComponent key={project.id} project={project} onClick={handleProjectClick} />
 							))}
 						</div>
 					</div>
 				)}
 
 				<div className="projects-grid-view__main-section">
-					<h2 className="projects-grid-view__section-title">
-						All Projects ({projects.length})
-					</h2>
+					<h2 className="projects-grid-view__section-title">All Projects ({projects.length})</h2>
 					<div className="projects-grid-view__grid">
 						{projects.map((project: ProjectCard) => (
-							<ProjectCardComponent
-								key={project.id}
-								project={project}
-								onClick={handleProjectClick}
-							/>
+							<ProjectCardComponent key={project.id} project={project} onClick={handleProjectClick} />
 						))}
 					</div>
 				</div>
