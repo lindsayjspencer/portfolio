@@ -33,6 +33,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	const { setTheme } = useTheme();
 	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const inputRef = useRef<HTMLTextAreaElement>(null);
 
 	// narrative now comes from directive data; no component seeding needed
 
@@ -63,6 +64,15 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		}
 
 		setInput('');
+
+		// Ensure textarea resizes after programmatic value change
+		requestAnimationFrame(() => {
+			const el = inputRef.current;
+			if (el) {
+				el.style.height = 'auto';
+				el.style.height = el.scrollHeight + 'px';
+			}
+		});
 
 		await handleChatSubmit({
 			userMessage,
@@ -126,6 +136,11 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		}
 	}, [pendingClarify]);
 
+	// Autofocus textarea on mount
+	useEffect(() => {
+		inputRef.current?.focus();
+	}, []);
+
 	// Set up ResizeObserver to track chat container height
 	useEffect(() => {
 		const container = containerRef.current;
@@ -186,6 +201,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 
 				<div className="input-container">
 					<textarea
+						ref={inputRef}
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={handleKeyDown}
