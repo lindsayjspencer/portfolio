@@ -394,6 +394,16 @@ export class DrawingUtils {
 					resourceIndicatorIcon: 'calendar_today',
 				};
 			}
+			case 'tag': {
+				return {
+					...getColourSet({
+						primary: themeColors.neutral[400], // Gray - tags/metadata
+						secondary: themeColors.neutral[200],
+						light: themeColors.neutral[50],
+					}),
+					resourceIndicatorIcon: 'sell',
+				};
+			}
 
 			case 'story': {
 				return {

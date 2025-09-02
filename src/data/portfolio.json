@@ -1049,6 +1049,36 @@
 			"source": "proj_codebots_homepage_ai",
 			"target": "skill_typescript",
 			"rel": "used"
+		},
+		{
+			"id": "e50",
+			"source": "proj_codebots_homepage_ai",
+			"target": "value_innovation",
+			"rel": "evidence"
+		},
+		{
+			"id": "e51",
+			"source": "proj_codebots_modeler",
+			"target": "value_innovation",
+			"rel": "evidence"
+		},
+		{
+			"id": "e52",
+			"source": "proj_react_granular_store",
+			"target": "value_open_source",
+			"rel": "evidence"
+		},
+		{
+			"id": "e53",
+			"source": "proj_dep_graph_versions",
+			"target": "value_quality",
+			"rel": "evidence"
+		},
+		{
+			"id": "e54",
+			"source": "proj_goodwill_markets",
+			"target": "value_design_perf",
+			"rel": "evidence"
 		}
 	],
 	"meta": {

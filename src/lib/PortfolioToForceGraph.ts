@@ -6,11 +6,16 @@ import type {
 import { type Graph, type Node, type Edge } from '~/lib/PortfolioStore';
 import type { Directive } from './ai/directiveTools';
 
-export type SyntheticNode = TimelineNode;
+export type SyntheticNode = TimelineNode | TagNode;
 
 // Timeline-specific types
 type TimelineNode = Node & {
 	type: 'timeline-month';
+};
+
+// Tag-specific types
+type TagNode = Node & {
+	type: 'tag';
 };
 
 // Generate a reasonable value for link weight based on relationship
@@ -171,6 +176,83 @@ function transformToProjectsTimelineGraph(portfolio: Graph): Graph {
 	};
 }
 
+// Transform portfolio data to values mindmap view (person → values → evidence + tags)
+function transformToValuesMindmapGraph(portfolio: Graph, directive: Directive): Graph {
+	const me = portfolio.nodes.find((n) => n.type === 'person')!;
+	const values = portfolio.nodes.filter((n) => n.type === 'value');
+	const stories = portfolio.nodes.filter((n) => n.type === 'story');
+	const projects = portfolio.nodes.filter((n) => n.type === 'project');
+
+	const nodes: Node[] = [me, ...values];
+	const edges: Edge[] = [];
+	const tagNodes: TagNode[] = [];
+
+	// Add person → value edges
+	for (const value of values) {
+		edges.push({
+			id: `pv_${value.id}`,
+			source: me.id,
+			target: value.id,
+			rel: 'values',
+		});
+
+		// Create tag nodes from value tags and connect them to the value
+		if (value.tags && value.tags.length > 0) {
+			value.tags.forEach((tag, index) => {
+				const tagId = `tag_${value.id}_${tag}`;
+				const tagNode: TagNode = {
+					id: tagId,
+					type: 'tag',
+					label: tag,
+					summary: `Tag: ${tag}`,
+					tags: ['tag'],
+				};
+				
+				tagNodes.push(tagNode);
+				edges.push({
+					id: `vt_${value.id}_${index}`,
+					source: value.id,
+					target: tagId,
+					rel: 'evidence',
+				});
+			});
+		}
+	}
+
+	// Add tag nodes to the main nodes array
+	nodes.push(...tagNodes);
+
+	// Add evidence (roles/stories/projects) → value based on existing edges
+	const evidenceRels = new Set(['evidence', 'practiced', 'exemplifies', 'happened_during']);
+	for (const edge of portfolio.edges) {
+		if (!edge.rel || !edge.source || !edge.target) continue;
+		const sourceNode = portfolio.nodes.find((n) => n.id === edge.source);
+		const targetNode = portfolio.nodes.find((n) => n.id === edge.target);
+		if (!sourceNode || !targetNode) continue;
+
+		// Keep only (role|story|project)→value evidence edges
+		if (targetNode.type === 'value' && 
+			(sourceNode.type === 'role' || sourceNode.type === 'story' || sourceNode.type === 'project') && 
+			evidenceRels.has(edge.rel)) {
+			if (!nodes.some((n) => n.id === sourceNode.id)) {
+				nodes.push(sourceNode);
+			}
+			edges.push({
+				id: `ve_${edge.id}`,
+				source: targetNode.id, // value as source
+				target: sourceNode.id, // evidence as target
+				rel: 'evidence',
+			});
+		}
+	}
+
+	return {
+		nodes,
+		edges,
+		meta: portfolio.meta,
+	};
+}
+
 export function portfolioToForceGraph(portfolio: Graph, directive: Directive): ForceDirectedGraphData {
 	// Apply mode-specific transformations
 	let transformedGraph = portfolio;
@@ -184,6 +266,8 @@ export function portfolioToForceGraph(portfolio: Graph, directive: Directive): F
 		} else if (directive.data.variant === 'projects') {
 			transformedGraph = transformToProjectsTimelineGraph(portfolio);
 		}
+	} else if (directive.mode === 'values' && directive.data.variant === 'mindmap') {
+		transformedGraph = transformToValuesMindmapGraph(portfolio, directive);
 	}
 
 	// Create a map for quick node lookup
@@ -197,8 +281,8 @@ export function portfolioToForceGraph(portfolio: Graph, directive: Directive): F
 	const nodes: ForceDirectedGraphNode[] = transformedGraph.nodes.map((node) => ({
 		itemName: node.label,
 		...node,
-		// Mark timeline nodes as non-selectable
-		selectable: node.type === 'timeline-month' ? false : undefined,
+		// Mark timeline and tag nodes as non-selectable
+		selectable: (node.type === 'timeline-month' || node.type === 'tag') ? false : undefined,
 		// Mark nodes as highlighted if they're in the highlights array
 		isHighlighted: highlightSet.has(node.id),
 	}));

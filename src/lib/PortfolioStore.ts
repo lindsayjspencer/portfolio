@@ -18,7 +18,8 @@ export type NodeType =
 	| 'cert'
 	| 'award'
 	| 'talk'
-	| 'timeline-month';
+	| 'timeline-month'
+	| 'tag';
 
 export type SkillLevel = 'expert' | 'advanced' | 'intermediate';
 
@@ -142,6 +143,10 @@ export interface TimelineMonthNode extends BaseNode {
 	type: 'timeline-month';
 }
 
+export interface TagNode extends BaseNode {
+	type: 'tag';
+}
+
 // Discriminated union of all node types
 export type Node =
 	| PersonNode
@@ -155,7 +160,8 @@ export type Node =
 	| CertNode
 	| AwardNode
 	| TalkNode
-	| TimelineMonthNode;
+	| TimelineMonthNode
+	| TagNode;
 
 export type EdgeRel =
 	| 'worked_as' // person → role
@@ -165,6 +171,7 @@ export type EdgeRel =
 	| 'led' // person/role → project/team
 	| 'mentored' // person/role → value/story
 	| 'evidence' // role/person → value (supports a value)
+	| 'values' // person → value (person's core values)
 	| 'timeline' // story/milestone → person/year spine
 	| 'timeline-marker' // timeline marker → timeline marker
 	| 'happened_during' // story → role/project

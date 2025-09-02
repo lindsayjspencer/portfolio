@@ -3,11 +3,8 @@ import { forceCollide } from 'd3-force-3d';
 import { ForceGraphView } from '~/components/ForceGraph/ForceGraphView';
 import { ProjectsGridView } from '~/components/ProjectsView/ProjectsGridView';
 import { ProjectsCaseStudyView } from '~/components/ProjectsView/ProjectsCaseStudyView';
-import { SkillsView } from '~/components/SkillsView/SkillsView';
 import SkillsMatrixView from '~/components/SkillsMatrixView/SkillsMatrixView';
-import { ValuesView } from '~/components/ValuesView/ValuesView';
 import { ValuesEvidenceView } from '~/components/ValuesView/ValuesEvidenceView';
-import { CompareView } from '~/components/CompareView/CompareView';
 import { LandingView } from '~/components/LandingView/LandingView';
 import { ResumeView } from '~/components/ResumeView/ResumeView';
 import {
@@ -246,16 +243,49 @@ export function ViewTransitionManager({ directive, graph }: ViewTransitionManage
 			case 'values':
 				switch (dataSnapshot.variant) {
 					case 'mindmap':
-						// TODO: Create ValuesMindmapView component
 						return (
 							<ForceGraphView
 								key={instance.key}
 								graphData={dataSnapshot.forceGraphData}
+								warmupTicks={4}
+								onCollisionForceSetup={(forceGraphRef) => {
+									if (forceGraphRef) {
+										// Custom collision radii based on node type
+										forceGraphRef.d3Force(
+											'collision',
+											forceCollide().radius((n: any) => {
+												switch (n.type) {
+													case 'person':
+														return 30; // Person node (center) - largest
+													case 'value':
+														return 26; // Value nodes - large
+													case 'project':
+														return 20; // Project evidence - medium
+													case 'story':
+														return 18; // Story evidence - medium
+													case 'role':
+														return 18; // Role evidence - medium
+													case 'tag':
+														return 12; // Tag nodes - small
+													default:
+														return 14; // Default - small
+												}
+											}),
+										);
+										// Set up mild charge for organic layout
+										forceGraphRef.d3Force('charge')?.strength(-100);
+										// Set up link distances (person→value stronger, value→evidence softer)
+										forceGraphRef
+											.d3Force('link')
+											?.distance((l: any) => (l.rel === 'values' ? 110 : 80))
+											.strength((l: any) => (l.rel === 'values' ? 0.6 : 0.3));
+									}
+								}}
 								{...commonProps}
 							/>
 						);
 					case 'evidence':
-						return <ValuesEvidenceView key={instance.key} {...commonProps} />;
+						return <ValuesEvidenceView key={instance.key} dataSnapshot={dataSnapshot} {...commonProps} />;
 				}
 				break;
 

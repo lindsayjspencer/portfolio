@@ -45,7 +45,12 @@ export interface SkillMatrix {
 }
 
 export interface ValueEvidence {
-	// TODO: Implement value evidence structure
+	valueId: string;
+	valueLabel: string;
+	valueSummary?: string;
+	roles: RoleNode[];
+	projects: ProjectNode[];
+	stories: StoryNode[];
 }
 
 export interface ComparisonData {
@@ -132,7 +137,7 @@ interface SkillsMatrixSnapshot extends BaseDataSnapshot {
 type SkillsDataSnapshot = SkillsClustersSnapshot | SkillsMatrixSnapshot;
 
 // Values DataSnapshots
-interface ValuesMindmapSnapshot extends BaseDataSnapshot {
+export interface ValuesMindmapSnapshot extends BaseDataSnapshot {
 	mode: 'values';
 	variant: 'mindmap';
 	forceGraphData: ForceDirectedGraphData;
@@ -140,7 +145,7 @@ interface ValuesMindmapSnapshot extends BaseDataSnapshot {
 	emphasizeStories?: boolean;
 }
 
-interface ValuesEvidenceSnapshot extends BaseDataSnapshot {
+export interface ValuesEvidenceSnapshot extends BaseDataSnapshot {
 	mode: 'values';
 	variant: 'evidence';
 	values: ValueNode[];
@@ -254,8 +259,44 @@ export const COMPONENT_TRANSITION_TIMINGS = {
 // ===== Data Processing Utility Functions =====
 
 function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence[] {
-	// TODO: Implement value evidence processing
-	return [];
+	const values = filterNodesByType<ValueNode>(graph.nodes, 'value');
+	const allRoles = filterNodesByType<RoleNode>(graph.nodes, 'role');
+	const allProjects = filterNodesByType<ProjectNode>(graph.nodes, 'project');
+	const allStories = filterNodesByType<StoryNode>(graph.nodes, 'story');
+	
+	return values.map((value) => {
+		// Find edges that point TO this value with evidence relationship
+		const evidenceEdges = graph.edges.filter(
+			(edge) => edge.target === value.id && edge.rel === 'evidence'
+		);
+		
+		const roles: RoleNode[] = [];
+		const projects: ProjectNode[] = [];
+		const stories: StoryNode[] = [];
+		
+		// Categorize evidence by type
+		evidenceEdges.forEach((edge) => {
+			const sourceNode = graph.nodes.find((n) => n.id === edge.source);
+			if (!sourceNode) return;
+			
+			if (sourceNode.type === 'role') {
+				roles.push(sourceNode as RoleNode);
+			} else if (sourceNode.type === 'project') {
+				projects.push(sourceNode as ProjectNode);
+			} else if (sourceNode.type === 'story') {
+				stories.push(sourceNode as StoryNode);
+			}
+		});
+		
+		return {
+			valueId: value.id,
+			valueLabel: value.label,
+			valueSummary: value.summary,
+			roles,
+			projects,
+			stories,
+		};
+	});
 }
 
 function findNodeById<T extends Node>(graph: Graph, id: string, type: T['type']): T | null {

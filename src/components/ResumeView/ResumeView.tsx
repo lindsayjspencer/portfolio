@@ -13,13 +13,6 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 	const [transitionDuration, setTransitionDuration] = useState(400);
 
 	useEffect(() => {
-		console.log('Mount resume');
-		return () => {
-			console.log('Unmount resume');
-		};
-	}, []);
-
-	useEffect(() => {
 		if (onRegisterCallbacks) {
 			onRegisterCallbacks({
 				onTransitionIn: async (duration: number) => {
