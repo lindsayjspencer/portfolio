@@ -562,6 +562,71 @@ export class DrawingUtils {
 	};
 
 	/**
+	 * Compact mobile rendering: circle with centered icon (no text)
+	 * Applies to selectable nodes only; non-selectable should use normal rendering.
+	 */
+	static drawCompactIconNode = (
+		ctx: CanvasRenderingContext2D,
+		globalScale: number,
+		settings: CustomNodeSettings,
+		hasHighlights = false,
+	) => {
+		const { node, themeColors, isSelected } = settings;
+		const { x, y } = node;
+
+		// Determine theme/colors for node state
+		const calculatedTheme = DrawingUtils.getTheme(
+			node as ForceDirectedGraphNode,
+			themeColors,
+			node.isHighlighted,
+			hasHighlights,
+		);
+		const currentStyle = isSelected
+			? {
+					...calculatedTheme,
+					nodeBackground: calculatedTheme.selectedBackground,
+					nodeBorder: calculatedTheme.selectedBorder,
+					nodeLeftBorder: calculatedTheme.selectedLeftBorder,
+				}
+			: calculatedTheme;
+
+		// Dimensions
+		const dimensions = DrawingUtils.calculateNodeDimensions(globalScale, isSelected);
+		const radius = dimensions.scale(14); // base circle size
+		const outline = Math.max(dimensions.scale(isSelected ? 2 : 1.5), dimensions.scale(1));
+
+		// Shadow (selection/highlight)
+		DrawingUtils.applyShadow(ctx, isSelected, !!node.isHighlighted, currentStyle.selectedShadowColor);
+
+		// Draw filled circle background
+		ctx.beginPath();
+		ctx.arc(x, y, radius, 0, Math.PI * 2);
+		ctx.closePath();
+		ctx.fillStyle = currentStyle.nodeBackground;
+		ctx.fill();
+
+		// Border
+		DrawingUtils.clearShadow(ctx, isSelected, !!node.isHighlighted);
+		ctx.lineWidth = outline;
+		ctx.strokeStyle = currentStyle.nodeBorder;
+		ctx.stroke();
+
+		// Icon in center
+		const iconSize = dimensions.iconSize; // already scaled
+		DrawingUtils.drawMaterialIcon(
+			ctx,
+			x,
+			y,
+			iconSize,
+			currentStyle.resourceTypeIconColor,
+			calculatedTheme.resourceIndicatorIcon,
+		);
+
+		const diameter = radius * 2;
+		return { width: diameter, height: diameter };
+	};
+
+	/**
 	 * Draws a role-specific node with title and company
 	 */
 	private static drawRoleNode = (

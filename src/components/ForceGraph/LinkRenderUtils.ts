@@ -81,6 +81,7 @@ export class LinkRenderUtils {
 		selectedNodes: Set<string>,
 		themeColors: ReturnType<typeof useTheme>['themeColors'],
 		hasHighlights = false,
+		options?: { compactOnMobile?: boolean },
 	) {
 		return (
 			providedNode: NodeObject<ForceDirectedGraphNode>,
@@ -93,17 +94,31 @@ export class LinkRenderUtils {
 			const isHovered = node.id === hoverNodeId;
 			const isSelected = selectedNodes.has(node.id);
 
-			const { width, height } = DrawingUtils.drawCustomNode(
-				ctx,
-				globalScale,
-				{
-					node,
-					themeColors,
-					isHovered,
-					isSelected,
-				},
-				hasHighlights,
-			);
+			// Compact rendering: circle+icon only on mobile for selectable nodes
+			const useCompact = !!options?.compactOnMobile && node.selectable !== false;
+			const { width, height } = useCompact
+				? DrawingUtils.drawCompactIconNode(
+						ctx,
+						globalScale,
+						{
+							node,
+							themeColors,
+							isHovered,
+							isSelected,
+						},
+						hasHighlights,
+					)
+				: DrawingUtils.drawCustomNode(
+						ctx,
+						globalScale,
+						{
+							node,
+							themeColors,
+							isHovered,
+							isSelected,
+						},
+						hasHighlights,
+					);
 
 			node.backgroundDimensions = {
 				width,

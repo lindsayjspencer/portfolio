@@ -126,8 +126,15 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 
 	const nodeRenderFunction = useMemo(() => {
 		const hasHighlights = graphData.nodes.some((node) => node.isHighlighted);
-		return LinkRenderUtils.getNodeRenderFunction(hoverNodeId, selectedNodes, themeColors, hasHighlights);
-	}, [hoverNodeId, selectedNodes, themeColors, graphData.nodes]);
+		// Detect mobile compact mode by breakpoint
+		const graphWidth = width ?? (typeof window !== 'undefined' ? window.innerWidth : 800);
+		const graphHeight = height ?? (typeof window !== 'undefined' ? window.innerHeight : 600);
+		const smaller = Math.min(graphWidth, graphHeight);
+		const compactOnMobile = smaller < ZOOM_CONFIG.mobileBreakpoint;
+		return LinkRenderUtils.getNodeRenderFunction(hoverNodeId, selectedNodes, themeColors, hasHighlights, {
+			compactOnMobile,
+		});
+	}, [hoverNodeId, selectedNodes, themeColors, graphData.nodes, width, height]);
 
 	const linkParticleRenderFunction = useMemo(
 		() => LinkRenderUtils.getLinkParticleRenderFunction(themeColors),
