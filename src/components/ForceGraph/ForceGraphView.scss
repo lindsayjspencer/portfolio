@@ -34,6 +34,22 @@
 	}
 }
 
+// Overlay container for legends and other overlays
+.force-graph-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	pointer-events: none; // Allow interactions with the graph below
+	z-index: 10; // Ensure it appears above the graph
+	
+	// Child elements can opt back into pointer events if needed
+	* {
+		pointer-events: auto;
+	}
+}
+
 // Tooltip styling for force graph nodes
 .force-graph-tooltip {
 	max-width: 20rem;

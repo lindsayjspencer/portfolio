@@ -1,5 +1,6 @@
 import type { useTheme } from '~/contexts/theme-context';
-import type { ExtendedNodeObject, ForceDirectedGraphNode } from './Common';
+import type { ExtendedNodeObject, ForceDirectedGraphNode, AnchorNode } from './Common';
+import { isAnchorNode } from './Common';
 
 // Type definitions for drawing utilities
 interface GraphNodeThemeSet {
@@ -253,6 +254,25 @@ export class DrawingUtils {
 	}
 
 	/**
+	 * Draw centered text then restore default text rendering state
+	 */
+	static drawCenteredText(
+		ctx: CanvasRenderingContext2D,
+		x: number,
+		y: number,
+		text: string,
+		color: string,
+		font: string,
+	) {
+		ctx.fillStyle = color;
+		ctx.font = font;
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillText(text, x, y);
+		DrawingUtils.setupTextRendering(ctx);
+	}
+
+	/**
 	 * Gets the theme configuration for a specific node type
 	 */
 	static getTheme(
@@ -351,7 +371,7 @@ export class DrawingUtils {
 						skillIcon = 'auto_awesome';
 						break;
 				}
-				
+
 				return {
 					...getColourSet({
 						primary: themeColors.error[500], // Red - skills/expertise
@@ -427,6 +447,20 @@ export class DrawingUtils {
 				};
 			}
 
+			case 'anchor': {
+				// Get tint color from node if available, otherwise use neutral
+				const tintColor = isAnchorNode(node) && node.tint ? node.tint : themeColors.neutral[400];
+
+				return {
+					...getColourSet({
+						primary: tintColor,
+						secondary: tintColor,
+						light: tintColor + '20', // Add some transparency
+					}),
+					resourceIndicatorIcon: 'anchor',
+				};
+			}
+
 			default: {
 				return {
 					...getColourSet({
@@ -464,6 +498,11 @@ export class DrawingUtils {
 
 		// Get shared dimensions
 		const dimensions = DrawingUtils.calculateNodeDimensions(globalScale, isSelected);
+
+		// --- Handle anchor nodes with special rendering ---
+		if (isAnchorNode(node)) {
+			return DrawingUtils.drawAnchorNode(ctx, node, isSelected, currentStyle, calculatedTheme, dimensions);
+		}
 
 		// --- Handle single-line rendering for non-highlighted nodes when highlights exist OR when singleLine is set ---
 		if ((hasHighlights && !node.isHighlighted) || node.singleLine) {
@@ -642,7 +681,13 @@ export class DrawingUtils {
 		DrawingUtils.drawLeftBorder(ctx, layout, dimensions, currentStyle.nodeLeftBorder);
 
 		// Draw skill icon (from theme)
-		DrawingUtils.drawNodeIcon(ctx, layout, dimensions, currentStyle.resourceTypeIconColor, calculatedTheme.resourceIndicatorIcon);
+		DrawingUtils.drawNodeIcon(
+			ctx,
+			layout,
+			dimensions,
+			currentStyle.resourceTypeIconColor,
+			calculatedTheme.resourceIndicatorIcon,
+		);
 
 		// Draw skill-specific text
 		DrawingUtils.setupTextRendering(ctx);
@@ -753,5 +798,34 @@ export class DrawingUtils {
 			width: totalWidth,
 			height: height,
 		};
+	};
+
+	/**
+	 * Draws anchor nodes with special styling for compare views
+	 */
+	static drawAnchorNode = (
+		ctx: CanvasRenderingContext2D,
+		node: ExtendedNodeObject & AnchorNode & { radius?: number; tint?: string },
+		isSelected: boolean,
+		currentStyle: GraphNodeThemeSet,
+		calculatedTheme: GraphNodeThemeSet,
+		dimensions: NodeDimensions,
+	) => {
+		const { x, y } = node;
+
+		// Small solid dot; clamp any provided radius to keep small
+		const desired = node.radius !== undefined ? Math.min(node.radius, 10) : 6;
+		const radius = dimensions.scale(desired);
+
+		// Choose solid fill colour: prefer explicit tint else themed border colour
+		const fillColor = node.tint || currentStyle.nodeLeftBorder;
+
+		ctx.beginPath();
+		ctx.arc(x, y, radius, 0, 2 * Math.PI);
+		ctx.fillStyle = fillColor;
+		ctx.fill();
+
+		const diameter = radius * 2;
+		return { width: diameter, height: diameter };
 	};
 }

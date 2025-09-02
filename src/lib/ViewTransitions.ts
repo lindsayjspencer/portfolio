@@ -1,6 +1,11 @@
 import type { Graph, Node, ProjectNode, SkillNode, ValueNode, RoleNode, StoryNode, Metric } from './PortfolioStore';
 import type { ForceDirectedGraphData } from '~/components/ForceGraph/Common';
-import { portfolioToForceGraph } from './PortfolioToForceGraph';
+import {
+	portfolioToForceGraph,
+	portfolioToCompareSkillsGraph,
+	portfolioToCompareProjectsGraph,
+	portfolioToCompareFrontendVsBackendGraph,
+} from './PortfolioToForceGraph';
 import {
 	toProjectCard,
 	buildCaseStudyViewModel,
@@ -9,17 +14,7 @@ import {
 	type CaseStudyViewModel,
 } from './PortfolioToProject';
 import { createSkillClusters, createSkillMatrix, skillsToForceGraph } from './PortfolioToSkills';
-import type {
-	Directive,
-	TimelineDirective,
-	ProjectsDirective,
-	SkillsDirective,
-	ValuesDirective,
-	CompareDirective,
-	ExploreDirective,
-	LandingDirective,
-	ResumeDirective,
-} from './ai/directiveTools';
+import type { Directive, ValuesDirective } from './ai/directiveTools';
 
 export type TransitionPhase = 'entering' | 'stable' | 'exiting';
 
@@ -156,27 +151,30 @@ export interface ValuesEvidenceSnapshot extends BaseDataSnapshot {
 type ValuesDataSnapshot = ValuesMindmapSnapshot | ValuesEvidenceSnapshot;
 
 // Compare DataSnapshots
-interface CompareSkillsSnapshot extends BaseDataSnapshot {
+export interface CompareSkillsSnapshot extends BaseDataSnapshot {
 	mode: 'compare';
 	variant: 'skills';
+	forceGraphData: ForceDirectedGraphData;
 	leftSkill: SkillNode | null;
 	rightSkill: SkillNode | null;
 	overlap: SkillNode[];
 	showOverlap: boolean;
 }
 
-interface CompareProjectsSnapshot extends BaseDataSnapshot {
+export interface CompareProjectsSnapshot extends BaseDataSnapshot {
 	mode: 'compare';
 	variant: 'projects';
+	forceGraphData: ForceDirectedGraphData;
 	leftProject: ProjectNode | null;
 	rightProject: ProjectNode | null;
 	overlap: ProjectNode[];
 	showOverlap: boolean;
 }
 
-interface CompareFrontendVsBackendSnapshot extends BaseDataSnapshot {
+export interface CompareFrontendVsBackendSnapshot extends BaseDataSnapshot {
 	mode: 'compare';
 	variant: 'frontend-vs-backend';
+	forceGraphData: ForceDirectedGraphData;
 	frontendSkills: SkillNode[];
 	backendSkills: SkillNode[];
 	fullStackSkills: SkillNode[];
@@ -263,22 +261,20 @@ function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence
 	const allRoles = filterNodesByType<RoleNode>(graph.nodes, 'role');
 	const allProjects = filterNodesByType<ProjectNode>(graph.nodes, 'project');
 	const allStories = filterNodesByType<StoryNode>(graph.nodes, 'story');
-	
+
 	return values.map((value) => {
 		// Find edges that point TO this value with evidence relationship
-		const evidenceEdges = graph.edges.filter(
-			(edge) => edge.target === value.id && edge.rel === 'evidence'
-		);
-		
+		const evidenceEdges = graph.edges.filter((edge) => edge.target === value.id && edge.rel === 'evidence');
+
 		const roles: RoleNode[] = [];
 		const projects: ProjectNode[] = [];
 		const stories: StoryNode[] = [];
-		
+
 		// Categorize evidence by type
 		evidenceEdges.forEach((edge) => {
 			const sourceNode = graph.nodes.find((n) => n.id === edge.source);
 			if (!sourceNode) return;
-			
+
 			if (sourceNode.type === 'role') {
 				roles.push(sourceNode as RoleNode);
 			} else if (sourceNode.type === 'project') {
@@ -287,7 +283,7 @@ function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence
 				stories.push(sourceNode as StoryNode);
 			}
 		});
-		
+
 		return {
 			valueId: value.id,
 			valueLabel: value.label,
@@ -481,35 +477,76 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 				case 'skills': {
 					const leftSkill = findNodeById<SkillNode>(graph, directive.data.leftId, 'skill');
 					const rightSkill = findNodeById<SkillNode>(graph, directive.data.rightId, 'skill');
+					const forceGraphData = portfolioToCompareSkillsGraph(graph, directive.data);
+
+					// Calculate overlap - projects that use both skills
+					const usedEdges = graph.edges.filter((e) => e.rel === 'used');
+					const projectsUsingLeft = new Set(
+						usedEdges.filter((e) => e.target === directive.data.leftId).map((e) => e.source),
+					);
+					const projectsUsingRight = new Set(
+						usedEdges.filter((e) => e.target === directive.data.rightId).map((e) => e.source),
+					);
+					const overlapProjectIds = [...projectsUsingLeft].filter((id) => projectsUsingRight.has(id));
+					const overlap = graph.nodes.filter(
+						(n): n is SkillNode =>
+							n.type === 'skill' &&
+							overlapProjectIds.some((pid) =>
+								usedEdges.some((e) => e.source === pid && e.target === n.id),
+							),
+					);
+
 					return {
 						...baseData,
 						mode: 'compare',
 						variant: 'skills',
+						forceGraphData,
 						leftSkill,
 						rightSkill,
-						overlap: [], // TODO: Calculate skill overlap
+						overlap,
 						showOverlap: directive.data.showOverlap,
 					};
 				}
 				case 'projects': {
 					const leftProject = findNodeById<ProjectNode>(graph, directive.data.leftId, 'project');
 					const rightProject = findNodeById<ProjectNode>(graph, directive.data.rightId, 'project');
+					const forceGraphData = portfolioToCompareProjectsGraph(graph, directive.data);
+
+					// Calculate overlap - skills used by both projects
+					const usedEdges = graph.edges.filter((e) => e.rel === 'used');
+					const skillsInLeft = new Set(
+						usedEdges.filter((e) => e.source === directive.data.leftId).map((e) => e.target),
+					);
+					const skillsInRight = new Set(
+						usedEdges.filter((e) => e.source === directive.data.rightId).map((e) => e.target),
+					);
+					const overlapSkillIds = [...skillsInLeft].filter((id) => skillsInRight.has(id));
+					const overlap = graph.nodes.filter(
+						(n): n is ProjectNode =>
+							n.type === 'project' &&
+							overlapSkillIds.some((sid) => usedEdges.some((e) => e.source === n.id && e.target === sid)),
+					);
+
 					return {
 						...baseData,
 						mode: 'compare',
 						variant: 'projects',
+						forceGraphData,
 						leftProject,
 						rightProject,
-						overlap: [], // TODO: Calculate project overlap
+						overlap,
 						showOverlap: directive.data.showOverlap,
 					};
 				}
 				case 'frontend-vs-backend': {
 					const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
+					const forceGraphData = portfolioToCompareFrontendVsBackendGraph(graph, directive.data);
+
 					return {
 						...baseData,
 						mode: 'compare',
 						variant: 'frontend-vs-backend',
+						forceGraphData,
 						frontendSkills: allSkills.filter((s) => s.tags?.includes('frontend')),
 						backendSkills: allSkills.filter((s) => s.tags?.includes('backend')),
 						fullStackSkills: allSkills.filter(

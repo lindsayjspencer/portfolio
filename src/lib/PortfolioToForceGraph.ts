@@ -2,11 +2,72 @@ import type {
 	ForceDirectedGraphNode,
 	ForceDirectedGraphData,
 	ForceDirectedGraphLink,
+	AnchorNode,
 } from '~/components/ForceGraph/Common';
-import { type Graph, type Node, type Edge } from '~/lib/PortfolioStore';
-import type { Directive } from './ai/directiveTools';
+import { makeAnchor, linkToAnchor, connectAnchors } from '~/components/ForceGraph/Common';
+import { type Graph, type Node, type Edge, type SkillNode, type ProjectNode } from '~/lib/PortfolioStore';
+import type { Directive, CompareDirective } from './ai/directiveTools';
 
-export type SyntheticNode = TimelineNode | TagNode;
+// Utility to detect mobile layout and adjust anchor positions
+function isMobileLayout(): boolean {
+	if (typeof window === 'undefined') return false;
+	return window.innerWidth <= 768;
+}
+
+function getAnchorPositions(type: 'venn' | 'sideBySide' | 'spectrum'): {
+	left: { fx: number; fy: number };
+	right: { fx: number; fy: number };
+	center?: { fx: number; fy: number };
+} {
+	const isMobile = isMobileLayout();
+	
+	if (type === 'venn') {
+		if (isMobile) {
+			return {
+				left: { fx: 0, fy: -150 },
+				right: { fx: 0, fy: 150 },
+				center: { fx: 0, fy: 0 }
+			};
+		}
+		return {
+			left: { fx: -220, fy: 0 },
+			right: { fx: 220, fy: 0 },
+			center: { fx: 0, fy: 0 }
+		};
+	}
+	
+	if (type === 'sideBySide') {
+		if (isMobile) {
+			return {
+				left: { fx: 0, fy: -200 },
+				right: { fx: 0, fy: 200 }
+			};
+		}
+		return {
+			left: { fx: -220, fy: 0 },
+			right: { fx: 220, fy: 0 }
+		};
+	}
+	
+	if (type === 'spectrum') {
+		if (isMobile) {
+			return {
+				left: { fx: 0, fy: -180 },
+				right: { fx: 0, fy: 180 },
+				center: { fx: 0, fy: 0 }
+			};
+		}
+		return {
+			left: { fx: -240, fy: 0 },
+			right: { fx: 240, fy: 0 },
+			center: { fx: 0, fy: 0 }
+		};
+	}
+	
+	return { left: { fx: -220, fy: 0 }, right: { fx: 220, fy: 0 } };
+}
+
+export type SyntheticNode = TimelineNode | TagNode | AnchorNode;
 
 // Timeline-specific types
 type TimelineNode = Node & {
@@ -207,7 +268,7 @@ function transformToValuesMindmapGraph(portfolio: Graph, directive: Directive): 
 					summary: `Tag: ${tag}`,
 					tags: ['tag'],
 				};
-				
+
 				tagNodes.push(tagNode);
 				edges.push({
 					id: `vt_${value.id}_${index}`,
@@ -231,9 +292,11 @@ function transformToValuesMindmapGraph(portfolio: Graph, directive: Directive): 
 		if (!sourceNode || !targetNode) continue;
 
 		// Keep only (role|story|project)→value evidence edges
-		if (targetNode.type === 'value' && 
-			(sourceNode.type === 'role' || sourceNode.type === 'story' || sourceNode.type === 'project') && 
-			evidenceRels.has(edge.rel)) {
+		if (
+			targetNode.type === 'value' &&
+			(sourceNode.type === 'role' || sourceNode.type === 'story' || sourceNode.type === 'project') &&
+			evidenceRels.has(edge.rel)
+		) {
 			if (!nodes.some((n) => n.id === sourceNode.id)) {
 				nodes.push(sourceNode);
 			}
@@ -282,7 +345,7 @@ export function portfolioToForceGraph(portfolio: Graph, directive: Directive): F
 		itemName: node.label,
 		...node,
 		// Mark timeline and tag nodes as non-selectable
-		selectable: (node.type === 'timeline-month' || node.type === 'tag') ? false : undefined,
+		selectable: node.type === 'timeline-month' || node.type === 'tag' ? false : undefined,
 		// Mark nodes as highlighted if they're in the highlights array
 		isHighlighted: highlightSet.has(node.id),
 	}));
@@ -344,4 +407,261 @@ export function getFilteredForceGraphData(
 	};
 
 	return portfolioToForceGraph(filteredGraph, directive);
+}
+
+// Compare transform functions
+
+// Transform portfolio data to compare skills (Venn-style layout)
+export function portfolioToCompareSkillsGraph(portfolio: Graph, directive: CompareDirective): ForceDirectedGraphData {
+	const leftSkillId = directive.leftId;
+	const rightSkillId = directive.rightId;
+
+	const leftSkill = portfolio.nodes.find((n): n is SkillNode => n.id === leftSkillId && n.type === 'skill');
+	const rightSkill = portfolio.nodes.find((n): n is SkillNode => n.id === rightSkillId && n.type === 'skill');
+
+	if (!leftSkill || !rightSkill) {
+		return { nodes: [], links: [] };
+	}
+
+	// Create anchor nodes with responsive positioning
+	const positions = getAnchorPositions('venn');
+	const leftAnchor = makeAnchor('anchor_leftSkill', 'skill-left', leftSkill.label, {
+		...positions.left,
+		radius: 28,
+		tint: '#3b82f6',
+	});
+	const rightAnchor = makeAnchor('anchor_rightSkill', 'skill-right', rightSkill.label, {
+		...positions.right,
+		radius: 28,
+		tint: '#ef4444',
+	});
+	const overlapAnchor = makeAnchor('anchor_overlap', 'skill-overlap', 'Overlap', {
+		...positions.center!,
+		radius: 18,
+		tint: '#8b5cf6',
+	});
+
+	const nodes: ForceDirectedGraphNode[] = [
+		{ ...leftAnchor, itemName: leftAnchor.label, selectable: false, isHighlighted: false },
+		{ ...rightAnchor, itemName: rightAnchor.label, selectable: false, isHighlighted: false },
+		{ ...overlapAnchor, itemName: overlapAnchor.label, selectable: false, isHighlighted: false },
+	];
+	const links: ForceDirectedGraphLink[] = [];
+
+	// Add frame connection between anchors
+	links.push(connectAnchors(leftAnchor.id, rightAnchor.id, 'frame'));
+
+	// Find projects that use these skills
+	const projectNodes = portfolio.nodes.filter((n): n is ProjectNode => n.type === 'project');
+	const usedEdges = portfolio.edges.filter((e) => e.rel === 'used');
+
+	for (const project of projectNodes) {
+		const usesLeft = usedEdges.some((e) => e.source === project.id && e.target === leftSkillId);
+		const usesRight = usedEdges.some((e) => e.source === project.id && e.target === rightSkillId);
+
+		if (usesLeft && usesRight) {
+			// Project uses both skills - connect to both anchors and overlap
+			nodes.push({
+				...project,
+				itemName: project.label,
+				isHighlighted: directive.highlights?.includes(project.id) ?? false,
+			});
+			links.push(linkToAnchor(project.id, leftAnchor.id, 'both', 'overlap'));
+			links.push(linkToAnchor(project.id, rightAnchor.id, 'both', 'overlap'));
+			links.push(linkToAnchor(project.id, overlapAnchor.id, 'both2', 'overlap', 0.5));
+		} else if (usesLeft) {
+			// Project uses only left skill
+			nodes.push({
+				...project,
+				itemName: project.label,
+				isHighlighted: directive.highlights?.includes(project.id) ?? false,
+			});
+			links.push(linkToAnchor(project.id, leftAnchor.id, 'left'));
+		} else if (usesRight) {
+			// Project uses only right skill
+			nodes.push({
+				...project,
+				itemName: project.label,
+				isHighlighted: directive.highlights?.includes(project.id) ?? false,
+			});
+			links.push(linkToAnchor(project.id, rightAnchor.id, 'right'));
+		}
+	}
+
+	return { nodes, links };
+}
+
+// Transform portfolio data to compare projects (side-by-side layout)
+export function portfolioToCompareProjectsGraph(portfolio: Graph, directive: CompareDirective): ForceDirectedGraphData {
+	const leftProjectId = directive.leftId;
+	const rightProjectId = directive.rightId;
+
+	const leftProject = portfolio.nodes.find((n): n is ProjectNode => n.id === leftProjectId && n.type === 'project');
+	const rightProject = portfolio.nodes.find((n): n is ProjectNode => n.id === rightProjectId && n.type === 'project');
+
+	if (!leftProject || !rightProject) {
+		return { nodes: [], links: [] };
+	}
+
+	// Create anchor nodes with responsive positioning
+	const positions = getAnchorPositions('sideBySide');
+	const leftAnchor = makeAnchor('anchor_leftProject', 'project-left', leftProject.label, {
+		...positions.left,
+		radius: 30,
+		tint: '#3b82f6',
+	});
+	const rightAnchor = makeAnchor('anchor_rightProject', 'project-right', rightProject.label, {
+		...positions.right,
+		radius: 30,
+		tint: '#ef4444',
+	});
+
+	const nodes: ForceDirectedGraphNode[] = [
+		{ ...leftAnchor, itemName: leftAnchor.label, selectable: false, isHighlighted: false },
+		{ ...rightAnchor, itemName: rightAnchor.label, selectable: false, isHighlighted: false },
+	];
+	const links: ForceDirectedGraphLink[] = [];
+
+	// Add frame connection between anchors
+	links.push(connectAnchors(leftAnchor.id, rightAnchor.id, 'frame'));
+
+	// Find skills that are used by these projects
+	const skillNodes = portfolio.nodes.filter((n): n is SkillNode => n.type === 'skill');
+	const usedEdges = portfolio.edges.filter((e) => e.rel === 'used');
+
+	for (const skill of skillNodes) {
+		const skillInLeft = usedEdges.some((e) => e.source === leftProjectId && e.target === skill.id);
+		const skillInRight = usedEdges.some((e) => e.source === rightProjectId && e.target === skill.id);
+
+		if (skillInLeft && skillInRight) {
+			// Skill is used by both projects - connect to both anchors
+			nodes.push({
+				...skill,
+				itemName: skill.label,
+				isHighlighted: directive.highlights?.includes(skill.id) ?? false,
+			});
+			links.push(linkToAnchor(skill.id, leftAnchor.id, 'both', 'overlap'));
+			links.push(linkToAnchor(skill.id, rightAnchor.id, 'both', 'overlap'));
+		} else if (skillInLeft) {
+			// Skill is used only by left project
+			nodes.push({
+				...skill,
+				itemName: skill.label,
+				isHighlighted: directive.highlights?.includes(skill.id) ?? false,
+			});
+			links.push(linkToAnchor(skill.id, leftAnchor.id, 'left'));
+		} else if (skillInRight) {
+			// Skill is used only by right project
+			nodes.push({
+				...skill,
+				itemName: skill.label,
+				isHighlighted: directive.highlights?.includes(skill.id) ?? false,
+			});
+			links.push(linkToAnchor(skill.id, rightAnchor.id, 'right'));
+		}
+	}
+
+	return { nodes, links };
+}
+
+// Transform portfolio data to compare frontend vs backend (spectrum layout)
+export function portfolioToCompareFrontendVsBackendGraph(
+	portfolio: Graph,
+	directive: CompareDirective,
+): ForceDirectedGraphData {
+	// Create anchor nodes with responsive positioning
+	const positions = getAnchorPositions('spectrum');
+	const frontendAnchor = makeAnchor('axis_frontend', 'axis-frontend', 'Frontend', {
+		...positions.left,
+		radius: 28,
+		tint: '#10b981',
+	});
+	const backendAnchor = makeAnchor('axis_backend', 'axis-backend', 'Backend', {
+		...positions.right,
+		radius: 28,
+		tint: '#f59e0b',
+	});
+	const fullstackAnchor = makeAnchor('axis_fullstack', 'axis-fullstack', 'Full-stack', {
+		...positions.center!,
+		radius: 24,
+		tint: '#3b82f6',
+	});
+
+	const nodes: ForceDirectedGraphNode[] = [
+		{ ...frontendAnchor, itemName: frontendAnchor.label, selectable: false, isHighlighted: false },
+		{ ...backendAnchor, itemName: backendAnchor.label, selectable: false, isHighlighted: false },
+		{ ...fullstackAnchor, itemName: fullstackAnchor.label, selectable: false, isHighlighted: false },
+	];
+	const links: ForceDirectedGraphLink[] = [];
+
+	// Add frame connections between anchors
+	links.push(connectAnchors(frontendAnchor.id, fullstackAnchor.id, 'frame'));
+	links.push(connectAnchors(fullstackAnchor.id, backendAnchor.id, 'frame'));
+
+	// Find skills and categorize them
+	const skillNodes = portfolio.nodes.filter((n): n is SkillNode => n.type === 'skill');
+
+	for (const skill of skillNodes) {
+		const isFrontend = skill.tags?.includes('frontend');
+		const isBackend = skill.tags?.includes('backend');
+
+		if (isFrontend && isBackend) {
+			// Full-stack skill
+			nodes.push({
+				...skill,
+				itemName: skill.label,
+				isHighlighted: directive.highlights?.includes(skill.id) ?? false,
+			});
+			links.push(linkToAnchor(skill.id, fullstackAnchor.id, 'fs', 'overlap'));
+		} else if (isFrontend) {
+			// Frontend-only skill
+			nodes.push({
+				...skill,
+				itemName: skill.label,
+				isHighlighted: directive.highlights?.includes(skill.id) ?? false,
+			});
+			links.push(linkToAnchor(skill.id, frontendAnchor.id, 'fe'));
+		} else if (isBackend) {
+			// Backend-only skill
+			nodes.push({
+				...skill,
+				itemName: skill.label,
+				isHighlighted: directive.highlights?.includes(skill.id) ?? false,
+			});
+			links.push(linkToAnchor(skill.id, backendAnchor.id, 'be'));
+		}
+	}
+
+	// Optionally add projects that heavily use frontend/backend skills
+	const projectNodes = portfolio.nodes.filter((n): n is ProjectNode => n.type === 'project');
+	const usedEdges = portfolio.edges.filter((e) => e.rel === 'used');
+
+	for (const project of projectNodes) {
+		const projectSkills = usedEdges
+			.filter((e) => e.source === project.id)
+			.map((e) => skillNodes.find((s) => s.id === e.target))
+			.filter(Boolean) as SkillNode[];
+
+		const frontendCount = projectSkills.filter((s) => s.tags?.includes('frontend')).length;
+		const backendCount = projectSkills.filter((s) => s.tags?.includes('backend')).length;
+
+		// Only include projects with significant skill usage
+		if (frontendCount >= 2 || backendCount >= 2) {
+			nodes.push({
+				...project,
+				itemName: project.label,
+				isHighlighted: directive.highlights?.includes(project.id) ?? false,
+			});
+
+			if (frontendCount >= 2 && backendCount >= 2) {
+				links.push(linkToAnchor(project.id, fullstackAnchor.id, 'fs', 'evidence', 0.3));
+			} else if (frontendCount >= 2) {
+				links.push(linkToAnchor(project.id, frontendAnchor.id, 'fe', 'evidence', 0.3));
+			} else if (backendCount >= 2) {
+				links.push(linkToAnchor(project.id, backendAnchor.id, 'be', 'evidence', 0.3));
+			}
+		}
+	}
+
+	return { nodes, links };
 }

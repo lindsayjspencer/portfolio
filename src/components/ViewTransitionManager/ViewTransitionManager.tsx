@@ -16,12 +16,94 @@ import {
 } from '~/lib/ViewTransitions';
 import type { Graph } from '~/lib/PortfolioStore';
 import './ViewTransitionManager.scss';
+import './CompareLegends.scss';
 import type { Directive } from '~/lib/ai/directiveTools';
 import { FORCE_CONFIG } from '../ForceGraph/constants';
+import type {
+	CompareSkillsSnapshot,
+	CompareProjectsSnapshot,
+	CompareFrontendVsBackendSnapshot,
+} from '~/lib/ViewTransitions';
 
 interface ViewTransitionManagerProps {
 	directive: Directive;
 	graph: Graph;
+}
+
+// Inline legend components for compare views
+function CompareSkillsLegend({ dataSnapshot }: { dataSnapshot: CompareSkillsSnapshot }) {
+	return (
+		<div className="compare-legend compare-legend--skills">
+			<div className="compare-legend__container">
+				<h2 className="compare-legend__title">Skills Comparison</h2>
+				<div className="compare-legend__description">Comparing projects that use these skills</div>
+				<div className="compare-legend__items">
+					<div className="compare-legend__item compare-legend__item--left">
+						<div className="compare-legend__color" style={{ backgroundColor: '#3b82f6' }}></div>
+						<span>Left Skill</span>
+					</div>
+					<div className="compare-legend__item compare-legend__item--overlap">
+						<div className="compare-legend__color" style={{ backgroundColor: '#8b5cf6' }}></div>
+						<span>Overlap</span>
+					</div>
+					<div className="compare-legend__item compare-legend__item--right">
+						<div className="compare-legend__color" style={{ backgroundColor: '#ef4444' }}></div>
+						<span>Right Skill</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function CompareProjectsLegend({ dataSnapshot }: { dataSnapshot: CompareProjectsSnapshot }) {
+	return (
+		<div className="compare-legend compare-legend--projects">
+			<div className="compare-legend__container">
+				<h2 className="compare-legend__title">Projects Comparison</h2>
+				<div className="compare-legend__description">Comparing skills used by these projects</div>
+				<div className="compare-legend__items">
+					<div className="compare-legend__item compare-legend__item--left">
+						<div className="compare-legend__color" style={{ backgroundColor: '#3b82f6' }}></div>
+						<span>Left Project</span>
+					</div>
+					<div className="compare-legend__item compare-legend__item--shared">
+						<div className="compare-legend__color" style={{ backgroundColor: '#8b5cf6' }}></div>
+						<span>Shared Skills</span>
+					</div>
+					<div className="compare-legend__item compare-legend__item--right">
+						<div className="compare-legend__color" style={{ backgroundColor: '#ef4444' }}></div>
+						<span>Right Project</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function CompareFrontendVsBackendLegend({ dataSnapshot }: { dataSnapshot: CompareFrontendVsBackendSnapshot }) {
+	return (
+		<div className="compare-legend compare-legend--spectrum">
+			<div className="compare-legend__container">
+				<h2 className="compare-legend__title">Frontend vs Backend</h2>
+				<div className="compare-legend__description">Skills and projects across the development spectrum</div>
+				<div className="compare-legend__items">
+					<div className="compare-legend__item compare-legend__item--frontend">
+						<div className="compare-legend__color" style={{ backgroundColor: '#10b981' }}></div>
+						<span>Frontend</span>
+					</div>
+					<div className="compare-legend__item compare-legend__item--fullstack">
+						<div className="compare-legend__color" style={{ backgroundColor: '#3b82f6' }}></div>
+						<span>Full-stack</span>
+					</div>
+					<div className="compare-legend__item compare-legend__item--backend">
+						<div className="compare-legend__color" style={{ backgroundColor: '#f59e0b' }}></div>
+						<span>Backend</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export function ViewTransitionManager({ directive, graph }: ViewTransitionManagerProps) {
@@ -292,16 +374,33 @@ export function ViewTransitionManager({ directive, graph }: ViewTransitionManage
 			case 'compare':
 				switch (dataSnapshot.variant) {
 					case 'skills':
-						// TODO: Create CompareSkillsView component
-						return <LandingView key={instance.key} {...commonProps} />; // Placeholder
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								overlay={<CompareSkillsLegend dataSnapshot={dataSnapshot} />}
+								{...commonProps}
+							/>
+						);
 					case 'projects':
-						// TODO: Create CompareProjectsView component
-						return <LandingView key={instance.key} {...commonProps} />; // Placeholder
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								overlay={<CompareProjectsLegend dataSnapshot={dataSnapshot} />}
+								{...commonProps}
+							/>
+						);
 					case 'frontend-vs-backend':
-						// TODO: Create CompareFrontendVsBackendView component
-						return <LandingView key={instance.key} {...commonProps} />; // Placeholder
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								overlay={<CompareFrontendVsBackendLegend dataSnapshot={dataSnapshot} />}
+								{...commonProps}
+							/>
+						);
 				}
-				break;
 
 			case 'explore':
 				switch (dataSnapshot.variant) {

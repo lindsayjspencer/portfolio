@@ -1,0 +1,168 @@
+// Compare view legends
+.compare-legend {
+	position: absolute;
+	top: 3.5rem;
+	left: 2rem;
+	background: rgba(255, 255, 255, 0.95);
+	border: 1px solid var(--color-neutral-200);
+	border-radius: 12px;
+	padding: 1.5rem;
+	max-width: 320px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	backdrop-filter: blur(8px);
+	z-index: 20;
+	/* Prepare for motion */
+	opacity: 1;
+	transform: translateY(0);
+	will-change: opacity, transform;
+
+	&__container {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	&__title {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--color-neutral-900);
+		margin: 0;
+		line-height: 1.2;
+	}
+
+	&__description {
+		font-size: 0.875rem;
+		color: var(--color-neutral-600);
+		line-height: 1.4;
+		margin: 0;
+	}
+
+	&__items {
+		display: flex;
+		gap: 1.5rem;
+		flex-wrap: wrap;
+	}
+
+	&__item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--color-neutral-700);
+	}
+
+	&__color {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	// Responsive positioning
+	@media (max-width: 768px) {
+		top: 1.5rem;
+		left: 1.5rem;
+		right: 1.5rem;
+		max-width: none;
+		padding: 1.25rem;
+
+		&__title {
+			font-size: 1.25rem;
+		}
+
+		&__description {
+			font-size: 0.8125rem;
+		}
+
+		&__items {
+			gap: 1rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		top: 1rem;
+		left: 1rem;
+		right: 1rem;
+		padding: 1rem;
+
+		&__title {
+			font-size: 1.125rem;
+		}
+
+		&__description {
+			font-size: 0.75rem;
+			margin-bottom: 0.5rem;
+		}
+
+		&__items {
+			gap: 0.75rem;
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		&__item {
+			font-size: 0.75rem;
+		}
+	}
+}
+
+/* Phase-driven animations scoped to the ForceGraph overlay */
+.force-graph-overlay.is-entering .compare-legend {
+	opacity: 0;
+	transform: translateY(14px);
+	animation: compareLegendFadeUpIn 0.4s ease-out forwards;
+}
+
+.force-graph-overlay.is-stable .compare-legend {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.force-graph-overlay.is-exiting .compare-legend {
+	opacity: 1;
+	transform: translateY(0);
+	animation: compareLegendFadeOutUp 0.3s ease-in forwards;
+}
+
+@keyframes compareLegendFadeUpIn {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes compareLegendFadeOutUp {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+}
+
+/* Reduced motion: no animations, instant state */
+@media (prefers-reduced-motion: reduce) {
+	.force-graph-overlay.is-entering .compare-legend,
+	.force-graph-overlay.is-stable .compare-legend,
+	.force-graph-overlay.is-exiting .compare-legend {
+		animation: none !important;
+		transition: none !important;
+	}
+
+	.force-graph-overlay.is-entering .compare-legend {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	.force-graph-overlay.is-exiting .compare-legend {
+		opacity: 0;
+		transform: translateY(0);
+	}
+}

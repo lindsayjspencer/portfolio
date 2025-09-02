@@ -3,6 +3,9 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useTheme } from '~/contexts/theme-context';
 import './OptionsDropdown.scss';
 import type { Directive } from '~/lib/ai/directiveTools';
+import { usePortfolioStore } from '~/lib/PortfolioStore';
+import { filterNodesByType } from '~/lib/ViewTransitions';
+import type { SkillNode, ProjectNode } from '~/lib/PortfolioStore';
 
 interface TopNavBarProps {
 	currentDirective: Directive;
@@ -74,6 +77,21 @@ const MENU_OPTIONS: MenuOption[] = [
 
 export function OptionsDropdown({ currentDirective, onDirectiveChange, landingMode }: TopNavBarProps) {
 	const { themeName, availableThemes, setTheme } = useTheme();
+	const graph = usePortfolioStore((state) => state.graph);
+
+	function getTwoRandomIds<T extends { id: string }>(items: T[]): [string, string] {
+		if (!items || items.length === 0) return ['', ''];
+		if (items.length === 1) {
+			const only = items[0]!;
+			return [only.id, only.id];
+		}
+		const i1 = Math.floor(Math.random() * items.length);
+		let i2 = Math.floor(Math.random() * (items.length - 1));
+		if (i2 >= i1) i2 += 1; // ensure distinct
+		const a = items[i1]!;
+		const b = items[i2]!;
+		return [a.id, b.id];
+	}
 
 	const createDirective = (mode: string, variant?: string): Directive => {
 		// Helper function to create a proper directive based on mode and variant
@@ -136,13 +154,25 @@ export function OptionsDropdown({ currentDirective, onDirectiveChange, landingMo
 					},
 				} as Directive;
 			case 'compare': {
+				const finalVariant = (variant as 'skills' | 'projects' | 'frontend-vs-backend') || 'skills';
+				let leftId = '';
+				let rightId = '';
+
+				if (finalVariant === 'skills' && graph?.nodes) {
+					const skills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
+					[leftId, rightId] = getTwoRandomIds(skills);
+				} else if (finalVariant === 'projects' && graph?.nodes) {
+					const projects = filterNodesByType<ProjectNode>(graph.nodes, 'project');
+					[leftId, rightId] = getTwoRandomIds(projects);
+				}
+
 				return {
 					mode: 'compare',
 					data: {
-						leftId: '',
-						rightId: '',
+						leftId,
+						rightId,
 						showOverlap: true,
-						variant: (variant as 'skills' | 'projects' | 'frontend-vs-backend') || 'skills',
+						variant: finalVariant,
 						...base,
 					},
 				} as Directive;

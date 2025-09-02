@@ -18,12 +18,14 @@ interface EnhancedForceGraphProps extends Omit<ForceDirectedGraphProps, 'nodeDat
 	graphData: ForceDirectedGraphData;
 	transitionPhase?: TransitionPhase;
 	onRegisterCallbacks?: (callbacks: TransitionCallbacks) => void;
+	overlay?: React.ReactNode;
 }
 
 export function ForceGraphView({
 	graphData,
 	transitionPhase = 'stable',
 	onRegisterCallbacks,
+	overlay,
 	...additionalProps
 }: EnhancedForceGraphProps) {
 	const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
@@ -228,7 +230,11 @@ export function ForceGraphView({
 	}, [mutable, visibleNodes]);
 
 	return (
-		<div className={`enhanced-force-graph ${isActive ? 'active' : ''}`} ref={(node) => setContainerRef(node)}>
+		<div
+			className={`enhanced-force-graph ${isActive ? 'active' : ''} transition-phase-${transitionPhase} is-${transitionPhase}`}
+			data-transition-phase={transitionPhase}
+			ref={(node) => setContainerRef(node)}
+		>
 			<ForceDirectedGraph
 				nodeData={visibleGraphData}
 				width={rect?.width}
@@ -241,6 +247,14 @@ export function ForceGraphView({
 				starfieldStartVisible={transitionPhase !== 'entering'}
 				onStarfieldReady={onStarfieldReady}
 			/>
+			{overlay && (
+				<div
+					className={`force-graph-overlay transition-phase-${transitionPhase} is-${transitionPhase}`}
+					data-transition-phase={transitionPhase}
+				>
+					{overlay}
+				</div>
+			)}
 		</div>
 	);
 }
