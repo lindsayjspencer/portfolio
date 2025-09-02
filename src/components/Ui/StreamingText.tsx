@@ -25,7 +25,7 @@ interface StreamingTextProps {
 	ungarbleCjkScale?: number; // font-size scale for CJK characters (default: 0.85)
 	ungarblePerCharMs?: number; // ms per character for duration (overrides ungarbleDuration)
 	ungarbleLeftBias?: number; // left-to-right bias strength (0-1, default: 0.3)
-	[key: string]: any;
+	[key: string]: unknown;
 }
 
 /* ----- stable ids (no Date.now) ----- */
@@ -106,7 +106,12 @@ const createCharacterSpans = (text: string, cjkScale: number): React.ReactElemen
 /* ----- nested detection (handles memo/forwardRef) ----- */
 const STREAMING_MARKER = Symbol.for('app/StreamingText');
 function isStreamingTextElement(el: React.ReactElement): boolean {
-	const t: any = el.type;
+	const t = el.type as unknown as {
+		[STREAMING_MARKER]?: boolean;
+		type?: { [STREAMING_MARKER]?: boolean };
+		render?: { [STREAMING_MARKER]?: boolean };
+		displayName?: string;
+	};
 	return Boolean(
 		t?.[STREAMING_MARKER] ||
 			t?.type?.[STREAMING_MARKER] || // React.memo
@@ -263,7 +268,9 @@ export function StreamingText({
 				setIsWaitingForNested(true);
 				/* compose child's onComplete with parent advance */
 				const child = unit.component;
-				const childExisting = (child.props as any)?.onComplete as (() => void) | undefined;
+				const childExisting = (child.props as { onComplete?: () => void })?.onComplete as
+					| (() => void)
+					| undefined;
 				const composed = () => {
 					try {
 						childExisting?.();
@@ -430,7 +437,7 @@ export function StreamingText({
 					}
 				}, ungarbleInterval);
 
-				timersRef.current.push(ungarbleTimer as any);
+				timersRef.current.push(ungarbleTimer as unknown as number);
 			} else {
 				// Normal streaming execution
 				executeUnit(0);
@@ -483,7 +490,9 @@ export function StreamingText({
 
 				if (kind === 'n' && unit.type === 'nested_stream') {
 					const child = unit.component;
-					const childExisting = (child.props as any)?.onComplete as (() => void) | undefined;
+					const childExisting = (child.props as { onComplete?: () => void })?.onComplete as
+						| (() => void)
+						| undefined;
 					const composed = () => {
 						try {
 							childExisting?.();
@@ -510,20 +519,23 @@ export function StreamingText({
 	}, [computedPlan, executeUnit, schedule]);
 
 	// Memoize the element creation to ensure it updates when props change
-	const element = useMemo(
-		() => (
+	const element = useMemo(() => {
+		const incomingStyle = (elementProps as { style?: React.CSSProperties })?.style || {};
+		const monoStyle: React.CSSProperties =
+			isUngarbling && ungarbleMonospace
+				? {
+						fontFamily:
+							'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+						letterSpacing: '0.05em',
+					}
+				: {};
+		return (
 			<Element
 				{...elementProps}
 				className={className}
 				style={{
-					...((elementProps as any)?.style || {}),
-					...(isUngarbling && ungarbleMonospace
-						? {
-								fontFamily:
-									'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-								letterSpacing: '0.05em',
-							}
-						: {}),
+					...incomingStyle,
+					...monoStyle,
 				}}
 				data-streaming-text
 				data-streaming={isStreamingText || isWaitingForNested || isUngarbling}
@@ -534,25 +546,25 @@ export function StreamingText({
 					<React.Fragment key={item.key}>{item.content}</React.Fragment>
 				))}
 			</Element>
-		),
-		[
-			Element,
-			elementProps,
-			className,
-			isUngarbling,
-			ungarbleMonospace,
-			isStreamingText,
-			isWaitingForNested,
-			isComplete,
-			renderedContent,
-		],
-	);
+		);
+	}, [
+		Element,
+		elementProps,
+		className,
+		isUngarbling,
+		ungarbleMonospace,
+		isStreamingText,
+		isWaitingForNested,
+		isComplete,
+		renderedContent,
+	]);
 
 	return element;
 }
 
 /* mark component for wrapped detection */
-(StreamingText as any)[STREAMING_MARKER] = true;
+// mark component for wrapped detection
+(StreamingText as unknown as Record<string | symbol, unknown>)[STREAMING_MARKER] = true;
 StreamingText.displayName = 'StreamingText';
 
 export default StreamingText;

@@ -69,11 +69,13 @@
 		"zustand": "^5.0.8"
 	},
 	"devDependencies": {
+		"@testing-library/react": "^16.0.1",
 		"@types/eslint": "^8.56.12",
 		"@types/jstoxml": "^5.0.0",
 		"@types/node": "^20.19.11",
 		"@types/react": "^18.3.24",
 		"@types/react-dom": "^18.3.7",
+		"@types/testing-library__react": "^10.2.0",
 		"@types/turndown": "^5.0.5",
 		"@typescript-eslint/eslint-plugin": "^8.41.0",
 		"@typescript-eslint/parser": "^8.41.0",
@@ -82,6 +84,8 @@
 		"eslint": "^8.57.1",
 		"eslint-config-next": "^14.2.32",
 		"evalite": "^0.11.5",
+		"jsdom": "^26.1.0",
+		"lz-string": "^1.5.0",
 		"prettier": "^3.6.2",
 		"tsx": "^4.20.5",
 		"typescript": "^5.9.2",

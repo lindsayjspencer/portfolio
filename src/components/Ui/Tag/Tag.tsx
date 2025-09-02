@@ -61,8 +61,11 @@ export function Tag({
 	);
 
 	if (href) {
+		const onAnchorClick: React.MouseEventHandler<HTMLAnchorElement> | undefined = onClick
+			? (e) => onClick(e as unknown as React.MouseEvent<HTMLElement>)
+			: undefined;
 		return (
-			<a className={baseClass} href={href} target={target} rel={rel} onClick={onClick as any} title={title}>
+			<a className={baseClass} href={href} target={target} rel={rel} onClick={onAnchorClick} title={title}>
 				{children}
 			</a>
 		);

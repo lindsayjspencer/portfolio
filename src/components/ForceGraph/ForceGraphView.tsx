@@ -88,6 +88,7 @@ export function ForceGraphView({
 
 	// Animation functions
 	const animateNodesIn = async (duration: number) => {
+		console.log('Animating nodes in');
 		animationTimeouts.current.forEach(clearTimeout);
 		animationTimeouts.current = [];
 		setVisibleNodes(new Set());

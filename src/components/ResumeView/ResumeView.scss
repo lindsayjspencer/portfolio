@@ -250,22 +250,6 @@
 		}
 	}
 
-	/* Compact content rules (hide lower-priority bits to keep to 1 page) */
-	/* 1) Limit bullets per role to the strongest two points */
-	.resume-view main .role ul li:nth-child(n + 3) {
-		display: none;
-	}
-
-	/* 2) Show fewer projects (first 3) */
-	.resume-view main .project:nth-child(n + 4) {
-		display: none;
-	}
-
-	/* 3) Trim Values (show first 3) */
-	.resume-view .sidebar .value:nth-child(n + 4) {
-		display: none;
-	}
-
 	/* 4) Prevent awkward page breaks */
 	.resume-view main section,
 	.resume-view .sidebar section {

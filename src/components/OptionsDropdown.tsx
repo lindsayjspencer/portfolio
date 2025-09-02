@@ -3,7 +3,8 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useTheme } from '~/contexts/theme-context';
 import './OptionsDropdown.scss';
 import type { Directive } from '~/lib/ai/directiveTools';
-import { usePortfolioStore } from '~/lib/PortfolioStore';
+import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
+import { useApplyDirective } from '~/hooks/useApplyDirective';
 import { filterNodesByType } from '~/lib/ViewTransitions';
 import type { SkillNode, ProjectNode } from '~/lib/PortfolioStore';
 
@@ -73,11 +74,10 @@ const MENU_OPTIONS: MenuOption[] = [
 
 export function OptionsDropdown() {
 	const { themeName, availableThemes, setTheme } = useTheme();
-	const graph = usePortfolioStore((state) => state.graph);
 	const currentDirective = usePortfolioStore((state) => state.directive);
-	const setDirective = usePortfolioStore((state) => state.setDirective);
+	const applyDirective = useApplyDirective();
 	const messages = usePortfolioStore((state) => state.messages);
-	
+
 	const hasHadInteraction = messages.length > 0;
 	const landingMode = currentDirective.mode === 'landing' && !hasHadInteraction;
 
@@ -236,7 +236,7 @@ export function OptionsDropdown() {
 															key={variant.value}
 															className={`mode-button ${isActive ? 'active' : ''}`}
 															onSelect={() =>
-																setDirective(
+																applyDirective(
 																	createDirective(option.mode, variant.value),
 																)
 															}
@@ -255,7 +255,7 @@ export function OptionsDropdown() {
 									<DropdownMenu.Item
 										key={option.mode}
 										className={`mode-button ${currentDirective.mode === option.mode ? 'active' : ''}`}
-										onSelect={() => setDirective(createDirective(option.mode))}
+										onSelect={() => applyDirective(createDirective(option.mode))}
 									>
 										{option.label}
 									</DropdownMenu.Item>

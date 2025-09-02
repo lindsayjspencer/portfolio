@@ -10,7 +10,7 @@ import type {
 	ProjectEvidence as ProjectTileData,
 	StoryEvidence as StoryTileData,
 } from './ValuesEvidenceCard';
-import { usePortfolioStore } from '~/lib/PortfolioStore';
+import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 
 interface ValuesEvidenceViewProps {
 	dataSnapshot: ValuesEvidenceSnapshot;
@@ -25,7 +25,7 @@ export function ValuesEvidenceView({
 }: ValuesEvidenceViewProps) {
 	const [contentOpacity, setContentOpacity] = useState(transitionPhase === 'stable' ? 1 : 0);
 	const [transitionDuration, setTransitionDuration] = useState(400);
-	const { openPanel, graph } = usePortfolioStore();
+	const { openPanel } = usePortfolioStore();
 
 	useEffect(() => {
 		if (onRegisterCallbacks) {

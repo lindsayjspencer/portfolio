@@ -6,26 +6,48 @@ import { OptionsDropdown } from '~/components/OptionsDropdown';
 import { ChatContainer } from '~/components/ChatContainer';
 import { WelcomeMessage } from '~/components/WelcomeMessage';
 import { SlidingPanel } from '~/components/Ui/SlidingPanel';
+import { UrlStateInitializer } from '~/components/AppPreloader/UrlStateInitializer';
+import { UrlStateLogger } from '~/components/AppPreloader/UrlStateLogger';
+import { UrlStateSync } from '~/components/AppPreloader/UrlStateSync';
+import { useEffect, useState } from 'react';
+import { PortfolioStoreProvider } from '~/lib/PortfolioStoreProvider';
+import type { Directive } from '~/lib/ai/directiveTools';
 
 export default function HomePage() {
+	const [initialDirective, setInitialDirective] = useState<Directive | null>(null);
+
+	if (!initialDirective) {
+		return (
+			<>
+				<UrlStateInitializer onReady={setInitialDirective} />
+			</>
+		);
+	}
+
 	return (
-		<div className="home-page-wrapper">
-			<div className="home-page">
-				{/* Top nav bar with debug dropdown */}
-				<OptionsDropdown />
+		<PortfolioStoreProvider initialDirective={initialDirective}>
+			<div className="home-page-wrapper">
+				{/* Dev-only logger */}
+				<UrlStateLogger />
+				{/* Sync store <-> URL and handle back/forward */}
+				<UrlStateSync />
+				<div className="home-page">
+					{/* Top nav bar with debug dropdown */}
+					<OptionsDropdown />
 
-				{/* Main view area */}
-				<div className="view-container">
-					<ViewTransitionManager />
+					{/* Main view area */}
+					<div className="view-container">
+						<ViewTransitionManager />
+					</div>
+
+					{/* Welcome message - manages its own visibility */}
+					<WelcomeMessage />
+
+					{/* Floating chat input at bottom */}
+					<ChatContainer />
 				</div>
-
-				{/* Welcome message - manages its own visibility */}
-				<WelcomeMessage />
-
-				{/* Floating chat input at bottom */}
-				<ChatContainer />
+				<SlidingPanel />
 			</div>
-			<SlidingPanel />
-		</div>
+		</PortfolioStoreProvider>
 	);
 }

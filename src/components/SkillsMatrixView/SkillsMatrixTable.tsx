@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback, forwardRef } from 'react';
 import Tippy, { type TippyProps } from '@tippyjs/react';
 import type { SkillMatrix } from '~/lib/ViewTransitions';
-import { usePortfolioStore } from '~/lib/PortfolioStore';
+import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import type { SkillNode, ProjectNode } from '~/lib/PortfolioStore';
 
 type Props = {
@@ -18,8 +18,11 @@ type TooltipData = {
 	projCol?: { id: string; label: string };
 };
 
-const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMatrixTable({ matrix, highlights = [], accent = '--color-primary-600' }, ref) {
-	const { openPanel, graph } = usePortfolioStore();
+const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMatrixTable(
+	{ matrix, highlights = [], accent = '--color-primary-600' },
+	ref,
+) {
+	const { openPanel } = usePortfolioStore();
 	const hl = useMemo(() => new Set(highlights), [highlights]);
 	const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
 
@@ -28,66 +31,71 @@ const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMat
 
 	// Calculate row and column totals
 	const rowTotals = useMemo(() => {
-		return matrix.rows.map((_, ri) => 
-			matrix.values[ri]?.reduce((sum, val) => sum + (val > 0 ? 1 : 0), 0) || 0
-		);
+		return matrix.rows.map((_, ri) => matrix.values[ri]?.reduce((sum, val) => sum + (val > 0 ? 1 : 0), 0) || 0);
 	}, [matrix]);
 
 	const colTotals = useMemo(() => {
-		return matrix.cols.map((_, ci) => 
+		return matrix.cols.map((_, ci) =>
 			matrix.rows.reduce((sum, _, ri) => {
 				const rowValues = matrix.values[ri];
 				return sum + (rowValues && rowValues[ci] !== undefined && rowValues[ci] > 0 ? 1 : 0);
-			}, 0)
+			}, 0),
 		);
 	}, [matrix]);
 
-	const handleCellHover = useCallback((ri: number, ci: number, e: React.MouseEvent) => {
-		const rowValues = matrix.values[ri];
-		if (!rowValues) return;
-		const cellValue = rowValues[ci];
-		if (cellValue === undefined || cellValue <= 0) {
-			setTooltipData(null);
-			return;
-		}
+	const handleCellHover = useCallback(
+		(ri: number, ci: number, e: React.MouseEvent) => {
+			const rowValues = matrix.values[ri];
+			if (!rowValues) return;
+			const cellValue = rowValues[ci];
+			if (cellValue === undefined || cellValue <= 0) {
+				setTooltipData(null);
+				return;
+			}
 
-		const skillRow = matrix.rows[ri];
-		const projCol = matrix.cols[ci];
-		if (!skillRow || !projCol) {
-			setTooltipData(null);
-			return;
-		}
+			const skillRow = matrix.rows[ri];
+			const projCol = matrix.cols[ci];
+			if (!skillRow || !projCol) {
+				setTooltipData(null);
+				return;
+			}
 
-		const rect = (e.target as HTMLElement).getBoundingClientRect();
-		setTooltipData({
-			x: rect.left + rect.width / 2,
-			y: rect.top,
-			skillRow,
-			projCol,
-			content: (
-				<div className="tooltip-content">
-					<div className="skill-name">{skillRow.label}</div>
-					<div className="project-name">{projCol.label}</div>
-				</div>
-			),
-		});
-	}, [matrix]);
+			const rect = (e.target as HTMLElement).getBoundingClientRect();
+			setTooltipData({
+				x: rect.left + rect.width / 2,
+				y: rect.top,
+				skillRow,
+				projCol,
+				content: (
+					<div className="tooltip-content">
+						<div className="skill-name">{skillRow.label}</div>
+						<div className="project-name">{projCol.label}</div>
+					</div>
+				),
+			});
+		},
+		[matrix],
+	);
 
 	const handleCellLeave = useCallback(() => {
 		setTooltipData(null);
 	}, []);
 
-	const createTooltipRect = useCallback((x: number, y: number): DOMRect => ({
-		width: 0,
-		height: 0,
-		top: y,
-		right: x,
-		bottom: y,
-		left: x,
-		x,
-		y,
-		toJSON: () => ({}),
-	} as DOMRect), []);
+	const createTooltipRect = useCallback(
+		(x: number, y: number): DOMRect =>
+			({
+				width: 0,
+				height: 0,
+				top: y,
+				right: x,
+				bottom: y,
+				left: x,
+				x,
+				y,
+				toJSON: () => ({}),
+			}) as DOMRect,
+		[],
+	);
 
 	const onCellClick = (ri: number, ci: number, e: React.MouseEvent) => {
 		const rowValues = matrix.values[ri];
@@ -96,9 +104,9 @@ const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMat
 		if (cellValue === undefined || cellValue <= 0) return;
 		const skillRow = matrix.rows[ri];
 		const projCol = matrix.cols[ci];
-		
+
 		if (!skillRow || !projCol) return;
-		
+
 		// Find the full nodes from the graph
 		const skillNode = graph.nodes.find((n) => n.id === skillRow.id && n.type === 'skill') as SkillNode;
 		const projNode = graph.nodes.find((n) => n.id === projCol.id && n.type === 'project') as ProjectNode;
@@ -131,11 +139,13 @@ const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMat
 	};
 
 	return (
-		<div 
-			className="skills-matrix-table" 
-			style={{ 
-				'--accent': accent.startsWith('#') ? accent : `var(${accent})`
-			} as React.CSSProperties}
+		<div
+			className="skills-matrix-table"
+			style={
+				{
+					'--accent': accent.startsWith('#') ? accent : `var(${accent})`,
+				} as React.CSSProperties
+			}
 		>
 			<table ref={ref}>
 				<thead>
@@ -147,7 +157,11 @@ const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMat
 							const isHl = hl.has(c.id);
 							const total = colTotals[ci] || 0;
 							return (
-								<th key={c.id} className={isHl ? 'col-hdr hl' : 'col-hdr'} title={`${c.label} (${total} skills)`}>
+								<th
+									key={c.id}
+									className={isHl ? 'col-hdr hl' : 'col-hdr'}
+									title={`${c.label} (${total} skills)`}
+								>
 									<span className="rot">{c.label}</span>
 									<span className="col-total">{total}</span>
 								</th>
@@ -163,7 +177,11 @@ const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMat
 						const total = rowTotals[ri] || 0;
 						return (
 							<tr key={r.id}>
-								<th scope="row" className={rowHl ? 'row-hdr hl' : 'row-hdr'} title={`${r.label} (${total} projects)`}>
+								<th
+									scope="row"
+									className={rowHl ? 'row-hdr hl' : 'row-hdr'}
+									title={`${r.label} (${total} projects)`}
+								>
 									<span className="skill-name">{r.label}</span>
 									<span className="row-total">{total}</span>
 								</th>

@@ -16,25 +16,25 @@ export interface ChatContainerProps {
 export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	const {
 		input,
-		narrative,
 		messages,
 		directive,
 		isLoading,
 		setInput,
-		setNarrative,
 		setLoading,
 		setDirective,
 		addMessage,
 		pendingClarify,
 		setPendingClarify,
 	} = usePortfolioStore();
-	
+
 	const hasHadInteraction = messages.length > 0;
 	const landingMode = directive.mode === 'landing' && !hasHadInteraction;
 
 	const { setTheme } = useTheme();
 	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 	const containerRef = useRef<HTMLDivElement>(null);
+
+	// narrative now comes from directive data; no component seeding needed
 
 	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -70,7 +70,6 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			directive,
 			addMessage,
 			setDirective,
-			setNarrative,
 			setLoading,
 			setPendingClarify,
 			setTheme,
@@ -110,7 +109,6 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 					directive,
 					addMessage,
 					setDirective,
-					setNarrative,
 					setLoading,
 					setPendingClarify,
 					setTheme,
@@ -180,9 +178,9 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 				)}
 
 				{/* Show regular narrative */}
-				{narrative && !pendingClarify && (
+				{directive.data.narration && !pendingClarify && (
 					<StreamingText speed={2} className="streaming-text">
-						{narrative}
+						{directive.data.narration}
 					</StreamingText>
 				)}
 

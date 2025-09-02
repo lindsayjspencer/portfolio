@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import './ValuesEvidenceCard.scss';
 import Tag from '~/components/Ui/Tag';
-import { MaterialIcon } from '~/components/Ui';
+import { MaterialIcon, type MaterialIconName } from '~/components/Ui';
 
 export type RoleEvidence = {
 	type: 'role';
@@ -154,7 +154,7 @@ export default function ValuesEvidenceCard({
 		<section className="values-evidence-card" aria-labelledby={`val-${id}-title`}>
 			<div className="values-evidence-card__header">
 				<div className="values-evidence-card__title">
-					<MaterialIcon name={icon as any} size="md" className="values-evidence-card__icon" />
+					<MaterialIcon name={icon as MaterialIconName} size="md" className="values-evidence-card__icon" />
 					<h2 id={`val-${id}-title`}>{title}</h2>
 				</div>
 				{tags.length > 0 && (

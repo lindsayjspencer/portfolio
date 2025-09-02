@@ -184,7 +184,7 @@
 		{
 			"id": "proj_codebots_modeler",
 			"type": "project",
-			"label": "Codebots",
+			"label": "Codebots Platform",
 			"summary": "Diagram-driven modelling to generate applications; pioneered React/TS generation.",
 			"description": "Users model entities, security, and queries across interconnected diagrams. A pipeline generates the target application. Led development and introduced React/TypeScript code generation as a first-class target.",
 			"period": {
@@ -236,7 +236,7 @@
 		{
 			"id": "proj_codebots_homepage_ai",
 			"type": "project",
-			"label": "Codebots Homepage / AI Search",
+			"label": "Codebots AI Search",
 			"summary": "LLM-driven chat with RAG answering queries about Codebots.",
 			"description": "Public-facing landing page using Next.js and Vercel AI SDK. Chat interface grounded in RAG over company documentation.",
 			"period": {

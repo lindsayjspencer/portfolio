@@ -14,7 +14,7 @@ import {
 	COMPONENT_TRANSITION_TIMINGS,
 	createDataSnapshot,
 } from '~/lib/ViewTransitions';
-import { usePortfolioStore } from '~/lib/PortfolioStore';
+import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import './ViewTransitionManager.scss';
 import './CompareLegends.scss';
 import { FORCE_CONFIG } from '../ForceGraph/constants';
@@ -103,26 +103,28 @@ function CompareFrontendVsBackendLegend({ dataSnapshot }: { dataSnapshot: Compar
 
 export function ViewTransitionManager() {
 	const directive = usePortfolioStore((state) => state.directive);
-	const graph = usePortfolioStore((state) => state.graph);
+	if (!directive) return null; // Wait until preloader/initializer sets a directive
 	const currentMode = directive.mode;
-	// Create initial data snapshot using utility
-	const initialDataSnapshot = useMemo(() => createDataSnapshot(graph, directive), [graph, directive]);
+	// Create initial data snapshot using utility (graph is static)
+	const initialDataSnapshot = useMemo(() => createDataSnapshot(graph, directive), [directive]);
 
 	const [transitionState, setTransitionState] = useState<ViewTransitionState>({
 		instances: [
 			{
 				mode: currentMode,
-				phase: 'stable',
+				phase: 'entering',
 				zIndex: 1,
 				key: `${currentMode}-${Date.now()}`,
 				dataSnapshot: initialDataSnapshot,
 			},
 		],
-		isTransitioning: false,
+		isTransitioning: true,
 	});
 
 	const transitionCallbacks = useRef<Map<string, TransitionCallbacks>>(new Map());
 	const transitionTimeouts = useRef<NodeJS.Timeout[]>([]);
+	// Guard to suppress repeated transitions to the same target
+	const lastTransitionKeyRef = useRef<string | null>(null);
 
 	// Clean up timeouts on unmount
 	useEffect(() => {
@@ -131,26 +133,129 @@ export function ViewTransitionManager() {
 		};
 	}, []);
 
-	// Handle directive changes (including mode and variant changes)
+	// Run an initial enter transition once on mount so first view animates in
+	useEffect(() => {
+		let cancelled = false;
+		const waitForCallbacks = (key: string, timeoutMs = 300): Promise<void> => {
+			const start = Date.now();
+			return new Promise((resolve) => {
+				const tick = () => {
+					if (cancelled) return resolve();
+					if (transitionCallbacks.current.has(key) || Date.now() - start > timeoutMs) {
+						resolve();
+					} else {
+						setTimeout(tick, 16);
+					}
+				};
+				tick();
+			});
+		};
+
+		const run = async () => {
+			const current = transitionState.instances[0];
+			if (!current || current.phase !== 'entering') return;
+
+			const enterTiming = COMPONENT_TRANSITION_TIMINGS[current.mode] || COMPONENT_TRANSITION_TIMINGS.landing;
+			await waitForCallbacks(current.key);
+			const callbacks = transitionCallbacks.current.get(current.key);
+			if (callbacks) {
+				await callbacks.onTransitionIn(enterTiming.in);
+			}
+
+			await new Promise((resolve) => {
+				const timeout = setTimeout(resolve, enterTiming.in);
+				transitionTimeouts.current.push(timeout);
+			});
+
+			if (cancelled) return;
+			setTransitionState((prev) => ({
+				instances: [
+					{
+						mode: prev.instances[0]?.mode ?? current.mode,
+						phase: 'stable',
+						zIndex: 1,
+						key: prev.instances[0]?.key ?? current.key,
+						dataSnapshot: prev.instances[0]?.dataSnapshot ?? current.dataSnapshot,
+					},
+				],
+				isTransitioning: false,
+			}));
+		};
+
+		run();
+		return () => {
+			cancelled = true;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Handle directive changes (trigger transitions only on mode/variant change; otherwise update snapshot in place)
 	useEffect(() => {
 		const currentStableView = transitionState.instances.find((i) => i.phase === 'stable');
+		if (!currentStableView) return;
 
-		// Compare the full directive, not just the mode
-		if (!currentStableView || transitionState.isTransitioning) {
+		// Don't start a new transition while one is in progress
+		if (transitionState.isTransitioning) return;
+
+		const prevSnapshot = currentStableView.dataSnapshot;
+		const prevMode = prevSnapshot.mode;
+		const nextMode = directive.mode;
+
+		// Only modes that actually have variants should be compared on variant changes
+		const modesWithVariants = new Set<Directive['mode']>([
+			'timeline',
+			'projects',
+			'skills',
+			'values',
+			'compare',
+			'explore',
+		]);
+		const prevVariant =
+			modesWithVariants.has(prevMode) && 'variant' in prevSnapshot
+				? (prevSnapshot as { variant?: string }).variant
+				: undefined;
+		const nextVariant =
+			modesWithVariants.has(nextMode) && 'variant' in directive.data
+				? (directive.data as { variant?: string }).variant
+				: undefined;
+
+		// If mode or variant changed, start a transition (but avoid loops to same target)
+		if (prevMode !== nextMode || prevVariant !== nextVariant) {
+			const nextKey = `${nextMode}:${nextVariant ?? ''}`;
+			if (lastTransitionKeyRef.current === nextKey) {
+				return;
+			}
+			lastTransitionKeyRef.current = nextKey;
+			startTransition(nextMode);
 			return;
 		}
 
-		// Check if this is a meaningful change that requires a transition
-		const needsTransition =
-			currentStableView.mode !== currentMode ||
-			JSON.stringify(currentStableView.dataSnapshot) !== JSON.stringify(createDataSnapshot(graph, directive));
-
-		if (needsTransition) {
-			startTransition(currentMode);
-		}
-	}, [directive, graph]);
+		// Same view; just refresh the snapshot to reflect intra-view directive changes (e.g., highlights, narration)
+		// Same view; just refresh the snapshot to reflect intra-view directive changes (e.g., highlights, narration)
+		// Skip if directive hasn't changed to avoid unnecessary state churn
+		const prevDirective = prevSnapshot.directive;
+		const directiveChanged = JSON.stringify(prevDirective) !== JSON.stringify(directive);
+		if (!directiveChanged) return;
+		const nextSnapshot = createDataSnapshot(graph, directive);
+		setTransitionState((prev) => {
+			const stableIdx = prev.instances.findIndex((i) => i.phase === 'stable');
+			if (stableIdx === -1 || prev.isTransitioning) return prev;
+			const prevStable = prev.instances[stableIdx]!;
+			const updatedStable: ViewInstanceState = {
+				mode: prevStable.mode,
+				phase: prevStable.phase,
+				zIndex: prevStable.zIndex,
+				key: prevStable.key,
+				dataSnapshot: nextSnapshot,
+			};
+			const instances = prev.instances.slice();
+			instances[stableIdx] = updatedStable;
+			return { ...prev, instances };
+		});
+	}, [directive, transitionState.isTransitioning]);
 
 	const startTransition = async (newMode: Directive['mode']) => {
+		console.log('transitioning to ', newMode);
 		const currentInstances = transitionState.instances;
 		const stableInstance = currentInstances.find((i) => i.phase === 'stable');
 
@@ -332,7 +437,17 @@ export function ViewTransitionManager() {
 										// Custom collision radii based on node type
 										forceGraphRef.d3Force(
 											'collision',
-											forceCollide().radius((n: any) => {
+											forceCollide<
+												{ type?: string } & {
+													index?: number;
+													x?: number;
+													y?: number;
+													z?: number;
+													vx?: number;
+													vy?: number;
+													vz?: number;
+												}
+											>().radius((n) => {
 												switch (n.type) {
 													case 'person':
 														return 30; // Person node (center) - largest
@@ -356,8 +471,8 @@ export function ViewTransitionManager() {
 										// Set up link distances (person→value stronger, value→evidence softer)
 										forceGraphRef
 											.d3Force('link')
-											?.distance((l: any) => (l.rel === 'values' ? 110 : 80))
-											.strength((l: any) => (l.rel === 'values' ? 0.6 : 0.3));
+											?.distance((l: { rel?: string }) => (l.rel === 'values' ? 110 : 80))
+											.strength((l: { rel?: string }) => (l.rel === 'values' ? 0.6 : 0.3));
 									}
 								}}
 								{...commonProps}

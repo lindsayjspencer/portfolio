@@ -1,11 +1,12 @@
 import '~/styles/main.scss';
 import { type Metadata } from 'next';
+import { headers } from 'next/headers';
 import { ThemeProvider } from '~/contexts/theme-context';
 import { getServerTheme } from '~/lib/server-theme';
 import { IconPreloader } from '~/components/Ui';
 import Script from 'next/script';
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
 	title: 'Lindsay Spencer - Interactive Portfolio',
 	description:
 		'An interactive portfolio showcasing my software development experience through an AI-powered conversational interface and dynamic visualizations.',
@@ -19,6 +20,19 @@ export const metadata: Metadata = {
 		],
 	},
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+	// Build a canonical URL on the server, stripping query/hash (root path only for this app)
+	const h = headers();
+	const proto = h.get('x-forwarded-proto') ?? 'https';
+	const host = h.get('x-forwarded-host') ?? h.get('host') ?? undefined;
+	const canonical = host ? `${proto}://${host}/` : undefined;
+
+	return {
+		...baseMetadata,
+		alternates: canonical ? { canonical } : undefined,
+	} satisfies Metadata;
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
 	const serverTheme = await getServerTheme();
@@ -44,7 +58,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 					rel="stylesheet"
 					href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
 				/>
-				<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+				<link
+					href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+					rel="stylesheet"
+				/>
 			</head>
 			<body>
 				<ThemeProvider serverTheme={serverTheme}>

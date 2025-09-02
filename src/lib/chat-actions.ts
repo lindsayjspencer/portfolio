@@ -12,7 +12,7 @@ export interface ChatSubmitParams {
 	// Store actions
 	addMessage: (message: Omit<ChatMessage, 'id'>) => void;
 	setDirective: (directive: Directive) => void;
-	setNarrative: (narrative: string | null) => void;
+	// setNarrative removed; narration is stored in directive
 	setLoading: (loading: boolean) => void;
 	setPendingClarify?: (payload: ClarifyPayload) => void;
 
@@ -29,19 +29,10 @@ const debugClarify: ClarifyPayload = {
 };
 
 export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> {
-	const {
-		userMessage,
-		messages,
-		directive,
-		addMessage,
-		setDirective,
-		setNarrative,
-		setLoading,
-		setPendingClarify,
-		setTheme,
-	} = params;
+	const { userMessage, messages, directive, addMessage, setDirective, setLoading, setPendingClarify, setTheme } =
+		params;
 
-	setNarrative(null);
+	// Begin request
 	setLoading(true);
 
 	// Add user message
@@ -70,19 +61,24 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 				setTheme(directiveResult.data.theme as ThemeName);
 			}
 
-			setDirective(directiveResult);
+			// Persist narration into directive so it syncs to URL/back-forward
+			const nextDirective = narrationText
+				? withNarrationInDirective(directiveResult, narrationText)
+				: directiveResult;
+			setDirective(nextDirective);
 			if (narrationText) {
-				setNarrative(narrationText);
 				addMessage({
 					role: 'assistant',
 					content: narrationText,
-					directive: directiveResult,
+					directive: nextDirective,
 				});
 			}
 		} else {
 			// Narration only or fallback
+			// Keep the current directive and write narration into it
 			if (narrationText) {
-				setNarrative(narrationText);
+				const nextDirective = withNarrationInDirective(directive, narrationText);
+				setDirective(nextDirective);
 			}
 			addMessage({
 				role: 'assistant',
@@ -100,4 +96,8 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 	} finally {
 		setLoading(false);
 	}
+}
+
+function withNarrationInDirective<T extends Directive>(d: T, narration: string): T {
+	return { ...d, data: { ...d.data, narration } } as T;
 }

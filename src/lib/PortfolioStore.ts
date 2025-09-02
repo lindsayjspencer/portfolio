@@ -1,4 +1,6 @@
-import { create } from 'zustand';
+import { createStore, type StoreApi } from 'zustand';
+import { useContext, createContext } from 'react';
+import { useStore } from 'zustand';
 import portfolioData from '~/data/portfolio.json';
 import type { ClarifyPayload } from './ai/clarifyTool';
 import type { ForceDirectedGraphNode } from '~/components/ForceGraph/Common';
@@ -197,6 +199,9 @@ export type Graph = {
 	meta?: GraphMeta;
 };
 
+// Export static graph directly from JSON; not part of Zustand state.
+export const graph: Graph = portfolioData as Graph;
+
 // Response types for multi-modal AI responses
 export type Response =
 	| { kind: 'directive'; data: Directive }
@@ -225,15 +230,13 @@ export type PanelContent =
 			onClose?: () => void;
 	  };
 
-interface PortfolioState {
-	graph: Graph;
+export interface PortfolioState {
 	directive: Directive;
 	messages: ChatMessage[];
 	isLoading: boolean;
 
 	// Chat-specific state
 	input: string;
-	narrative: string | null;
 
 	// Panel state
 	isPanelOpen: boolean;
@@ -252,7 +255,6 @@ interface PortfolioState {
 
 	// Chat actions
 	setInput: (input: string) => void;
-	setNarrative: (narrative: string | null) => void;
 
 	// New: Response actions
 	pushResponse: (response: Response) => void;
@@ -266,80 +268,89 @@ interface PortfolioState {
 	togglePanel: () => void;
 }
 
-export const usePortfolioStore = create<PortfolioState>((set) => ({
-	graph: portfolioData as Graph,
-	directive: {
-		mode: 'landing',
-		data: {
-			variant: 'neutral',
-			highlights: [],
-			narration: '',
-			confidence: 0.7,
-		},
-	} as Directive,
-	messages: [],
-	isLoading: false,
+export type PortfolioStoreApi = StoreApi<PortfolioState>;
 
-	// Chat-specific state
-	input: '',
-	narrative: null,
+export function createPortfolioStore(initialDirective: Directive): PortfolioStoreApi {
+	return createStore<PortfolioState>((set) => ({
+		directive: initialDirective,
+		messages: [],
+		isLoading: false,
 
-	// Panel state
-	isPanelOpen: false,
-	panelContent: null,
+		// Chat-specific state
+		input: '',
 
-	// New: Response tracking
-	responses: [],
-	pendingClarify: undefined,
-	lastDirective: undefined,
+		// Panel state
+		isPanelOpen: false,
+		panelContent: null,
 
-	setDirective: (directive) => set({ directive }),
+		// New: Response tracking
+		responses: [],
+		pendingClarify: undefined,
+		lastDirective: undefined,
 
-	addMessage: (message) =>
-		set((state) => ({
-			messages: [
-				...state.messages,
-				{
-					...message,
-					id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-				},
-			],
-		})),
+		setDirective: (directive) => set({ directive }),
 
-	setLoading: (isLoading) => set({ isLoading }),
+		addMessage: (message) =>
+			set((state) => ({
+				messages: [
+					...state.messages,
+					{
+						...message,
+						id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+					},
+				],
+			})),
 
-	clearMessages: () =>
-		set({
-			messages: [],
-			directive: {
-				mode: 'landing',
-				data: {
-					variant: 'neutral',
-					highlights: [],
-					narration: '',
-					confidence: 0.7,
-				},
-			} as Directive,
-		}),
+		setLoading: (isLoading) => set({ isLoading }),
 
-	// Chat actions
-	setInput: (input) => set({ input }),
-	setNarrative: (narrative) => set({ narrative }),
+		clearMessages: () =>
+			set({
+				messages: [],
+				directive: {
+					mode: 'landing',
+					data: {
+						variant: 'neutral',
+						highlights: [],
+						narration: '',
+						confidence: 0.7,
+					},
+				} as Directive,
+			}),
 
-	// New: Response actions
-	pushResponse: (response) =>
-		set((state) => ({
-			responses: [...state.responses, response],
-		})),
+		// Chat actions
+		setInput: (input) => set({ input }),
+		// setNarrative removed; narrative lives in directive.data.narration
 
-	setPendingClarify: (payload) => set({ pendingClarify: payload }),
+		// New: Response actions
+		pushResponse: (response) =>
+			set((state) => ({
+				responses: [...state.responses, response],
+			})),
 
-	setLastDirective: (directive) => set({ lastDirective: directive }),
+		setPendingClarify: (payload) => set({ pendingClarify: payload }),
 
-	clearResponses: () => set({ responses: [], pendingClarify: undefined }),
+		setLastDirective: (directive) => set({ lastDirective: directive }),
 
-	// Panel actions
-	openPanel: (content) => set({ isPanelOpen: true, panelContent: content }),
-	closePanel: () => set({ isPanelOpen: false, panelContent: null }),
-	togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),
-}));
+		clearResponses: () => set({ responses: [], pendingClarify: undefined }),
+
+		// Panel actions
+		openPanel: (content) => set({ isPanelOpen: true, panelContent: content }),
+		closePanel: () => set({ isPanelOpen: false, panelContent: null }),
+		togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),
+	}));
+}
+
+// React context exported here to avoid circular imports
+export const PortfolioStoreContext = createContext<PortfolioStoreApi | null>(null);
+
+// Hook compatible with existing call sites: usePortfolioStore(selector?)
+export function usePortfolioStore(): PortfolioState;
+export function usePortfolioStore<T>(selector: (state: PortfolioState) => T): T;
+export function usePortfolioStore<T>(selector?: (state: PortfolioState) => T): T | PortfolioState {
+	const store = useContext(PortfolioStoreContext);
+	if (!store) throw new Error('usePortfolioStore must be used within a PortfolioStoreProvider');
+	if (selector) {
+		return useStore(store, selector);
+	}
+	return useStore(store, (s) => s);
+}
