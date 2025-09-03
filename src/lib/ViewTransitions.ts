@@ -110,9 +110,19 @@ interface ProjectsCaseStudySnapshot extends BaseDataSnapshot {
 type ProjectsDataSnapshot = ProjectsGridSnapshot | ProjectsRadialSnapshot | ProjectsCaseStudySnapshot;
 
 // Skills DataSnapshots
-interface SkillsClustersSnapshot extends BaseDataSnapshot {
+interface SkillsTechnicalSnapshot extends BaseDataSnapshot {
 	mode: 'skills';
-	variant: 'clusters';
+	variant: 'technical';
+	forceGraphData: ForceDirectedGraphData;
+	skills: SkillNode[];
+	clusters: SkillCluster[];
+	focusLevel?: 'expert' | 'advanced' | 'intermediate';
+	clusterBy: 'domain' | 'recency' | 'usage';
+}
+
+interface SkillsSoftSnapshot extends BaseDataSnapshot {
+	mode: 'skills';
+	variant: 'soft';
 	forceGraphData: ForceDirectedGraphData;
 	skills: SkillNode[];
 	clusters: SkillCluster[];
@@ -129,7 +139,7 @@ interface SkillsMatrixSnapshot extends BaseDataSnapshot {
 	clusterBy: 'domain' | 'recency' | 'usage';
 }
 
-type SkillsDataSnapshot = SkillsClustersSnapshot | SkillsMatrixSnapshot;
+type SkillsDataSnapshot = SkillsTechnicalSnapshot | SkillsSoftSnapshot | SkillsMatrixSnapshot;
 
 // Values DataSnapshots
 export interface ValuesMindmapSnapshot extends BaseDataSnapshot {
@@ -462,17 +472,32 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 				: allSkills;
 
 			switch (directive.data.variant) {
-				case 'clusters':
+				case 'technical': {
+					const dataWithType = { ...directive.data, skillType: 'technical' as const };
 					return {
 						...baseData,
 						mode: 'skills',
-						variant: 'clusters',
-						forceGraphData: skillsToForceGraph(graph, directive.data),
-						skills: filteredSkills,
-						clusters: createSkillClusters(graph, directive.data),
+						variant: 'technical',
+						forceGraphData: skillsToForceGraph(graph, dataWithType),
+						skills: filteredSkills.filter((s) => s.skill_type !== 'soft'),
+						clusters: createSkillClusters(graph, dataWithType),
 						focusLevel: directive.data.focusLevel,
 						clusterBy: directive.data.clusterBy,
 					};
+				}
+				case 'soft': {
+					const dataWithType = { ...directive.data, skillType: 'soft' as const };
+					return {
+						...baseData,
+						mode: 'skills',
+						variant: 'soft',
+						forceGraphData: skillsToForceGraph(graph, dataWithType),
+						skills: filteredSkills.filter((s) => s.skill_type === 'soft'),
+						clusters: createSkillClusters(graph, dataWithType),
+						focusLevel: directive.data.focusLevel,
+						clusterBy: directive.data.clusterBy,
+					};
+				}
 				case 'matrix':
 					return {
 						...baseData,

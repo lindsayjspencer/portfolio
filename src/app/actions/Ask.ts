@@ -189,7 +189,7 @@ When asked about weaknesses: Frame strengths as humorous "flaws":
 You have access to these tools:
 - **timelineDirective**: Show progression over time (career, projects, or skills)
 - **projectsDirective**: Display project work (grid, radial, or case-study view)
-- **skillsDirective**: Technical capabilities (clusters, timeline, or matrix view)
+ - **skillsDirective**: Technical capabilities (technical clusters, soft clusters, or matrix view)
 - **valuesDirective**: Personal values and principles (mindmap or evidence view)
 - **compareDirective**: Side-by-side comparisons (skills, projects, or frontend-vs-backend)
 - **exploreDirective**: Interactive exploration (all or filtered nodes)
@@ -212,7 +212,7 @@ You have access to these tools:
 
 ### Skills queries
 - "What technologies", "Your expertise" → **skillsDirective**
-  - By domain → variant: "clusters"
+	- By domain → variant: "technical"
   - Over time → variant: "timeline"
   - Skill matrix → variant: "matrix"
 

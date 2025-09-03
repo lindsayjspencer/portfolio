@@ -416,7 +416,15 @@ export function ViewTransitionManager() {
 
 			case 'skills':
 				switch (dataSnapshot.variant) {
-					case 'clusters':
+					case 'technical':
+						return (
+							<ForceGraphView
+								key={instance.key}
+								graphData={dataSnapshot.forceGraphData}
+								{...commonProps}
+							/>
+						);
+					case 'soft':
 						return (
 							<ForceGraphView
 								key={instance.key}

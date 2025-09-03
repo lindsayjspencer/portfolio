@@ -100,7 +100,7 @@ const projectsData = z
 const skillsData = z
 	.object({
 		...BaseUrl,
-		variant: z.enum(['clusters', 'matrix']).default('clusters'),
+		variant: z.enum(['technical', 'soft', 'matrix']).default('technical'),
 		focusLevel: z.enum(['expert', 'advanced', 'intermediate']).optional(),
 		clusterBy: z.enum(['domain', 'recency', 'usage']).optional(),
 	})

@@ -97,6 +97,8 @@ export interface SkillNode extends BaseNode {
 	type: 'skill';
 	/** Required proficiency level for skill */
 	level: SkillLevel;
+	/** Technical vs soft skill categorization */
+	skill_type: 'technical' | 'soft';
 }
 
 export interface ValueNode extends BaseNode {

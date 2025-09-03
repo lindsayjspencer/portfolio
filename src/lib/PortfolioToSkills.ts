@@ -175,7 +175,10 @@ export function clusterByCommunity(graph: Graph, skillGraph: SkillGraph): SkillC
 export function createSkillClusters(graph: Graph, data: SkillsDirective): SkillCluster[] {
 	const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
 	// const filtered = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
-	const filtered = allSkills;
+	const filtered =
+		data.variant === 'technical'
+			? allSkills.filter((s) => s.skill_type === 'technical')
+			: allSkills.filter((s) => s.skill_type === 'soft');
 
 	if (filtered.length === 0) {
 		return [];
@@ -200,7 +203,10 @@ export function createSkillClusters(graph: Graph, data: SkillsDirective): SkillC
 export function skillsToForceGraph(graph: Graph, data: SkillsDirective): ForceDirectedGraphData {
 	const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
 	// const filtered = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
-	const filtered = allSkills;
+	const filtered =
+		data.variant === 'technical'
+			? allSkills.filter((s) => s.skill_type === 'technical')
+			: allSkills.filter((s) => s.skill_type === 'soft');
 
 	// Build skill graph for co-occurrence data
 	const skillGraph = buildSkillGraph(graph, filtered);

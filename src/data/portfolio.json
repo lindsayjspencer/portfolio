@@ -325,7 +325,8 @@
 			"tags": [
 				"frontend"
 			],
-			"level": "expert"
+			"level": "expert",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_typescript",
@@ -340,7 +341,8 @@
 				"frontend",
 				"backend"
 			],
-			"level": "expert"
+			"level": "expert",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_css",
@@ -355,7 +357,8 @@
 				"frontend",
 				"ui-ux"
 			],
-			"level": "advanced"
+			"level": "advanced",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_canvas",
@@ -370,7 +373,8 @@
 				"frontend",
 				"data-viz"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_next",
@@ -384,7 +388,8 @@
 			"tags": [
 				"frontend"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_node",
@@ -399,7 +404,8 @@
 				"backend",
 				"tooling"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_dotnet",
@@ -413,7 +419,8 @@
 			"tags": [
 				"backend"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_vite",
@@ -428,7 +435,8 @@
 				"frontend",
 				"tooling"
 			],
-			"level": "expert"
+			"level": "expert",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_lamp",
@@ -442,7 +450,8 @@
 			"tags": [
 				"backend"
 			],
-			"level": "expert"
+			"level": "expert",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_jquery",
@@ -456,7 +465,8 @@
 			"tags": [
 				"frontend"
 			],
-			"level": "expert"
+			"level": "expert",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_llm_apps",
@@ -475,7 +485,8 @@
 				"gemini",
 				"rag"
 			],
-			"level": "advanced"
+			"level": "advanced",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_llm_local",
@@ -490,7 +501,8 @@
 				"llm",
 				"local"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_threejs",
@@ -507,7 +519,8 @@
 				"webgl",
 				"data-viz"
 			],
-			"level": "advanced"
+			"level": "advanced",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_php",
@@ -522,7 +535,8 @@
 				"backend",
 				"web"
 			],
-			"level": "advanced"
+			"level": "advanced",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_mysql",
@@ -537,7 +551,8 @@
 				"database",
 				"backend"
 			],
-			"level": "advanced"
+			"level": "advanced",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_postgres",
@@ -552,7 +567,8 @@
 				"database",
 				"backend"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_docker",
@@ -568,7 +584,8 @@
 				"containers",
 				"tooling"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_linux",
@@ -584,7 +601,8 @@
 				"systems",
 				"cli"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
 		},
 		{
 			"id": "skill_apache",
@@ -600,7 +618,127 @@
 				"backend",
 				"devops"
 			],
-			"level": "intermediate"
+			"level": "intermediate",
+			"skill_type": "technical"
+		},
+		{
+			"id": "skill_leadership",
+			"type": "skill",
+			"label": "Leadership & Team Management",
+			"description": "I have extensive experience leading technical teams and initiatives. As a senior developer, I led a company-wide frontend focus group of 15-20 developers for two years, and currently serve as Quality Lead embedded across multiple squads. I've successfully guided teams through complex technical migrations and challenging project deadlines while fostering collaboration and knowledge sharing.",
+			"years": [
+				2020,
+				2025
+			],
+			"tags": [
+				"leadership",
+				"management",
+				"collaboration"
+			],
+			"level": "advanced",
+			"skill_type": "soft"
+		},
+		{
+			"id": "skill_mentoring",
+			"type": "skill",
+			"label": "Mentoring & Knowledge Transfer",
+			"description": "I'm passionate about developing others and sharing knowledge. Through running frontend focus groups, I've mentored junior developers, showcased best practices, and fostered a culture of continuous learning. I believe in leading by example and creating environments where team members can grow and succeed.",
+			"years": [
+				2020,
+				2025
+			],
+			"tags": [
+				"mentoring",
+				"knowledge-sharing",
+				"development"
+			],
+			"level": "advanced",
+			"skill_type": "soft"
+		},
+		{
+			"id": "skill_project_management",
+			"type": "skill",
+			"label": "Project Management",
+			"description": "I have strong experience managing complex technical projects from conception to delivery. This includes coordinating multi-year platform development, managing shifting client-driven deadlines, and balancing feature requests with technical debt. I've successfully delivered projects ranging from internal tools to enterprise applications while maintaining team productivity and code quality.",
+			"years": [
+				2014,
+				2025
+			],
+			"tags": [
+				"project-management",
+				"coordination",
+				"delivery"
+			],
+			"level": "advanced",
+			"skill_type": "soft"
+		},
+		{
+			"id": "skill_process_improvement",
+			"type": "skill",
+			"label": "Process Improvement",
+			"description": "I excel at identifying inefficiencies and implementing systematic improvements. I've led major performance optimizations, automated manual processes (reducing 3-4 hour tasks to under a minute), and established quality practices across teams. My approach focuses on measurable outcomes and sustainable change management.",
+			"years": [
+				2016,
+				2025
+			],
+			"tags": [
+				"optimization",
+				"automation",
+				"efficiency"
+			],
+			"level": "expert",
+			"skill_type": "soft"
+		},
+		{
+			"id": "skill_strategic_planning",
+			"type": "skill",
+			"label": "Strategic Planning",
+			"description": "I have a strong track record of making strategic technical decisions that align with business goals. This includes planning and executing major technology migrations (React upgrades, Webpack to Vite), introducing new technologies like TypeScript code generation, and identifying opportunities for innovation with emerging technologies like AI/LLM applications.",
+			"years": [
+				2018,
+				2025
+			],
+			"tags": [
+				"strategy",
+				"planning",
+				"innovation"
+			],
+			"level": "advanced",
+			"skill_type": "soft"
+		},
+		{
+			"id": "skill_collaboration",
+			"type": "skill",
+			"label": "Cross-functional Collaboration",
+			"description": "I work effectively across disciplines, particularly with design and product teams. I excel at translating between technical and non-technical stakeholders, iterating closely with designers to achieve pixel-perfect implementations, and coordinating across multiple teams to deliver complex features under tight deadlines.",
+			"years": [
+				2014,
+				2025
+			],
+			"tags": [
+				"collaboration",
+				"communication",
+				"cross-functional"
+			],
+			"level": "advanced",
+			"skill_type": "soft"
+		},
+		{
+			"id": "skill_technical_communication",
+			"type": "skill",
+			"label": "Technical Communication",
+			"description": "I'm skilled at communicating complex technical concepts to diverse audiences. This includes running focus groups, creating technical documentation, presenting architectural decisions, and establishing automated documentation pipelines. I believe clear communication is essential for successful technical leadership and knowledge transfer.",
+			"years": [
+				2020,
+				2025
+			],
+			"tags": [
+				"communication",
+				"documentation",
+				"presentation"
+			],
+			"level": "advanced",
+			"skill_type": "soft"
 		},
 		{
 			"id": "value_mentorship",
@@ -1079,6 +1217,366 @@
 			"source": "proj_goodwill_markets",
 			"target": "value_design_perf",
 			"rel": "evidence"
+		},
+		{
+			"id": "e55",
+			"source": "person_lindsay",
+			"target": "skill_leadership",
+			"rel": "has"
+		},
+		{
+			"id": "e56",
+			"source": "person_lindsay",
+			"target": "skill_mentoring",
+			"rel": "has"
+		},
+		{
+			"id": "e57",
+			"source": "person_lindsay",
+			"target": "skill_project_management",
+			"rel": "has"
+		},
+		{
+			"id": "e58",
+			"source": "person_lindsay",
+			"target": "skill_process_improvement",
+			"rel": "has"
+		},
+		{
+			"id": "e59",
+			"source": "person_lindsay",
+			"target": "skill_strategic_planning",
+			"rel": "has"
+		},
+		{
+			"id": "e60",
+			"source": "person_lindsay",
+			"target": "skill_collaboration",
+			"rel": "has"
+		},
+		{
+			"id": "e61",
+			"source": "person_lindsay",
+			"target": "skill_technical_communication",
+			"rel": "has"
+		},
+		{
+			"id": "e62",
+			"source": "role_codebots_sfsd",
+			"target": "skill_leadership",
+			"rel": "used"
+		},
+		{
+			"id": "e63",
+			"source": "role_codebots_quality_lead",
+			"target": "skill_leadership",
+			"rel": "used"
+		},
+		{
+			"id": "e64",
+			"source": "role_codebots_sfsd",
+			"target": "skill_mentoring",
+			"rel": "used"
+		},
+		{
+			"id": "e65",
+			"source": "role_codebots_sfsd",
+			"target": "skill_project_management",
+			"rel": "used"
+		},
+		{
+			"id": "e66",
+			"source": "role_codebots_quality_lead",
+			"target": "skill_project_management",
+			"rel": "used"
+		},
+		{
+			"id": "e67",
+			"source": "role_goodwill_ops",
+			"target": "skill_project_management",
+			"rel": "used"
+		},
+		{
+			"id": "e68",
+			"source": "role_codebots_quality_lead",
+			"target": "skill_process_improvement",
+			"rel": "used"
+		},
+		{
+			"id": "e69",
+			"source": "role_goodwill_ops",
+			"target": "skill_process_improvement",
+			"rel": "used"
+		},
+		{
+			"id": "e70",
+			"source": "role_codebots_sfsd",
+			"target": "skill_strategic_planning",
+			"rel": "used"
+		},
+		{
+			"id": "e71",
+			"source": "role_codebots_quality_lead",
+			"target": "skill_strategic_planning",
+			"rel": "used"
+		},
+		{
+			"id": "e72",
+			"source": "role_codebots_sfsd",
+			"target": "skill_collaboration",
+			"rel": "used"
+		},
+		{
+			"id": "e73",
+			"source": "role_codebots_quality_lead",
+			"target": "skill_collaboration",
+			"rel": "used"
+		},
+		{
+			"id": "e74",
+			"source": "role_codebots_sfsd",
+			"target": "skill_technical_communication",
+			"rel": "used"
+		},
+		{
+			"id": "e75",
+			"source": "role_codebots_quality_lead",
+			"target": "skill_technical_communication",
+			"rel": "used"
+		},
+		{
+			"id": "e76",
+			"source": "proj_codebots_modeler",
+			"target": "skill_leadership",
+			"rel": "used"
+		},
+		{
+			"id": "e77",
+			"source": "proj_dep_graph_versions",
+			"target": "skill_leadership",
+			"rel": "used"
+		},
+		{
+			"id": "e78",
+			"source": "proj_codebots_modeler",
+			"target": "skill_mentoring",
+			"rel": "used"
+		},
+		{
+			"id": "e79",
+			"source": "proj_codebots_modeler",
+			"target": "skill_project_management",
+			"rel": "used"
+		},
+		{
+			"id": "e80",
+			"source": "proj_goodwill_markets",
+			"target": "skill_project_management",
+			"rel": "used"
+		},
+		{
+			"id": "e81",
+			"source": "proj_dep_graph_versions",
+			"target": "skill_process_improvement",
+			"rel": "used"
+		},
+		{
+			"id": "e82",
+			"source": "proj_goodwill_markets",
+			"target": "skill_process_improvement",
+			"rel": "used"
+		},
+		{
+			"id": "e83",
+			"source": "proj_codebots_modeler",
+			"target": "skill_strategic_planning",
+			"rel": "used"
+		},
+		{
+			"id": "e84",
+			"source": "proj_dep_graph_versions",
+			"target": "skill_collaboration",
+			"rel": "used"
+		},
+		{
+			"id": "e85",
+			"source": "proj_codebots_modeler",
+			"target": "skill_collaboration",
+			"rel": "used"
+		},
+		{
+			"id": "e86",
+			"source": "proj_codebots_modeler",
+			"target": "skill_technical_communication",
+			"rel": "used"
+		},
+		{
+			"id": "e87",
+			"source": "value_mentorship",
+			"target": "skill_leadership",
+			"rel": "evidenced_by"
+		},
+		{
+			"id": "e88",
+			"source": "value_quality",
+			"target": "skill_leadership",
+			"rel": "evidenced_by"
+		},
+		{
+			"id": "e89",
+			"source": "value_mentorship",
+			"target": "skill_mentoring",
+			"rel": "evidenced_by"
+		},
+		{
+			"id": "e90",
+			"source": "value_quality",
+			"target": "skill_process_improvement",
+			"rel": "evidenced_by"
+		},
+		{
+			"id": "e91",
+			"source": "value_innovation",
+			"target": "skill_strategic_planning",
+			"rel": "evidenced_by"
+		},
+		{
+			"id": "e92",
+			"source": "value_mentorship",
+			"target": "skill_technical_communication",
+			"rel": "evidenced_by"
+		},
+		{
+			"id": "e93",
+			"source": "value_quality",
+			"target": "skill_technical_communication",
+			"rel": "evidenced_by"
+		},
+		{
+			"id": "e94",
+			"source": "story_deadlines",
+			"target": "skill_leadership",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e95",
+			"source": "story_css_perf",
+			"target": "skill_leadership",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e96",
+			"source": "story_css_perf",
+			"target": "skill_mentoring",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e97",
+			"source": "story_deadlines",
+			"target": "skill_project_management",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e98",
+			"source": "story_bank_recon",
+			"target": "skill_project_management",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e99",
+			"source": "story_css_perf",
+			"target": "skill_process_improvement",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e100",
+			"source": "story_bank_recon",
+			"target": "skill_process_improvement",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e101",
+			"source": "story_css_perf",
+			"target": "skill_strategic_planning",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e102",
+			"source": "story_deadlines",
+			"target": "skill_collaboration",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e103",
+			"source": "story_pixel_perfect",
+			"target": "skill_collaboration",
+			"rel": "demonstrates"
+		},
+		{
+			"id": "e104",
+			"source": "proj_goodwill_markets",
+			"target": "skill_css",
+			"rel": "used"
+		},
+		{
+			"id": "e105",
+			"source": "proj_goodwill_markets",
+			"target": "skill_node",
+			"rel": "used"
+		},
+		{
+			"id": "e106",
+			"source": "proj_codebots_modeler",
+			"target": "skill_jquery",
+			"rel": "used"
+		},
+		{
+			"id": "e107",
+			"source": "proj_codebots_modeler",
+			"target": "skill_lamp",
+			"rel": "used"
+		},
+		{
+			"id": "e108",
+			"source": "proj_codebots_modeler",
+			"target": "skill_linux",
+			"rel": "used"
+		},
+		{
+			"id": "e109",
+			"source": "proj_dep_graph_versions",
+			"target": "skill_css",
+			"rel": "used"
+		},
+		{
+			"id": "e110",
+			"source": "proj_dep_graph_versions",
+			"target": "skill_vite",
+			"rel": "used"
+		},
+		{
+			"id": "e111",
+			"source": "proj_codebots_homepage_ai",
+			"target": "skill_docker",
+			"rel": "used"
+		},
+		{
+			"id": "e112",
+			"source": "proj_codebots_homepage_ai",
+			"target": "skill_process_improvement",
+			"rel": "used"
+		},
+		{
+			"id": "e113",
+			"source": "proj_codebots_homepage_ai",
+			"target": "skill_css",
+			"rel": "used"
+		},
+		{
+			"id": "e114",
+			"source": "proj_codebots_homepage_ai",
+			"target": "skill_node",
+			"rel": "used"
 		}
 	],
 	"meta": {

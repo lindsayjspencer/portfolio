@@ -41,7 +41,8 @@ const MENU_OPTIONS: MenuOption[] = [
 		mode: 'skills',
 		label: 'Skills',
 		variants: [
-			{ value: 'clusters', label: 'Clusters' },
+			{ value: 'technical', label: 'Technical' },
+			{ value: 'soft', label: 'Soft' },
 			{ value: 'matrix', label: 'Matrix' },
 		],
 	},
@@ -129,7 +130,7 @@ export function OptionsDropdown() {
 				return {
 					mode: 'skills',
 					data: {
-						variant: (variant as 'clusters' | 'matrix') || 'clusters',
+						variant: (variant as 'technical' | 'soft' | 'matrix') || 'technical',
 						clusterBy: 'domain',
 						...base,
 					},

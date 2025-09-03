@@ -39,12 +39,13 @@ export const projectsDirective = tool({
 
 const skillsDirectiveSchema = z.object({
 	...Base,
-	variant: z.enum(['clusters', 'matrix']).default('clusters'),
+	// Rename "clusters" to "technical" and add new "soft" variant, keep matrix
+	variant: z.enum(['technical', 'soft', 'matrix']).default('technical'),
 	focusLevel: z.enum(['expert', 'advanced', 'intermediate']).optional(),
 	clusterBy: z.enum(['domain', 'recency', 'usage']).default('domain'),
 });
 export const skillsDirective = tool({
-	description: 'Show skills view.',
+	description: 'Show skills view (technical clusters, soft clusters, or matrix).',
 	inputSchema: skillsDirectiveSchema,
 });
 
