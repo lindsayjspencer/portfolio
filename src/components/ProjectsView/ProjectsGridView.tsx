@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import type { TransitionPhase, TransitionCallbacks, ProjectsGridSnapshot } from '~/lib/ViewTransitions';
 import type { ProjectCard } from '~/lib/PortfolioToProject';
-import { usePortfolioStore } from '~/lib/PortfolioStore';
+import { useApplyDirective } from '~/hooks/useApplyDirective';
+import type { Directive } from '~/lib/ai/directiveTools';
 import './ProjectsGridView.scss';
 import Tag from '~/components/Ui/Tag';
 
@@ -109,7 +110,7 @@ function ProjectCardComponent({ project, onClick }: ProjectCardComponentProps) {
 
 export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCallbacks }: ProjectsGridViewProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const { openPanel } = usePortfolioStore();
+	const applyDirective = useApplyDirective();
 
 	// Register transition callbacks
 	useEffect(() => {
@@ -140,15 +141,19 @@ export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCall
 	}, [onRegisterCallbacks]);
 
 	const handleProjectClick = (project: ProjectCard) => {
-		// Open the project in the panel
-		openPanel({
-			type: 'node',
-			title: project.label,
+		// Navigate to the case study view for this project by applying a directive
+		const directive: Directive = {
+			mode: 'projects',
 			data: {
-				...project,
-				itemName: project.label,
+				variant: 'case-study',
+				// Use highlights to select the focus project inside the case-study snapshot
+				highlights: [project.id],
+				narration: '',
+				confidence: 0.7,
+				showMetrics: true,
 			},
-		});
+		};
+		applyDirective(directive);
 	};
 
 	const { projects, pinnedProjects } = dataSnapshot;

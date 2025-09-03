@@ -11,6 +11,8 @@ import type {
 	StoryEvidence as StoryTileData,
 } from './ValuesEvidenceCard';
 import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
+import { useApplyDirective } from '~/hooks/useApplyDirective';
+import type { Directive } from '~/lib/ai/directiveTools';
 
 interface ValuesEvidenceViewProps {
 	dataSnapshot: ValuesEvidenceSnapshot;
@@ -26,6 +28,7 @@ export function ValuesEvidenceView({
 	const [contentOpacity, setContentOpacity] = useState(transitionPhase === 'stable' ? 1 : 0);
 	const [transitionDuration, setTransitionDuration] = useState(400);
 	const { openPanel } = usePortfolioStore();
+	const applyDirective = useApplyDirective();
 
 	useEffect(() => {
 		if (onRegisterCallbacks) {
@@ -67,6 +70,24 @@ export function ValuesEvidenceView({
 	const onOpen = (nodeId: string) => {
 		const node = graph.nodes.find((n) => n.id === nodeId);
 		if (!node) return;
+
+		if (node.type === 'project') {
+			// Apply a directive to open the case study for this project
+			const directive: Directive = {
+				mode: 'projects',
+				data: {
+					variant: 'case-study',
+					highlights: [node.id],
+					narration: '',
+					confidence: 0.7,
+					showMetrics: true,
+				},
+			};
+			applyDirective(directive);
+			return;
+		}
+
+		// Fallback: open panel for roles and stories
 		openPanel({
 			type: 'node',
 			title: node.label,

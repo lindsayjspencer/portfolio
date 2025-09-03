@@ -15,6 +15,7 @@ import {
 import { clarifyTool, type ClarifyPayload } from '~/lib/ai/clarifyTool';
 import { setServerTheme } from '~/lib/server-theme';
 import portfolioData from '~/data/portfolio.json';
+import { CASE_STUDIES } from '~/data/case-studies';
 import { langfuse } from '~/server/langfuse';
 import { randomUUID } from 'crypto';
 
@@ -60,6 +61,56 @@ function formatPortfolioAsMarkdown() {
 	return markdown;
 }
 
+// Convert case studies data to markdown context
+function formatCaseStudiesAsMarkdown() {
+	let markdown = '# Case Studies\n\n';
+
+	Object.values(CASE_STUDIES).forEach((caseStudy) => {
+		markdown += `## ${caseStudy.title}\n\n`;
+		markdown += `- **ID**: ${caseStudy.id}\n`;
+		markdown += `- **Project ID**: ${caseStudy.projectId}\n`;
+		markdown += `- **Summary**: ${caseStudy.summary}\n`;
+
+		if (caseStudy?.meta?.role) {
+			markdown += `- **Role**: ${caseStudy?.meta.role}\n`;
+		}
+
+		if (caseStudy?.meta?.stack && caseStudy?.meta.stack.length > 0) {
+			markdown += `- **Tech Stack**: ${caseStudy.meta.stack.join(', ')}\n`;
+		}
+
+		if (caseStudy?.meta?.links && caseStudy?.meta.links.length > 0) {
+			markdown += `- **Links**: ${caseStudy.meta.links.map((link) => `${link.title}: ${link.href}`).join(', ')}\n`;
+		}
+
+		markdown += '\n### Sections:\n\n';
+
+		caseStudy.sections.forEach((section, index) => {
+			if (section.kind === 'intro') {
+				markdown += `**Introduction**: ${section.body}\n\n`;
+			} else if (section.kind === 'bullets' && section.title) {
+				markdown += `**${section.title}**:\n`;
+				if (section.items) {
+					section.items.forEach((item) => {
+						markdown += `- ${item}\n`;
+					});
+				}
+				markdown += '\n';
+			} else if (section.kind === 'metrics' && section.title && section.metrics) {
+				markdown += `**${section.title}**:\n`;
+				section.metrics.forEach((metric) => {
+					markdown += `- ${metric.label}: ${metric.value}\n`;
+				});
+				markdown += '\n';
+			}
+		});
+
+		markdown += '\n---\n\n';
+	});
+
+	return markdown;
+}
+
 const formatMessagesAsMarkdown = (messages: ModelMessage[]): string => {
 	const formattedMessages = messages
 		.map((msg) => {
@@ -99,6 +150,7 @@ interface EnhancedAskResult {
 
 export async function Ask(messages: ModelMessage[], currentDirective: Directive | null): Promise<EnhancedAskResult> {
 	const portfolioContext = formatPortfolioAsMarkdown();
+	const caseStudiesContext = formatCaseStudiesAsMarkdown();
 
 	const SYSTEM_PROMPT = `You ARE Lindsay Spencer. Always respond in first person as Lindsay. Never break character or mention being an AI assistant.
 
@@ -119,6 +171,9 @@ When user mentions "resume" or "CV": Just show the resume view without explanati
 
 ### What Lindsay is most proud of
 When asked about pride/accomplishments: "Honestly? I'm most proud that you're here, interacting with this application I built. But if you want something more traditional - [pick a relevant project and explain why]."
+
+### Education and qualifications
+When asked about education, university, degrees, or formal qualifications: "I'm entirely self-taught over a 20-year timespan. Everything you see here - from the technical skills to the project outcomes - comes from hands-on learning, building real systems, and solving actual problems. I've found that shipping products and delivering results speaks louder than any piece of paper."
 
 ### Weaknesses
 When asked about weaknesses: Frame strengths as humorous "flaws":
@@ -175,9 +230,35 @@ You have access to these tools:
 - Full résumé → **resumeDirective**
 - Free exploration → **exploreDirective**
 
-### Clarification Examples (always in first person):
-- User: "Show me your experience" → **clarify**: "Would you like to see my career timeline, specific skills, or project work?"
-- User: "Tell me about React" → **clarify**: "Are you interested in React projects I've built, my React skill level, or how I learned it?"
+### Using the clarify tool
+**IMPORTANT**: When a request is ambiguous, ALWAYS use the **clarify** tool instead of asking numbered questions in your response. The clarify tool provides a better user experience with interactive options.
+
+**DO THIS** ✅:
+- Use **clarify** tool with options array
+- Provide clear, conversational option descriptions
+- Keep Lindsay's voice in the clarification text
+
+**DON'T DO THIS** ❌:
+- "Would you like to: 1) See my timeline 2) View my projects 3) Check my skills"
+- Numbered lists in your text response
+- Breaking character to ask technical questions
+
+### Clarification Examples:
+- User: "Show me your experience" → Use **clarify** tool with:
+  {
+    slot: "experience_type",
+    question: "What kind of experience would you like to see?",
+    kind: "choice",
+    options: ["Career Timeline", "Technical Skills", "Project Work"]
+  }
+
+- User: "Tell me about React" → Use **clarify** tool with:
+  {
+    slot: "react_focus",
+    question: "What specifically about my React experience interests you?",
+    kind: "choice",
+    options: ["React Projects I've Built", "My React Skill Level", "How I Learned React"]
+  }
 
 Always include:
 - confidence scores (0-1) 
@@ -187,6 +268,8 @@ Always include:
 
 Portfolio context:
 ${portfolioContext}
+
+${caseStudiesContext}
 
 Choose the most appropriate directive tool based on the user's request. Use clarify when ambiguous.`;
 
