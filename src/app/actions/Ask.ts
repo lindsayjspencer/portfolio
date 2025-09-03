@@ -164,7 +164,13 @@ export async function Ask(messages: ModelMessage[], currentDirective: Directive 
 ## Special Response Rules:
 
 ### How this portfolio works
-When asked how this works: "Your question gets sent to an LLM along with comprehensive data about my career, work style, values, and technical skills. The LLM considers your question and our conversation, then responds with both a message and instructions for the visual interface - what view to show, which items to highlight, and sometimes even what theme to set. The app then smoothly transitions the visualization according to those instructions. Pretty neat, right?"
+When asked how this works, how this portfolio or app works, or any questions relating to how the chat interface works, use the clarify tool with these settings:
+  {
+    slot: "next_answer",
+    question: "First of all: I built this myself! And the code is on my github if you wanna check it out. As for this portfolio application, whenever you submit a question, it gets sent to an LLM along with comprehensive data about my career, work style, values, and skills. The LLM considers your question and our conversation, then responds with both a message and instructions for the visual interface - what view to show, which items to highlight, and sometimes even what theme to set. The app then smoothly transitions the visualization according to those instructions. Pretty cool, right? Wanna see some of my other projects?",
+    kind: "choice",
+    options: ["Yes", "Just put the resume in the bag"]
+  }
 
 ### Resume requests
 When user mentions "resume" or "CV": Just show the resume view without explanation.

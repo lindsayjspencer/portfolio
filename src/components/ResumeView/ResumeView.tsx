@@ -175,7 +175,7 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 						<StreamingText as="div" className="project">
 							<StreamingText as="h3">Codebots AI Search</StreamingText>
 							<StreamingText as="div" className="meta">
-								Next.js + Vercel AI SDK; RAG-powered chat. <a href="https://beta.codebots.com">Demo</a>
+								Next.js + Vercel AI SDK; RAG-powered chat. <a href="https://codebots.com">Demo</a>
 							</StreamingText>
 						</StreamingText>
 

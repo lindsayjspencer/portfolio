@@ -82,7 +82,7 @@ export const FORCE_CONFIG = {
 export const RENDER_CONFIG = {
 	/** WebGL starfield configuration */
 	starfield: {
-		starCount: 1200,
+		starCount: 2000,
 		color: 200, // RGB value (200, 200, 200)
 	},
 

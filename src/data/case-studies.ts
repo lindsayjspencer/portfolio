@@ -12,7 +12,7 @@ export const CASE_STUDIES: Record<string, CaseStudy> = {
 			'Interactive, real-time version dependency graph. Plan and apply cascading updates with one-click macros; replaced multi-hour manual workflows with minutes-long visual operations.',
 		hero: {
 			src: '/images/case-studies/dep-graph-versions/hero.mp4',
-			alt: '3D force-directed dependency versioning UI',
+			alt: '2D force-directed dependency versioning UI',
 		},
 		meta: {
 			role: 'Author & Lead',
@@ -230,33 +230,94 @@ export const CASE_STUDIES: Record<string, CaseStudy> = {
 		projectId: 'proj_codebots_homepage_ai',
 		slug: 'codebots-homepage-ai',
 		title: 'Codebots Homepage / AI Search',
-		summary: 'Public-facing landing page with LLM/RAG-powered chat over company documentation.',
+		summary:
+			'Homepage reduced to a single RAG-backed chat so non-technical visitors quickly learn what Codebots is and how it works. Vectorized docs + curated blogs, model routing, eval-guarded responses, and markdown-rendered answers with streaming.',
 		hero: {
-			src: '/images/case-studies/codebots-homepage-ai/hero.png',
+			src: '/images/case-studies/codebots-homepage-ai/hero.mp4',
 			alt: 'Codebots homepage with AI search chat',
 		},
 		meta: {
-			stack: ['Next.js', 'React', 'TypeScript', 'LLM Application Engineering', 'Local Model Integration'],
-			links: [{ title: 'Demo', href: 'https://beta.codebots.com' }],
+			role: 'Initiator & Lead',
+			stack: [
+				'Next.js',
+				'React',
+				'TypeScript',
+				'LLM Application Engineering',
+				'Local Model Integration',
+				'Open WebUI',
+				'RAG Flow',
+				'Gemma 3',
+				'Kimi K2',
+				'Redis',
+				'Markdown renderer',
+			],
+			links: [{ title: 'Demo', href: 'https://codebots.com' }],
 		},
 		sections: [
 			{
 				kind: 'intro',
-				body: 'Public-facing landing page featuring LLM-driven chat grounded with RAG over company documentation.',
+				body: 'Visitors arrived via SEO but struggled to grasp Codebots quickly. We simplified the homepage to a single LLM chat grounded by RAG over documentation and curated blogs. A tuned system prompt sets tone and structure, and answers stream with correct markdown rendering.',
 			},
 			{
 				kind: 'bullets',
-				title: 'Highlights',
+				title: 'Problem & goals',
 				items: [
-					'RAG-backed chat UX answering product/company questions',
-					'Next.js app with production deployment',
-					'Focus on concise responses and discoverability',
+					'High SEO traffic, low conversion; visitors did not understand “what is Codebots?”',
+					'Attention spans declined and content was hard to navigate; steep learning curve',
+					'Goal: concise, grounded answers that build comprehension and drive conversion',
 				],
 			},
 			{
 				kind: 'bullets',
-				title: 'Tech stack',
-				items: ['Next.js', 'React', 'TypeScript', 'LLM Application Engineering', 'Local Model Integration'],
+				title: 'Audience & placement',
+				items: [
+					'Target: prospective clients and non-technical users',
+					'Homepage is chat-first; traditional content receded to support the conversation',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Retrieval & prompting',
+				items: [
+					'All documentation vectorized plus a curated selection of blog posts',
+					'Tuned system prompt enforces tone and structure; answers render via in-house markdown renderer',
+					'Gateway routes each question to the most appropriate model (Gemma 3, Kimi K2)',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Architecture',
+				items: [
+					'Open WebUI + RAG Flow orchestrate locally hosted models',
+					'RAG over a vector index of docs and curated blogs; answers stream to the UI',
+					'Model router/gateway selects between Gemma 3 and Kimi K2 based on query fit',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Quality & safety',
+				items: [
+					'Guarded by an eval suite used to test model quality and regressions',
+					'Secondary LLM verifier checks responses against guidelines and flags hallucinations',
+					'Redis-backed rate limiting to protect the service',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'My role',
+				items: [
+					'Introduced LLM calls inside the application and shipped text streaming',
+					'Designed the chat UX and prompt strategy; integrated markdown rendering',
+					'Collaborated with a deployment owner and a 2-person adjacent local AI team',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Next',
+				items: [
+					'Clarification and suggestion prompting to boost answer quality and navigation',
+					'Merge the main product experience into the homepage for a cohesive journey',
+				],
 			},
 		],
 	},
@@ -349,42 +410,120 @@ export const CASE_STUDIES: Record<string, CaseStudy> = {
 		projectId: 'proj_goodwill_markets',
 		slug: 'goodwill-markets',
 		title: 'Markets & Events Platform',
-		summary: 'End-to-end admin & operations platform: bookings, payments, integrations, onsite tools, analytics.',
+		summary:
+			'End-to-end platform that automated debt/invoicing, reconciliation, mapping, comms, onsite ops, and analytics. Scaled admin from 1 market → 36 markets with lean staff through systematic automation.',
 		hero: {
 			src: '/images/case-studies/goodwill-markets/hero.png',
 			alt: 'Markets & events admin platform UI',
 		},
 		meta: {
-			stack: ['React', 'TypeScript', 'jQuery', 'PHP', 'MySQL', 'Docker', 'Linux', 'Apache', 'Three.js'],
+			role: 'Sole Developer',
+			stack: [
+				'PHP (CodeIgniter 3)',
+				'MySQL',
+				'Apache / Linux (Binary Lane VPS)',
+				'jQuery → React + TypeScript',
+				'Webpack → Rollup',
+				'Service Workers',
+				'Mandrill/Mailchimp Transactional',
+				'MYOB',
+				'Westpac (bank feeds)',
+				'Square OAuth',
+				'Wufoo',
+			],
 			links: [],
 		},
 		sections: [
 			{
 				kind: 'intro',
-				body: 'Multi-year system powering vendor onboarding, bookings, payments and accounting integrations, onsite tools, analytics, mapping, document management, surveys, rich email templating, and a marketing site generator.',
+				body: 'I started in 2014 as Operations Manager and immediately saw Excel-driven processes consuming entire weeks for two admin staff and 25% of the bookkeeper’s time. I delivered a working LAMP system in 10 weeks to automate debts, payments, invoicing, and reconciliation. Over the years it expanded to rich emailing, applications, mapping, MYOB/Westpac integrations, onsite mobile tools, analytics, and a marketing site generator. In 2020 I upgraded PHP 5.6→7.2 and migrated UIs from jQuery to React/TypeScript while re-designing 35 of 38 interfaces.',
 			},
 			{
 				kind: 'bullets',
 				title: 'Highlights',
 				items: [
-					'Admin & operations platform scaled from 1 → 36 markets across AU',
-					'Integrated payments and bookkeeping with MYOB/Westpac',
-					'Onsite mobile views, drag-and-drop UIs, and mapping tools',
-					'Rich email templating and automated document workflows',
+					'Automated debt/invoice generation and full bank reconciliation',
+					'Drag-and-drop mapping cut 2–3h pre-event work to seconds during the week',
+					'Granular permissions for office, onsite, accounting, media, and marketing roles',
+					'500 concurrent users at peak; first interactivity ~350ms after optimizations',
+					'36+ email template families, previews, history/search, and triggers across the platform',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Payments & reconciliation',
+				items: [
+					'Partial payments, refunds, credits, and internal account splits by market/event',
+					'MYOB sync for payments against accounts; Westpac batch reconciliation and bank feeds',
+					'Reconciliation moved from manual (25% bookkeeper time) to fully automated',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Emailing & applications',
+				items: [
+					'Context-aware variables with 36+ template types; preview, history, search',
+					'Hundreds of trigger points; Mandrill/Mailchimp transactional for delivery',
+					'Applications integrated with email system and Wufoo forms',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Mapping & onsite ops',
+				items: [
+					'Drag-and-drop stall allocation (jQuery Sortable → React DnD → native DnD)',
+					'Onsite mobile UI: check-in, cash collection, stall moves, incidents, live map, card payments',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Vendor value engine',
+				items: [
+					'Internal “thumbprint similarity” scoring identifies missing vendor mix for high-performing days',
+					'Suggests vendors to approach to improve the day’s expected performance',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Marketing site generator',
+				items: [
+					'Generates the public marketing site from platform values; control colors and content',
+					'Outputs SEO artifacts (sitemaps/meta) and handles publish flow',
+				],
+			},
+			{
+				kind: 'bullets',
+				title: 'Architecture & performance',
+				items: [
+					'LAMP on Binary Lane VPS (CodeIgniter 3, MySQL, Apache/Linux)',
+					'Multi-page app; bundling from Webpack 4 → Rollup; service workers and JS chunking',
+					'Concurrency ~500 users; first interactivity ~350ms after optimizations',
+					'2020 upgrade PHP 5.6 → 7.2; jQuery → React/TypeScript; 35/38 interfaces redesigned',
 				],
 			},
 			{
 				kind: 'bullets',
 				title: 'Tech stack',
-				items: ['React', 'TypeScript', 'jQuery', 'PHP', 'MySQL', 'Docker', 'Linux', 'Apache', 'Three.js'],
+				items: [
+					'PHP (CodeIgniter 3), MySQL, Apache/Linux',
+					'jQuery → React + TypeScript',
+					'Webpack → Rollup, Service Workers',
+					'Mandrill/Mailchimp, MYOB, Westpac, Square OAuth, Wufoo',
+				],
 			},
 			{
 				kind: 'metrics',
 				title: 'Outcomes',
 				metrics: [
-					{ label: 'Admin reduction', value: '-60% office admin per event' },
-					{ label: 'Bookkeeper automation', value: '80% automated' },
-					{ label: 'Markets scaled', value: '1 → 36 across AU' },
+					{
+						label: 'Admin workload',
+						value: '2 staff/week → automated; now 4 staff run 8 weekly markets (2yrs)',
+					},
+					{ label: 'Today', value: '9 staff operate 36 markets' },
+					{ label: 'Reconciliation', value: 'Manual (25% bookkeeper time) → fully automated' },
+					{ label: 'Mapping', value: '2–3h pre-event → seconds during the week' },
+					{ label: 'A/R owing', value: '~50% outstanding → ~6%' },
+					{ label: 'Latency', value: '~350ms first interactivity' },
 				],
 			},
 		],

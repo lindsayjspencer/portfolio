@@ -257,7 +257,7 @@
 			"links": [
 				{
 					"title": "Demo",
-					"href": "https://beta.codebots.com"
+					"href": "https://codebots.com"
 				}
 			]
 		},
@@ -269,11 +269,11 @@
 			"description": "Released as OSS on npm, enabling performant granular store updates for React apps.",
 			"period": {
 				"start": "2023-12",
-				"end": "2023-12"
+				"end": "present"
 			},
 			"years": [
 				2023,
-				2023
+				2025
 			],
 			"tags": [
 				"react",

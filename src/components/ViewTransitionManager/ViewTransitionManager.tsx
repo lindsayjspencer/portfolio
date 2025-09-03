@@ -103,7 +103,6 @@ function CompareFrontendVsBackendLegend({ dataSnapshot }: { dataSnapshot: Compar
 
 export function ViewTransitionManager() {
 	const directive = usePortfolioStore((state) => state.directive);
-	if (!directive) return null; // Wait until preloader/initializer sets a directive
 	const currentMode = directive.mode;
 	// Create initial data snapshot using utility (graph is static)
 	const initialDataSnapshot = useMemo(() => createDataSnapshot(graph, directive), [directive]);
@@ -120,17 +119,6 @@ export function ViewTransitionManager() {
 		],
 		isTransitioning: true,
 	});
-
-	// Debug: observe the current stable snapshot after any state change
-	const stableSnapshot = useMemo(
-		() => transitionState.instances.find((i) => i.phase === 'stable')?.dataSnapshot,
-		[transitionState],
-	);
-	useEffect(() => {
-		if (!stableSnapshot) return;
-		const variant = 'variant' in stableSnapshot ? (stableSnapshot as any).variant : undefined;
-		const highlights = (stableSnapshot as any)?.directive?.data?.highlights;
-	}, [stableSnapshot]);
 
 	const transitionCallbacks = useRef<Map<string, TransitionCallbacks>>(new Map());
 	const transitionTimeouts = useRef<NodeJS.Timeout[]>([]);
@@ -222,14 +210,10 @@ export function ViewTransitionManager() {
 			'explore',
 		]);
 		const prevVariant =
-			modesWithVariants.has(prevMode) && 'variant' in prevSnapshot
-				? (prevSnapshot as { variant?: string }).variant
-				: undefined;
+			modesWithVariants.has(prevMode) && 'variant' in prevSnapshot ? prevSnapshot.variant : undefined;
 		// Read variant from the new directive, but treat missing as "unchanged"
 		const nextVariantRaw =
-			modesWithVariants.has(nextMode) && 'variant' in directive.data
-				? (directive.data as { variant?: string }).variant
-				: undefined;
+			modesWithVariants.has(nextMode) && 'variant' in directive.data ? directive.data.variant : undefined;
 
 		// If mode or variant changed, start a transition (but avoid loops to same target)
 		// Only transition if mode actually changes or variant is explicitly different

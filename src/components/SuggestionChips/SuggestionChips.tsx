@@ -11,7 +11,6 @@ const ALL_QUESTIONS = [
 	'Why should we hire you over an AI?',
 	'What are you most proud of in your career?',
 	'Do you have experience in Typescript?',
-	'Just put the resume in the bag',
 	'Are you just a programmer?',
 	'Surprise me with something interesting',
 	'How does this portfolio work?',
@@ -20,9 +19,7 @@ const ALL_QUESTIONS = [
 	'Tell me about your leadership experience',
 	'What are your core values?',
 	'Have you worked with AI/ML?',
-	'What about backend development?',
 	'Show me your most impactful project',
-	'Do you have experience with cloud platforms?',
 ];
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -48,7 +45,8 @@ export function SuggestionChips() {
 
 	useEffect(() => {
 		if (landingMode && shouldRender) {
-			setRandomQuestions(shuffleArray([...ALL_QUESTIONS]).slice(0, 3));
+			const questions = shuffleArray([...ALL_QUESTIONS]).slice(0, 2);
+			setRandomQuestions([...questions, 'Just put the resume in the bag']);
 		}
 	}, [landingMode, shouldRender]);
 
