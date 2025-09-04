@@ -101,15 +101,14 @@ export function UrlStateSync() {
 			((dWithTheme.data as any)?.narration ?? '') === '';
 
 		const url = isDefaultLanding ? '/' : `/?state=${encoded}`;
-		const push = prevKey && prevKey !== nextKey;
 
 		// If mode/variant changed, write immediately (no debounce) to avoid being starved by rapid intra-view updates
 		if (prevKey !== nextKey) {
 			try {
 				const current = new URLSearchParams(window.location.search).get('state');
 				if (current !== encoded) {
-					if (push && !isDefaultLanding) router.push(url);
-					else router.replace(url);
+					// Always push a new history entry (even for landing) so Back behaves predictably
+					router.push(url);
 				}
 			} catch {}
 			lastEncodedRef.current = encoded;
@@ -124,8 +123,8 @@ export function UrlStateSync() {
 				if (current === encoded) return;
 			} catch {}
 
-			if (push && !isDefaultLanding) router.push(url);
-			else router.replace(url);
+			// Always push a new history entry
+			router.push(url);
 			lastEncodedRef.current = encoded;
 			lastKeyRef.current = nextKey;
 		}, 250);

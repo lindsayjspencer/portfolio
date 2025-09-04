@@ -19,13 +19,8 @@ export function useApplyDirective() {
 		(directive: Directive, _opts?: ApplyDirectiveOptions) => {
 			const hasTheme = typeof (directive.data as { theme?: unknown }).theme !== 'undefined';
 			const incomingNarration = (directive.data as { narration?: string }).narration;
-			const currentNarration = (currentDirective?.data as { narration?: string } | undefined)?.narration;
-			const narration =
-				incomingNarration != null && incomingNarration !== ''
-					? incomingNarration
-					: currentNarration != null
-						? currentNarration
-						: '';
+			// Do not preserve previous narration; if none is provided, clear it to empty string
+			const narration = incomingNarration != null ? incomingNarration : '';
 			const normalized: Directive = {
 				...directive,
 				data: {

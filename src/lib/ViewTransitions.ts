@@ -675,3 +675,89 @@ function assertNever(x: never): never {
 	// Fallback - should never reach here with proper typing
 	throw new Error('Unknown directive mode');
 }
+
+// ===== Transition decision helpers =====
+
+/**
+ * Returns a stable, structural signature of a directive for transition equality checks.
+ * By default, ignores purely presentational or LLM-facing fields: narration, highlights, theme, confidence, hints.
+ * Per-mode/variant exceptions can omit additional fields considered non-structural (e.g., projects.showMetrics, compare.showOverlap).
+ */
+export function structuralSignature(directive: Directive): string {
+	// Base fields to ignore across all modes
+	const baseIgnore = new Set<string>(['narration', 'highlights', 'theme', 'confidence', 'hints']);
+
+	// Per-mode/variant additional ignores (kept minimal; owner can review/tune)
+	// Keys below live inside directive.data
+	const modeVariantIgnores: Partial<Record<Directive['mode'], Record<string | '__any__', string[]>>> = {
+		// projects: `showMetrics` often toggles chrome without requiring a full transition
+		projects: { __any__: ['showMetrics'] },
+		// compare: `showOverlap` toggles overlay layering; treat as cosmetic by default
+		compare: { __any__: ['showOverlap'] },
+		// skills: treat display "hints" already covered by baseIgnore; nothing extra here for now
+	};
+
+	const prevVariant = (directive as any)?.data?.variant as string | undefined;
+	const additionalIgnores =
+		modeVariantIgnores[directive.mode]?.[prevVariant ?? '__any__'] ??
+		modeVariantIgnores[directive.mode]?.['__any__'] ??
+		[];
+
+	const ignore = new Set<string>([...baseIgnore, ...additionalIgnores]);
+
+	// Create a sanitized shallow copy of directive.data excluding ignored keys
+	const sanitizeData = (data: Record<string, unknown> | undefined) => {
+		if (!data) return {} as Record<string, unknown>;
+		const out: Record<string, unknown> = {};
+		for (const key of Object.keys(data)) {
+			if (ignore.has(key)) continue;
+			out[key] = (data as any)[key];
+		}
+		return out;
+	};
+
+	const structural = {
+		mode: directive.mode,
+		data: sanitizeData((directive as any).data),
+	} as const;
+
+	return stableStringify(structural);
+}
+
+/**
+ * Decide whether a change from prev -> next directives should trigger a full transition.
+ * Rules:
+ *  - Mode changed -> transition
+ *  - Variant changed (including defined -> undefined) -> transition
+ *  - Structural signature changed (after ignoring purely cosmetic keys) -> transition
+ *  - Else -> no transition; update snapshot in place
+ */
+export function shouldTransition(prev: Directive, next: Directive): boolean {
+	if (prev.mode !== next.mode) return true;
+
+	const prevVariant = (prev as any)?.data?.variant as string | undefined;
+	const nextVariant = (next as any)?.data?.variant as string | undefined;
+	if (prevVariant !== nextVariant) return true; // includes defined->undefined
+
+	const prevSig = structuralSignature(prev);
+	const nextSig = structuralSignature(next);
+	return prevSig !== nextSig;
+}
+
+/**
+ * Stable stringify that sorts object keys recursively to ensure consistent signatures.
+ */
+function stableStringify(value: unknown): string {
+	const seen = new WeakSet();
+	const helper = (v: any): any => {
+		if (v === null || typeof v !== 'object') return v;
+		if (seen.has(v)) return undefined; // avoid cycles (shouldn't occur for directives)
+		seen.add(v);
+		if (Array.isArray(v)) return v.map(helper);
+		const keys = Object.keys(v).sort();
+		const out: Record<string, unknown> = {};
+		for (const k of keys) out[k] = helper(v[k]);
+		return out;
+	};
+	return JSON.stringify(helper(value));
+}

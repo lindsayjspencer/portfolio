@@ -24,6 +24,29 @@
 		margin: 0 auto;
 	}
 
+	/* Media loading overlay */
+	.pcs-media__loader {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		background: var(--surface-a, rgba(0, 0, 0, 0.04));
+		pointer-events: none;
+	}
+	.pcs-spinner {
+		width: 28px;
+		height: 28px;
+		border: 3px solid rgba(0, 0, 0, 0.2);
+		border-top-color: rgba(0, 0, 0, 0.6);
+		border-radius: 50%;
+		animation: pcs-spin 0.9s linear infinite;
+	}
+	@keyframes pcs-spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
 	.pcs-header {
 		display: grid;
 		gap: var(--pcs-gap);
@@ -33,6 +56,7 @@
 	.pcs-title {
 		font-size: 2.5rem;
 		line-height: 1.2;
+
 		margin: 0;
 	}
 
@@ -147,6 +171,7 @@
 
 	/* Hero card with entrance */
 	.pcs-hero {
+		position: relative; /* for overlay positioning */
 		padding: 0; /* full-bleed image without inner padding */
 		border-radius: var(--pcs-card-radius);
 		overflow: hidden;
@@ -183,6 +208,14 @@
 			height: auto;
 			object-fit: cover;
 		}
+	}
+
+	/* Ensure overlays position correctly within image containers */
+	.pcs-card.pcs-image {
+		position: relative;
+	}
+	.pcs-tile--image {
+		position: relative;
 	}
 
 	.pcs-sections {

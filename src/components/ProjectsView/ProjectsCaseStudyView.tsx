@@ -47,6 +47,73 @@ export function ProjectsCaseStudyView({
 
 	const { caseStudy } = dataSnapshot;
 
+	// Media helper
+	const isVideoSrc = (src: string | undefined): boolean => {
+		if (!src) return false;
+		const s = src.toLowerCase();
+		return s.endsWith('.mp4') || s.endsWith('.webm');
+	};
+
+	// Loading flags without changing layout
+	const [heroLoaded, setHeroLoaded] = useState(false);
+	const [sectionImageLoaded, setSectionImageLoaded] = useState<Record<number, boolean>>({});
+	const [galleryImageLoaded, setGalleryImageLoaded] = useState<Record<string, boolean>>({});
+	function ImageWithLoader(props: {
+		src: string;
+		alt: string;
+		width: number;
+		height: number;
+		priority?: boolean;
+		className?: string;
+	}) {
+		const [loaded, setLoaded] = useState(false);
+		const { className, ...rest } = props;
+		return (
+			<div className={`pcs-media ${loaded ? 'is-loaded' : 'is-loading'} ${className ?? ''}`.trim()}>
+				{!loaded && (
+					<div className="pcs-media__loader" aria-hidden>
+						<div className="pcs-spinner" />
+					</div>
+				)}
+				<Image
+					{...rest}
+					onLoad={() => setLoaded(true)}
+					style={{ opacity: loaded ? 1 : 0, transition: 'opacity 300ms ease' }}
+				/>
+			</div>
+		);
+	}
+
+	function VideoWithLoader(props: {
+		src: string;
+		className?: string;
+		autoPlay?: boolean;
+		muted?: boolean;
+		loop?: boolean;
+		playsInline?: boolean;
+		preload?: 'auto' | 'metadata' | 'none';
+		ariaLabel?: string;
+	}) {
+		const [loaded, setLoaded] = useState(false);
+		const { className, ariaLabel, ...rest } = props;
+		return (
+			<div className={`pcs-media ${loaded ? 'is-loaded' : 'is-loading'} ${className ?? ''}`.trim()}>
+				{!loaded && (
+					<div className="pcs-media__loader" aria-hidden>
+						<div className="pcs-spinner" />
+					</div>
+				)}
+				<video
+					{...rest}
+					aria-label={ariaLabel}
+					onLoadedData={() => setLoaded(true)}
+					onCanPlayThrough={() => setLoaded(true)}
+					style={{ opacity: loaded ? 1 : 0, transition: 'opacity 300ms ease' }}
+				/>
+			</div>
+		);
+	}
+
 	return (
 		<div className="projects-case-study" style={{ opacity, transition: `opacity ${duration}ms ease-in-out` }}>
 			<div className="pcs-container">
@@ -68,24 +135,34 @@ export function ProjectsCaseStudyView({
 
 				{caseStudy.hero && (
 					<div className={`pcs-card pcs-hero ${heroVisible ? 'is-visible' : ''}`} data-visible={heroVisible}>
-						{/(\.mp4|\.webm)$/i.test(caseStudy.hero.src) ? (
+						{!heroLoaded && (
+							<div className="pcs-media__loader" aria-hidden>
+								<div className="pcs-spinner" />
+							</div>
+						)}
+						{isVideoSrc(caseStudy.hero.src) ? (
 							<video
 								className="pcs-hero-video"
 								src={caseStudy.hero.src}
+								width={1200}
+								height={630}
 								autoPlay
 								muted
 								loop
 								playsInline
 								preload="auto"
 								aria-label={caseStudy.hero.alt ?? 'Case study hero video'}
+								onLoadedData={() => setHeroLoaded(true)}
+								onCanPlayThrough={() => setHeroLoaded(true)}
 							/>
 						) : (
 							<Image
 								src={caseStudy.hero.src}
 								alt={caseStudy.hero.alt ?? ''}
-								width={1280}
-								height={720}
+								width={1200}
+								height={600}
 								priority
+								onLoad={() => setHeroLoaded(true)}
 							/>
 						)}
 					</div>
@@ -119,7 +196,20 @@ export function ProjectsCaseStudyView({
 								return (
 									<StreamingText key={i} as="figure" className="pcs-card pcs-image">
 										{s.title && <StreamingText as="figcaption">{s.title}</StreamingText>}
-										<Image src={s.image.src} alt={s.image.alt ?? ''} width={1280} height={720} />
+										{!sectionImageLoaded[i] && (
+											<div className="pcs-media__loader" aria-hidden>
+												<div className="pcs-spinner" />
+											</div>
+										)}
+										<Image
+											src={s.image.src}
+											alt={s.image.alt ?? ''}
+											width={1280}
+											height={720}
+											onLoadingComplete={() =>
+												setSectionImageLoaded((prev) => ({ ...prev, [i]: true }))
+											}
+										/>
 									</StreamingText>
 								);
 							}
@@ -128,11 +218,31 @@ export function ProjectsCaseStudyView({
 									<StreamingText key={i} as="div" className="pcs-card pcs-gallery">
 										{s.title && <StreamingText as="h2">{s.title}</StreamingText>}
 										<div className="pcs-card__grid">
-											{s.images.map((im, idx) => (
-												<div key={idx} className="pcs-tile pcs-tile--image" role="group">
-													<Image src={im.src} alt={im.alt ?? ''} width={640} height={360} />
-												</div>
-											))}
+											{s.images.map((im, idx) => {
+												const key = `${i}-${idx}`;
+												const loaded = galleryImageLoaded[key];
+												return (
+													<div key={idx} className="pcs-tile pcs-tile--image" role="group">
+														{!loaded && (
+															<div className="pcs-media__loader" aria-hidden>
+																<div className="pcs-spinner" />
+															</div>
+														)}
+														<Image
+															src={im.src}
+															alt={im.alt ?? ''}
+															width={640}
+															height={360}
+															onLoadingComplete={() =>
+																setGalleryImageLoaded((prev) => ({
+																	...prev,
+																	[key]: true,
+																}))
+															}
+														/>
+													</div>
+												);
+											})}
 										</div>
 									</StreamingText>
 								);

@@ -148,6 +148,41 @@
 		color: var(--muted);
 	}
 
+	.contact-links {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.25rem;
+
+		a {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.25rem;
+			color: var(--muted);
+			transition: color 150ms ease;
+
+			&:hover {
+				color: var(--primary);
+				text-decoration: none;
+
+				.material-icon-component {
+					color: var(--primary);
+				}
+			}
+
+			.material-icon-component {
+				transition: color 150ms ease;
+				margin-top: 2px;
+			}
+		}
+
+		.separator {
+			color: var(--color-neutral-400);
+			user-select: none;
+		}
+	}
+
 	ul {
 		margin: 0.25rem 0 0.5rem 1rem;
 		padding: 0;

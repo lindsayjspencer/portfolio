@@ -201,18 +201,20 @@ export function OptionsDropdown() {
 		}
 	};
 
+	const activeOption = MENU_OPTIONS.find((option) => option.mode === currentDirective.mode);
+
 	return (
 		<div className={`options-dropdown-container ${!landingMode ? 'visible' : ''}`}>
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger asChild>
-					<button className="options-dropdown-trigger" aria-label="Debug menu">
-						<MaterialIcon name="more_horiz" size={16} />
+					<button className="options-dropdown-trigger" aria-label="Menu">
+						{activeOption?.label ?? 'Menu'}
+						<MaterialIcon name="chevron_right" size={16} />
 					</button>
 				</DropdownMenu.Trigger>
 
 				<DropdownMenu.Portal>
 					<DropdownMenu.Content className="options-dropdown-menu" align="start" sideOffset={12}>
-						<div className="dropdown-header">View Mode</div>
 						{MENU_OPTIONS.map((option) => {
 							if (option.variants) {
 								// Check if any variant of this mode is active
@@ -297,8 +299,8 @@ export function OptionsDropdown() {
 							className="mode-button"
 							onSelect={() => {
 								clearMessages();
-								// Also clear the URL immediately
-								router.replace('/');
+								// Let UrlStateSync write landing; keep history by pushing
+								router.push('/');
 							}}
 						>
 							Go Home (clear chat)

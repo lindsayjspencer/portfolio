@@ -15,6 +15,10 @@
 		all: unset;
 		font-family: inherit;
 		border-radius: 0.5rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -25,12 +29,16 @@
 		backdrop-filter: blur(10px);
 		background-color: white;
 		color: var(--color-neutral-700);
-		font-size: 16px;
 		line-height: 16px;
 		cursor: pointer;
 
 		&:hover {
 			background-color: var(--color-neutral-50);
+		}
+
+		.material-icon-component {
+			margin-left: 0.25rem;
+			transform: rotate(90deg);
 		}
 	}
 

@@ -71,8 +71,14 @@ export type MaterialIconName =
 	| 'chat'
 	| 'phone'
 	| 'email'
+	| 'mail'
 	| 'notifications'
 	| 'notifications_off'
+	// Social & Links
+	| 'link'
+	| 'language'
+	| 'code'
+	| 'public'
 	// Values view icons (extended)
 	| 'diversity_3'
 	| 'group'
@@ -81,7 +87,6 @@ export type MaterialIconName =
 	| 'speed'
 	| 'brush'
 	| 'lightbulb'
-	| 'public'
 	| 'auto_awesome';
 
 // Size variants (alias for consistency)

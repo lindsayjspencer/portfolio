@@ -44,7 +44,8 @@ export function UrlStateInitializer({ onReady }: { onReady?: (initial: Directive
 		const validated = validateUrlDirective(raw);
 		if (!validated) {
 			// Clean URL if invalid
-			router.replace('/');
+			// Keep history consistent; push instead of replace
+			router.push('/');
 			const landing: Directive = {
 				mode: 'landing',
 				data: {

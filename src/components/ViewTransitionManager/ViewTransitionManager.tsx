@@ -13,6 +13,8 @@ import {
 	type TransitionCallbacks,
 	COMPONENT_TRANSITION_TIMINGS,
 	createDataSnapshot,
+	shouldTransition,
+	structuralSignature,
 } from '~/lib/ViewTransitions';
 import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import './ViewTransitionManager.scss';
@@ -157,9 +159,8 @@ export function ViewTransitionManager() {
 			const enterTiming = COMPONENT_TRANSITION_TIMINGS[current.mode] || COMPONENT_TRANSITION_TIMINGS.landing;
 			await waitForCallbacks(current.key);
 			const callbacks = transitionCallbacks.current.get(current.key);
-			if (callbacks) {
-				await callbacks.onTransitionIn(enterTiming.in);
-			}
+			// Fire-and-forget; CSS transitions handle timing, we await duration below
+			callbacks?.onTransitionIn(enterTiming.in);
 
 			await new Promise((resolve) => {
 				const timeout = setTimeout(resolve, enterTiming.in);
@@ -197,57 +198,27 @@ export function ViewTransitionManager() {
 		if (transitionState.isTransitioning) return;
 
 		const prevSnapshot = currentStableView.dataSnapshot;
-		const prevMode = prevSnapshot.mode;
-		const nextMode = directive.mode;
-
-		// Only modes that actually have variants should be compared on variant changes
-		const modesWithVariants = new Set<Directive['mode']>([
-			'timeline',
-			'projects',
-			'skills',
-			'values',
-			'compare',
-			'explore',
-		]);
-		const prevVariant =
-			modesWithVariants.has(prevMode) && 'variant' in prevSnapshot ? prevSnapshot.variant : undefined;
-		// Read variant from the new directive, but treat missing as "unchanged"
-		const nextVariantRaw =
-			modesWithVariants.has(nextMode) && 'variant' in directive.data ? directive.data.variant : undefined;
-
-		// If mode or variant changed, start a transition (but avoid loops to same target)
-		// Only transition if mode actually changes or variant is explicitly different
-		if (prevMode !== nextMode || (nextVariantRaw !== undefined && prevVariant !== nextVariantRaw)) {
-			const nextKey = `${nextMode}:${nextVariantRaw ?? prevVariant ?? ''}`;
-			if (lastTransitionKeyRef.current === nextKey) {
-				return;
-			}
+		const prevDirective = prevSnapshot.directive;
+		const nextDirective = directive;
+		const doTransition = shouldTransition(prevDirective, nextDirective);
+		if (doTransition) {
+			const nextMode = nextDirective.mode;
+			// Include structural signature so legitimate same-mode changes can transition
+			const sig = structuralSignature(nextDirective);
+			const nextKey = `${nextMode}:${(nextDirective as any).data?.variant ?? ''}:${sig}`;
+			if (lastTransitionKeyRef.current === nextKey) return;
 			lastTransitionKeyRef.current = nextKey;
 			startTransition(nextMode);
 			return;
 		}
 
-		// Same view; just refresh the snapshot to reflect intra-view directive changes (e.g., highlights, narration)
-		// Skip if directive hasn't changed to avoid unnecessary state churn
-		const prevDirective = prevSnapshot.directive;
-		const directiveChanged = JSON.stringify(prevDirective) !== JSON.stringify(directive);
-		if (!directiveChanged) {
-			return;
-		}
-		const nextSnapshot = createDataSnapshot(graph, directive);
+		// No transition needed; update snapshot in place for presentational-only changes
+		const nextSnapshot = createDataSnapshot(graph, nextDirective);
 		setTransitionState((prev) => {
 			const stableIdx = prev.instances.findIndex((i) => i.phase === 'stable');
-			if (stableIdx === -1 || prev.isTransitioning) {
-				return prev;
-			}
+			if (stableIdx === -1 || prev.isTransitioning) return prev;
 			const prevStable = prev.instances[stableIdx]!;
-			const updatedStable: ViewInstanceState = {
-				mode: prevStable.mode,
-				phase: prevStable.phase,
-				zIndex: prevStable.zIndex,
-				key: prevStable.key,
-				dataSnapshot: nextSnapshot,
-			};
+			const updatedStable: ViewInstanceState = { ...prevStable, dataSnapshot: nextSnapshot };
 			const instances = prev.instances.slice();
 			instances[stableIdx] = updatedStable;
 			return { ...prev, instances };
@@ -288,9 +259,8 @@ export function ViewTransitionManager() {
 
 		// Start exit transition
 		const exitCallbacks = transitionCallbacks.current.get(exitingInstance.key);
-		if (exitCallbacks) {
-			await exitCallbacks.onTransitionOut(exitTiming.out);
-		}
+		// Fire-and-forget; wait only for duration
+		exitCallbacks?.onTransitionOut(exitTiming.out);
 
 		// Wait for exit duration
 		await new Promise((resolve) => {
@@ -300,9 +270,8 @@ export function ViewTransitionManager() {
 
 		// Start enter transition
 		const enterCallbacks = transitionCallbacks.current.get(incomingInstance.key);
-		if (enterCallbacks) {
-			await enterCallbacks.onTransitionIn(enterTiming.in);
-		}
+		// Fire-and-forget; wait only for duration
+		enterCallbacks?.onTransitionIn(enterTiming.in);
 
 		// Wait for enter duration
 		await new Promise((resolve) => {
@@ -326,6 +295,8 @@ export function ViewTransitionManager() {
 
 		// Clean up callbacks for removed instance
 		transitionCallbacks.current.delete(exitingInstance.key);
+		// Reset loop guard to allow future transitions to recompute target key
+		lastTransitionKeyRef.current = null;
 	};
 
 	const registerTransitionCallbacks = (key: string, callbacks: TransitionCallbacks) => {

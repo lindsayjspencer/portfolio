@@ -71,6 +71,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 							'public',
 							'search',
 							'speed',
+							// Contact icons for resume
+							'mail',
+							'code',
+							'language',
+							'link',
 						].join(',') +
 						'&display=block'
 					}
