@@ -9,6 +9,8 @@ import './SuggestionChips.scss';
 const ALL_QUESTIONS = [
 	"What's your experience with modern web frameworks?",
 	'Why should we hire you over an AI?',
+	'Why should we hire you in this economy',
+	'What makes you unique?',
 	'What are you most proud of in your career?',
 	'Do you have experience in Typescript?',
 	'Are you just another programmer?',
@@ -36,12 +38,37 @@ export function SuggestionChips() {
 	const [isAnimating, setIsAnimating] = useState(false);
 
 	const [randomQuestions, setRandomQuestions] = useState<string[]>([]);
+	const [fadingOut, setFadingOut] = useState(false);
+	const [shuffleKey, setShuffleKey] = useState(0);
 
+	// Rotate questions: reshuffle every 8 seconds while visible on landing
 	useEffect(() => {
-		if (landingMode && shouldRender) {
+		if (!(landingMode && shouldRender)) return;
+
+		const pick = () => {
 			const questions = shuffleArray([...ALL_QUESTIONS]).slice(0, 2);
 			setRandomQuestions([...questions, 'Just put the resume in the bag']);
-		}
+		};
+
+		// initial pick (no fade-out on first render)
+		pick();
+		setShuffleKey((k) => k + 1);
+
+		let fadeTimeout: ReturnType<typeof setTimeout> | null = null;
+		const rotate = () => {
+			setFadingOut(true);
+			fadeTimeout = setTimeout(() => {
+				pick();
+				setShuffleKey((k) => k + 1);
+				setFadingOut(false);
+			}, 220); // match CSS exit duration
+		};
+
+		const id = setInterval(rotate, 8000);
+		return () => {
+			clearInterval(id);
+			if (fadeTimeout) clearTimeout(fadeTimeout);
+		};
 	}, [landingMode, shouldRender]);
 
 	useEffect(() => {
@@ -86,10 +113,10 @@ export function SuggestionChips() {
 
 	return (
 		<div className={className}>
-			<div className="chips-container">
+			<div className={`chips-container ${fadingOut ? 'fading-out' : ''}`}>
 				{randomQuestions.map((question, index) => (
 					<button
-						key={index}
+						key={`${shuffleKey}-${index}`}
 						className="suggestion-chip"
 						onClick={() => handleChipClick(question)}
 						disabled={isLoading}

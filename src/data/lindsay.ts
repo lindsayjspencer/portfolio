@@ -6,7 +6,7 @@ const lindsayProfile = `# About Lindsay (Interests & Personality)
 - Currently training for a **full marathon**.
 - Prefers long-distance endurance running over sprinting.
 - Runs and walks daily with **Cauliflower**, a 5-year-old **female border collie**.
-- Like's watching movies and tv series — especially enjoys **thriller** films/series.
+- Likes watching movies and tv series.
 
 ## Daily Habits & Routines
 

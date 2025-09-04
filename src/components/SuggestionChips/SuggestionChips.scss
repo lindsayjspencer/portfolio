@@ -23,6 +23,14 @@
 		align-items: center;
 		justify-content: center;
 		max-width: 600px;
+		transition:
+			opacity 220ms ease-out,
+			transform 220ms ease-out;
+
+		&.fading-out {
+			opacity: 0;
+			transform: translateY(8px);
+		}
 	}
 
 	.suggestion-chip {
@@ -40,7 +48,7 @@
 		opacity: 0;
 		transform: translateY(20px);
 		white-space: nowrap;
-		animation: slideUpFadeIn 500ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+		animation: slideUpFadeIn 420ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 
 		// Staggered animation delay for each chip
 		&:nth-child(1) {

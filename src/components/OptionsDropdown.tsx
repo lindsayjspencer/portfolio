@@ -204,7 +204,7 @@ export function OptionsDropdown() {
 	const activeOption = MENU_OPTIONS.find((option) => option.mode === currentDirective.mode);
 
 	return (
-		<div className={`options-dropdown-container ${!landingMode ? 'visible' : ''}`}>
+		<div className={`options-dropdown-container visible`}>
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger asChild>
 					<button className="options-dropdown-trigger" aria-label="Menu">
