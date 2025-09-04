@@ -1,13 +1,14 @@
 'use client';
 
 import './ChatContainer.scss';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { useTheme } from '~/contexts/theme-context';
 import { MaterialIcon, Spinner } from '~/components/Ui';
 import { StreamingText } from '~/components/Ui/StreamingText';
 import { handleChatSubmit } from '~/lib/chat-actions';
 import { useState } from 'react';
+import { useApplyDirective } from '~/hooks/useApplyDirective';
 
 export interface ChatContainerProps {
 	onSubmitSuccess?: () => void;
@@ -34,8 +35,117 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
+	const applyDirective = useApplyDirective();
 
 	// narrative now comes from directive data; no component seeding needed
+
+	// Emphasis processor: **bold** or *bold* => <strong>, _italic_ => <i>
+	const processEmphasis = useCallback((segment: string, lineIdx: number) => {
+		const out: React.ReactNode[] = [];
+		const regex = /(\*\*([^*]+?)\*\*|\*([^*]+?)\*|_([^_]+?)_)/g;
+		let lastIndex = 0;
+		let match: RegExpExecArray | null;
+		let idx = 0;
+		while ((match = regex.exec(segment)) !== null) {
+			const [full, _gBoldAll, gBold2, gBold1, gItalic] = match as unknown as [
+				string,
+				string,
+				string,
+				string,
+				string,
+			];
+			const start = match.index;
+			const end = start + full.length;
+			if (start > lastIndex) out.push(segment.slice(lastIndex, start));
+			const content = gBold2 ?? gBold1 ?? gItalic ?? '';
+			if (gItalic) {
+				out.push(
+					<StreamingText as="i" key={`it-${lineIdx}-${idx++}`}>
+						{content}
+					</StreamingText>,
+				);
+			} else {
+				out.push(
+					<StreamingText as="strong" key={`em-${lineIdx}-${idx++}`}>
+						{content}
+					</StreamingText>,
+				);
+			}
+			lastIndex = end;
+		}
+		if (lastIndex < segment.length) out.push(segment.slice(lastIndex));
+		return out;
+	}, []);
+
+	// Inline node maker: handles <project:...>Label</project> and emphasis inside
+	const makeInlineNodes = useCallback(
+		(text: string, lineIdx: number) => {
+			const nodes: React.ReactNode[] = [];
+			const projectRe = /<project:([a-zA-Z0-9_\-]+)>([\s\S]*?)<\/project>/g;
+			let projLast = 0;
+			let pm: RegExpExecArray | null;
+			let projIdx = 0;
+			while ((pm = projectRe.exec(text)) !== null) {
+				const [full, projectId, label] = pm;
+				if (!projectId) continue;
+				const start = pm.index;
+				const end = start + full.length;
+				if (start > projLast) nodes.push(...processEmphasis(text.slice(projLast, start), lineIdx));
+				nodes.push(
+					<a
+						href="#"
+						className="project-link"
+						onClick={(e) => {
+							e.preventDefault();
+							applyDirective({
+								mode: 'projects',
+								data: {
+									variant: 'case-study',
+									highlights: [projectId],
+									narration: '',
+									confidence: 1,
+									showMetrics: true,
+								},
+							});
+						}}
+						key={`proj-${lineIdx}-${projIdx++}`}
+					>
+						<StreamingText as="span">{processEmphasis((label ?? '') as string, lineIdx)}</StreamingText>
+					</a>,
+				);
+				projLast = end;
+			}
+			if (projLast < text.length) nodes.push(...processEmphasis(text.slice(projLast), lineIdx));
+			return nodes;
+		},
+		[applyDirective, processEmphasis],
+	);
+
+	// Transform narration
+	const narrationNodes = useMemo(() => {
+		const narration = directive.data.narration ?? '';
+		if (!narration) return null;
+		const lines = narration.split('\n');
+		const out: React.ReactNode[] = [];
+		lines.forEach((line, i) => {
+			out.push(...makeInlineNodes(line, i));
+			if (i < lines.length - 1) out.push(<br key={`br-${i}`} />);
+		});
+		return out;
+	}, [directive.data.narration, makeInlineNodes]);
+
+	// Transform clarify question similarly
+	const clarifyQuestionNodes = useMemo(() => {
+		const q = pendingClarify?.question ?? '';
+		if (!q) return null;
+		const lines = q.split('\n');
+		const out: React.ReactNode[] = [];
+		lines.forEach((line, i) => {
+			out.push(...makeInlineNodes(line, i));
+			if (i < lines.length - 1) out.push(<br key={`cbr-${i}`} />);
+		});
+		return out;
+	}, [pendingClarify?.question, makeInlineNodes]);
 
 	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -170,7 +280,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 				{/* Show clarify question in narration area */}
 				{pendingClarify && (
 					<StreamingText className="streaming-text">
-						<StreamingText>{pendingClarify.question}</StreamingText>
+						<StreamingText>{clarifyQuestionNodes}</StreamingText>
 
 						{/* Show option chips for choice clarifications */}
 						{pendingClarify.kind === 'choice' && pendingClarify.options && (
@@ -195,7 +305,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 				{/* Show regular narrative */}
 				{directive.data.narration && !pendingClarify && !isLoading && (
 					<StreamingText speed={2} className="streaming-text">
-						{directive.data.narration}
+						{narrationNodes}
 					</StreamingText>
 				)}
 

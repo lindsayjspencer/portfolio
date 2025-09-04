@@ -11,15 +11,9 @@ const ALL_QUESTIONS = [
 	'Why should we hire you over an AI?',
 	'What are you most proud of in your career?',
 	'Do you have experience in Typescript?',
-	'Are you just a programmer?',
-	'Surprise me with something interesting',
+	'Are you just another programmer?',
 	'How does this portfolio work?',
 	'Show me your React projects',
-	'What makes you different from other developers?',
-	'Tell me about your leadership experience',
-	'What are your core values?',
-	'Have you worked with AI/ML?',
-	'Show me your most impactful project',
 ];
 
 function shuffleArray<T>(array: T[]): T[] {

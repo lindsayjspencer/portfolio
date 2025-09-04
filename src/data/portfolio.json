@@ -185,8 +185,8 @@
 			"id": "proj_codebots_modeler",
 			"type": "project",
 			"label": "Codebots Platform",
-			"summary": "Diagram-driven modelling to generate applications; pioneered React/TS generation.",
-			"description": "Users model entities, security, and queries across interconnected diagrams. A pipeline generates the target application. Led development and introduced React/TypeScript code generation as a first-class target.",
+			"summary": "Diagram-driven modelling and code generation platform. I led the project, focusing on diagramming SDK integration, concurrency, the pipeline designer, and major frontend stack migrations.",
+			"description": "Codebots lets teams design metamodels, visuals, and application models using a proprietary diagramming SDK, then generate production code via pipelines (EGL/EGX and related Epsilon tools). I led the platform, focusing on SDK integration, concurrency, pipeline UX, and frontend migrations.",
 			"period": {
 				"start": "2020-05",
 				"end": "present"
@@ -208,8 +208,8 @@
 			"id": "proj_dep_graph_versions",
 			"type": "project",
 			"label": "Resource Version Dependency Graph",
-			"summary": "Interactive force-directed tool for cascading dependency/version updates.",
-			"description": "3D/2D force-directed interface to create/update resource versions and dependency combinations with cascades. Reduced multi-hour workflows to under a minute.",
+			"summary": "Interactive, real-time version dependency graph. Plan and apply cascading updates with one-click macros; replaced multi-hour manual workflows with minutes-long visual operations.",
+			"description": "Users struggled to manage long dependency chains across versions, often spending hours and reverting changes. I designed and built a 2D force-directed version graph that reacts live to edits, surfaces conflicts, and applies safe cascades via one-click macros.",
 			"period": {
 				"start": "2025-04",
 				"end": "2025-07"
@@ -237,8 +237,8 @@
 			"id": "proj_codebots_homepage_ai",
 			"type": "project",
 			"label": "Codebots AI Search",
-			"summary": "LLM-driven chat with RAG answering queries about Codebots.",
-			"description": "Public-facing landing page using Next.js and Vercel AI SDK. Chat interface grounded in RAG over company documentation.",
+			"summary": "Homepage reduced to a single RAG-backed chat so non-technical visitors quickly learn what Codebots is and how it works. Vectorized docs + curated blogs, model routing, eval-guarded responses, and markdown-rendered answers with streaming.",
+			"description": "Visitors arrived via SEO but struggled to grasp Codebots quickly. We simplified the homepage to a single LLM chat grounded by RAG over documentation and curated blogs. A tuned system prompt sets tone and structure, and answers stream with correct markdown rendering.",
 			"period": {
 				"start": "2025-01",
 				"end": "present"
@@ -265,8 +265,8 @@
 			"id": "proj_react_granular_store",
 			"type": "project",
 			"label": "React Granular Store (OSS)",
-			"summary": "React/TS state management library adopted in enterprise applications.",
-			"description": "Released as OSS on npm, enabling performant granular store updates for React apps.",
+			"summary": "Lightweight state library with granular subscriptions, strong typing, and predictable rendering. Built to replace heavy proxy-based patterns and reduce memory/over-rendering at scale.",
+			"description": "I built this after hitting limits with proxy-based state (MobX-style) that used too much memory, re-rendered too often, and hid when updates would happen. This store gives tight control and observability with granular subscriptions and a minimal, strongly-typed API.",
 			"period": {
 				"start": "2023-12",
 				"end": "present"
@@ -292,8 +292,8 @@
 			"id": "proj_goodwill_markets",
 			"type": "project",
 			"label": "Markets & Events Platform",
-			"summary": "End-to-end admin & operations platform for a state-wide market operator.",
-			"description": "Applications, vendors/bookings, payments, MYOB/Westpac integrations, Square OAuth-style sales tracking, drag-and-drop UIs, onsite mobile views, analytics/graphs, mapping tools, document management, surveys, rich email editing/templating, inductions, media management, and a marketing site generator.",
+			"summary": "End-to-end platform that automated debt/invoicing, reconciliation, mapping, comms, onsite ops, and analytics. Scaled admin from 1 market → 36 markets with lean staff through systematic automation.",
+			"description": "I started in 2014 as Operations Manager and immediately saw Excel-driven processes consuming entire weeks for two admin staff and 25% of the bookkeeper’s time. I delivered a working LAMP system in 10 weeks to automate debts, payments, invoicing, and reconciliation. Over the years it expanded to rich emailing, applications, mapping, MYOB/Westpac integrations, onsite mobile tools, analytics, and a marketing site generator.",
 			"period": {
 				"start": "2014-06",
 				"end": "2020-03"
@@ -1581,6 +1581,6 @@
 	],
 	"meta": {
 		"personId": "person_lindsay",
-		"lastUpdated": "2025-08-26"
+		"lastUpdated": "2025-09-04"
 	}
 }
