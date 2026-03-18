@@ -78,7 +78,6 @@ export function ValuesEvidenceView({
 				data: {
 					variant: 'case-study',
 					highlights: [node.id],
-					narration: '',
 					confidence: 0.7,
 					showMetrics: true,
 				},

@@ -1,5 +1,5 @@
 // Auto-generated theme file - DO NOT EDIT MANUALLY
-// Generated on 2025-09-02T12:29:09.337Z
+// Generated on 2025-09-04T21:29:07.769Z
 
 export type ColorVariation = '50' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
 

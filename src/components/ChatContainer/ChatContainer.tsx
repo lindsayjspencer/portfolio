@@ -33,6 +33,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 
 	const { setTheme } = useTheme();
 	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+	const [streamedText, setStreamedText] = useState('');
 	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const applyDirective = useApplyDirective();
@@ -102,7 +103,6 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 								data: {
 									variant: 'case-study',
 									highlights: [projectId],
-									narration: '',
 									confidence: 1,
 									showMetrics: true,
 								},
@@ -121,31 +121,19 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		[applyDirective, processEmphasis],
 	);
 
-	// Transform narration
-	const narrationNodes = useMemo(() => {
-		const narration = directive.data.narration ?? '';
-		if (!narration) return null;
-		const lines = narration.split('\n');
-		const out: React.ReactNode[] = [];
-		lines.forEach((line, i) => {
-			out.push(...makeInlineNodes(line, i));
-			if (i < lines.length - 1) out.push(<br key={`br-${i}`} />);
-		});
-		return out;
-	}, [directive.data.narration, makeInlineNodes]);
+	// No directive-based narration; all user-facing text is streamed
 
-	// Transform clarify question similarly
-	const clarifyQuestionNodes = useMemo(() => {
-		const q = pendingClarify?.question ?? '';
-		if (!q) return null;
-		const lines = q.split('\n');
+	// Transform streamed text (used during loading and for clarify question)
+	const streamingNodes = useMemo(() => {
+		if (!streamedText) return null;
+		const lines = streamedText.split('\n');
 		const out: React.ReactNode[] = [];
 		lines.forEach((line, i) => {
 			out.push(...makeInlineNodes(line, i));
-			if (i < lines.length - 1) out.push(<br key={`cbr-${i}`} />);
+			if (i < lines.length - 1) out.push(<br key={`sbr-${i}`} />);
 		});
 		return out;
-	}, [pendingClarify?.question, makeInlineNodes]);
+	}, [streamedText, makeInlineNodes]);
 
 	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -164,8 +152,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 				return; // Invalid state, don't submit
 			}
 
-			// Clear clarify state
-			setPendingClarify(undefined);
+			// Do not clear pendingClarify here; keep it until the assistant processes the reply and sends the next 'done'
 			setSelectedOptions([]);
 		} else {
 			// Regular chat submission
@@ -184,6 +171,9 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			}
 		});
 
+		// reset streamed text and begin streaming
+		setStreamedText('');
+
 		await handleChatSubmit({
 			userMessage,
 			messages,
@@ -193,6 +183,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			setLoading,
 			setPendingClarify,
 			setTheme,
+			onTextDelta: (delta) => setStreamedText((prev) => prev + delta),
 		});
 
 		onSubmitSuccess?.();
@@ -220,8 +211,8 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			setSelectedOptions([option]);
 			setTimeout(async () => {
 				const userMessage = `[clarify:${pendingClarify.slot}] ${option}`;
-				setPendingClarify(undefined);
 				setSelectedOptions([]);
+				setStreamedText('');
 
 				await handleChatSubmit({
 					userMessage,
@@ -232,6 +223,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 					setLoading,
 					setPendingClarify,
 					setTheme,
+					onTextDelta: (delta) => setStreamedText((prev) => prev + delta),
 				});
 
 				onSubmitSuccess?.();
@@ -245,6 +237,8 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			setSelectedOptions([]);
 		}
 	}, [pendingClarify]);
+
+	// Keep streamed text after completion so the final answer remains visible.
 
 	// Autofocus textarea on mount
 	useEffect(() => {
@@ -277,35 +271,23 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			<form onSubmit={onSubmit} className="chat-form">
 				{isLoading && <div className="loading-response" />}
 
-				{/* Show clarify question in narration area */}
-				{pendingClarify && (
-					<StreamingText className="streaming-text">
-						<StreamingText>{clarifyQuestionNodes}</StreamingText>
+				{/* Single streaming area for all user-facing text */}
+				{streamingNodes && <div className="streaming-text">{streamingNodes}</div>}
 
-						{/* Show option chips for choice clarifications */}
-						{pendingClarify.kind === 'choice' && pendingClarify.options && (
-							<StreamingText className="clarify-options">
-								{pendingClarify.options.map((option) => (
-									<StreamingText
-										as="button"
-										key={option}
-										type="button"
-										onClick={() => handleOptionClick(option)}
-										className={`option-chip ${selectedOptions.includes(option) ? 'selected' : ''}`}
-										about={selectedOptions.includes(option) ? 'hello' : ''}
-									>
-										{option}
-									</StreamingText>
-								))}
+				{/* Clarify options (if any) beneath the streamed text */}
+				{pendingClarify?.kind === 'choice' && pendingClarify.options && (
+					<StreamingText className="clarify-options">
+						{pendingClarify.options.map((option) => (
+							<StreamingText
+								as="button"
+								key={option}
+								type="button"
+								onClick={() => handleOptionClick(option)}
+								className={`option-chip ${selectedOptions.includes(option) ? 'selected' : ''}`}
+							>
+								{option}
 							</StreamingText>
-						)}
-					</StreamingText>
-				)}
-
-				{/* Show regular narrative */}
-				{directive.data.narration && !pendingClarify && !isLoading && (
-					<StreamingText speed={2} className="streaming-text">
-						{narrationNodes}
+						))}
 					</StreamingText>
 				)}
 

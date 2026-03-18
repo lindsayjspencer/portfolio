@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { ClarifyPayload } from '~/lib/ai/clarifyTool';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import type { Directive } from '~/lib/ai/directiveTools';
 import { getThemeNames, type ThemeName } from '~/lib/themes';
@@ -40,8 +41,17 @@ export class UrlStateTooLargeError extends Error {
 	}
 }
 
-export function encodeDirective(directive: Directive): string {
-	const json = JSON.stringify(directive);
+// New top-level URL state type: directive (structure-only), latest streamed message text, and theme
+export type UrlState = {
+	directive: UrlDirective;
+	message?: string;
+	/** Present only during a clarify turn; persisted to render options after refresh */
+	pendingClarify?: ClarifyPayload;
+	theme: ThemeName;
+};
+
+export function encodeUrlState(state: UrlState): string {
+	const json = JSON.stringify(state);
 	const b64url = toBase64Url(toBase64(json));
 	if (b64url.length <= UNCOMPRESSED_THRESHOLD) return b64url;
 
@@ -51,7 +61,7 @@ export function encodeDirective(directive: Directive): string {
 	throw new UrlStateTooLargeError();
 }
 
-export function decodeDirective(encoded: string): unknown | null {
+export function decodeUrlState(encoded: string): unknown | null {
 	try {
 		if (encoded.startsWith('c:')) {
 			const decompressed = decompressFromEncodedURIComponent(encoded.slice(2));
@@ -65,13 +75,11 @@ export function decodeDirective(encoded: string): unknown | null {
 	}
 }
 
-// URL-state schema: narration optional, theme REQUIRED; passthrough extra fields.
+// URL-state directive schema: structure-only — no narration, no theme; passthrough extra fields.
 const Theme = z.enum(getThemeNames() as [ThemeName, ...ThemeName[]]);
 
 const BaseUrl = {
-	narration: z.string().optional(),
 	highlights: z.array(z.string()).default([]),
-	theme: Theme, // required in URL state
 	confidence: z.number().min(0).max(1).default(0.7),
 	hints: z
 		.object({
@@ -157,31 +165,40 @@ export function validateUrlDirective(data: unknown): UrlDirective | null {
 	return d;
 }
 
-export function ensureThemeInDirective<T extends { data: { theme?: ThemeName } }>(
-	directive: T,
-	fallbackTheme: ThemeName,
-): T {
-	if (!directive.data?.theme) {
-		return {
-			...directive,
-			data: {
-				...directive.data,
-				theme: fallbackTheme,
-			},
-		} as T;
-	}
-	return directive;
+// Clarify caps for URL persistence
+export const PENDING_OPTIONS_MAX = 20;
+export const PENDING_OPTION_STR_MAX = 120;
+export const PENDING_SLOT_MAX = 64;
+export const PENDING_PLACEHOLDER_MAX = 200;
+
+const pendingClarifySchema = z
+	.object({
+		slot: z.string().min(1).max(PENDING_SLOT_MAX),
+		kind: z.enum(['choice', 'free']),
+		options: z.array(z.string().min(1).max(PENDING_OPTION_STR_MAX)).max(PENDING_OPTIONS_MAX).optional(),
+		multi: z.boolean().optional(),
+		placeholder: z.string().max(PENDING_PLACEHOLDER_MAX).optional(),
+		// Example and timeout are not needed client-side for persistence; allow but cap
+		exampleAnswer: z.string().max(200).optional(),
+		timeoutSec: z.number().int().positive().max(600).optional(),
+	})
+	.strict();
+
+// UrlState schema and validation
+const urlStateSchema = z.object({
+	directive: urlDirectiveSchema,
+	message: z.string().optional(),
+	pendingClarify: pendingClarifySchema.optional(),
+	theme: Theme,
+});
+export type ValidUrlState = z.infer<typeof urlStateSchema>;
+
+export function validateUrlState(data: unknown): ValidUrlState | null {
+	const res = urlStateSchema.safeParse(data);
+	return res.success ? res.data : null;
 }
 
-// Bridge: Convert a validated UrlDirective to the store's Directive shape
-// by ensuring narration is present (store currently expects it),
-// while keeping the URL contract (narration optional) intact.
-export function toStoreDirective(d: UrlDirective, narrationDefault = ''): Directive {
-	return {
-		...d,
-		data: {
-			...d.data,
-			narration: d.data.narration ?? narrationDefault,
-		},
-	} as Directive;
+// Bridge: Convert a ValidUrlState to the store's Directive shape (unchanged; messages are separate)
+export function toStoreDirectiveFromUrlState(s: ValidUrlState): Directive {
+	return s.directive as Directive;
 }

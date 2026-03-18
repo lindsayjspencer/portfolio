@@ -148,7 +148,6 @@ export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCall
 				variant: 'case-study',
 				// Use highlights to select the focus project inside the case-study snapshot
 				highlights: [project.id],
-				narration: '',
 				confidence: 0.7,
 				showMetrics: true,
 			},

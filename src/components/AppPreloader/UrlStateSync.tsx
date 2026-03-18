@@ -4,11 +4,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import {
-	encodeDirective,
-	decodeDirective,
-	validateUrlDirective,
-	ensureThemeInDirective,
-	toStoreDirective,
+	encodeUrlState,
+	decodeUrlState,
+	validateUrlState,
+	toStoreDirectiveFromUrlState,
 	UrlStateTooLargeError,
 } from '~/utils/urlState';
 import { useTheme } from '~/contexts/theme-context';
@@ -23,7 +22,11 @@ function modeVariantKey(d: Directive) {
 export function UrlStateSync() {
 	const router = useRouter();
 	const directive = usePortfolioStore((s) => s.directive);
+	const messages = usePortfolioStore((s) => s.messages);
+	const pendingClarify = usePortfolioStore((s) => s.pendingClarify);
 	const setDirective = usePortfolioStore((s) => s.setDirective);
+	const addMessage = usePortfolioStore((s) => s.addMessage);
+	const setPendingClarify = usePortfolioStore((s) => s.setPendingClarify);
 	const { themeName, setTheme } = useTheme();
 
 	const lastEncodedRef = useRef<string | null>(null);
@@ -31,19 +34,30 @@ export function UrlStateSync() {
 	const applyingFromUrlRef = useRef(false);
 
 	// Derive a lightweight signature so in-place directive mutations still trigger this effect
+	// Compute latest assistant message for URL state
+	const lastAssistantMessage = useMemo(() => {
+		for (let i = messages.length - 1; i >= 0; i--) {
+			const m = messages[i];
+			if (m && m.role === 'assistant' && m.content) return m.content;
+		}
+		return '';
+	}, [messages]);
+
 	const writeSignature = useMemo(() => {
 		if (!directive) return '';
 		const v = 'variant' in directive.data ? (directive.data as any).variant : undefined;
 		const highlights = (directive.data as any)?.highlights ?? [];
-		const narration = (directive.data as any)?.narration ?? '';
-		const theme = (directive.data as any)?.theme ?? themeName;
-		return JSON.stringify({ m: directive.mode, v, h: highlights, n: narration, t: theme });
+		// Include a compact summary of the message so URL updates when it changes
+		const msg = lastAssistantMessage
+			? { ml: lastAssistantMessage.length, mh: lastAssistantMessage.slice(0, 64) }
+			: {};
+		return JSON.stringify({ m: directive.mode, v, h: highlights, t: themeName, ...msg });
 	}, [
 		directive?.mode,
 		(directive as any)?.data?.variant,
 		(directive as any)?.data?.highlights,
-		(directive as any)?.data?.narration,
 		themeName,
+		lastAssistantMessage,
 	]);
 
 	// Write back to URL on directive changes (debounced)
@@ -55,26 +69,23 @@ export function UrlStateSync() {
 			return;
 		}
 
-		// Ensure theme is present in directive before encoding
-		const hasTheme = typeof (directive.data as { theme?: unknown }).theme !== 'undefined';
-		const dWithTheme: Directive = hasTheme
-			? directive
-			: ({ ...directive, data: { ...directive.data, theme: themeName } } as Directive);
-
 		let encoded: string;
 		try {
-			encoded = encodeDirective(dWithTheme);
+			// Use latest assistant message for URL state; include pendingClarify when present
+			const message = lastAssistantMessage || '';
+			const state = { directive: directive as any, message, theme: themeName, pendingClarify } as const;
+			encoded = encodeUrlState(state);
 		} catch (e) {
 			if (e instanceof UrlStateTooLargeError) {
-				// Fallback: drop narration from URL to stay within bounds, keep full in store
-				const withoutNarration: Directive = {
-					...dWithTheme,
-					data: { ...dWithTheme.data, narration: '' },
-				} as Directive;
 				try {
-					encoded = encodeDirective(withoutNarration);
-					// do not mutate store; only URL will contain shortened state
-					console.warn('[UrlStateSync] URL state too large; writing truncated narration to URL.');
+					// Fallback: drop message first
+					encoded = encodeUrlState({
+						directive: directive as any,
+						message: '',
+						theme: themeName,
+						pendingClarify,
+					});
+					console.warn('[UrlStateSync] URL state too large; writing without message.');
 				} catch {
 					// Give up if still too large
 					return;
@@ -90,15 +101,15 @@ export function UrlStateSync() {
 		} catch {}
 		if (lastEncodedRef.current === encoded) return;
 
-		const nextKey = modeVariantKey(dWithTheme);
+		const nextKey = modeVariantKey(directive);
 		const prevKey = lastKeyRef.current;
 
 		// Special case: for the default landing state, clean the URL to '/'
 		const isDefaultLanding =
-			dWithTheme.mode === 'landing' &&
-			Array.isArray((dWithTheme.data as any)?.highlights) &&
-			(dWithTheme.data as any)?.highlights.length === 0 &&
-			((dWithTheme.data as any)?.narration ?? '') === '';
+			directive.mode === 'landing' &&
+			Array.isArray((directive.data as any)?.highlights) &&
+			(directive.data as any)?.highlights.length === 0 &&
+			true;
 
 		const url = isDefaultLanding ? '/' : `/?state=${encoded}`;
 
@@ -144,27 +155,26 @@ export function UrlStateSync() {
 						data: {
 							variant: 'neutral',
 							highlights: [],
-							narration: '',
 							confidence: 0.7,
-							theme: themeName,
 						},
 					} as Directive;
 					applyingFromUrlRef.current = true;
 					setDirective(landing);
 					return;
 				}
-				const raw = decodeDirective(encoded);
-				const validated = validateUrlDirective(raw);
+				const raw = decodeUrlState(encoded);
+				const validated = validateUrlState(raw);
 				if (!validated) return;
-				const withTheme = ensureThemeInDirective(validated, themeName);
-				const storeDirective = toStoreDirective(withTheme);
+				const storeDirective = toStoreDirectiveFromUrlState(validated);
 
 				// Apply theme from URL if different
-				const urlTheme = withTheme.data?.theme;
-				if (urlTheme && urlTheme !== themeName) setTheme(urlTheme);
+				const urlTheme = validated.theme;
+				if (urlTheme && urlTheme !== themeName) setTheme(urlTheme as any);
 
 				applyingFromUrlRef.current = true;
 				setDirective(storeDirective);
+				// Restore pendingClarify from URL so options render immediately
+				setPendingClarify(validated.pendingClarify as any);
 			} catch (e) {
 				// noop
 			}
@@ -173,15 +183,29 @@ export function UrlStateSync() {
 		return () => window.removeEventListener('popstate', onPopState);
 	}, [setDirective, themeName, setTheme]);
 
-	// If user changes theme from UI, reflect it into directive so URL stays the source of truth
+	// On initial mount, seed pendingClarify and last assistant message from URL (directive is already applied by UrlStateInitializer)
 	useEffect(() => {
-		if (!directive) return;
-		const currentTheme = (directive.data as { theme?: string }).theme;
-		if (currentTheme === themeName) return;
-		// Update store directive with new theme
-		applyingFromUrlRef.current = false; // user-initiated; allow write-back
-		setDirective({ ...directive, data: { ...directive.data, theme: themeName } } as Directive);
-	}, [themeName, directive, setDirective]);
+		try {
+			const params = new URLSearchParams(window.location.search);
+			const encoded = params.get('state');
+			if (!encoded) return;
+			const raw = decodeUrlState(encoded);
+			const validated = validateUrlState(raw);
+			if (!validated) return;
+			setPendingClarify(validated.pendingClarify as any);
+			// If a message exists in URL, seed it as an assistant message so the chat shows the last answer
+			if (validated.message && typeof validated.message === 'string' && validated.message.trim().length > 0) {
+				addMessage({ role: 'assistant', content: validated.message });
+			}
+		} catch {
+			// ignore
+		}
+	}, [setPendingClarify, addMessage]);
+
+	// Theme changes are independent and included in URL top-level; no directive mutation
+	useEffect(() => {
+		// When theme changes, writeSignature will include it and write URL via effect above
+	}, [themeName]);
 
 	return null;
 }

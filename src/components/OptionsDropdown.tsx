@@ -102,7 +102,6 @@ export function OptionsDropdown() {
 	const createDirective = (mode: string, variant?: string): Directive => {
 		// Helper function to create a proper directive based on mode and variant
 		const base = {
-			narration: '',
 			highlights: [],
 			confidence: 0.7,
 		};

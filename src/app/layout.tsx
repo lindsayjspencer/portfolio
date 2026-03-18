@@ -2,7 +2,6 @@ import '~/styles/main.scss';
 import { type Metadata } from 'next';
 import { headers } from 'next/headers';
 import { ThemeProvider } from '~/contexts/theme-context';
-import { getServerTheme } from '~/lib/server-theme';
 import { IconPreloader } from '~/components/Ui';
 import Script from 'next/script';
 
@@ -34,9 +33,11 @@ export async function generateMetadata(): Promise<Metadata> {
 	} satisfies Metadata;
 }
 
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-	const serverTheme = await getServerTheme();
+interface RootLayoutProps {
+	children: React.ReactNode;
+}
 
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en">
 			<head>
@@ -109,7 +110,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 				/>
 			</head>
 			<body>
-				<ThemeProvider serverTheme={serverTheme}>
+				<ThemeProvider>
 					<IconPreloader>{children}</IconPreloader>
 				</ThemeProvider>
 			</body>

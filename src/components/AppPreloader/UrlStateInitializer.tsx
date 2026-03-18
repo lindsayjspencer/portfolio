@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { decodeDirective, validateUrlDirective, ensureThemeInDirective, toStoreDirective } from '~/utils/urlState';
+import { decodeUrlState, validateUrlState, toStoreDirectiveFromUrlState, type ValidUrlState } from '~/utils/urlState';
 import { useTheme } from '~/contexts/theme-context';
 import type { ThemeName } from '~/lib/themes';
 import type { Directive } from '~/lib/ai/directiveTools';
@@ -25,23 +25,21 @@ export function UrlStateInitializer({ onReady }: { onReady?: (initial: Directive
 
 		const encoded = params.get('state');
 		if (!encoded) {
-			// Default landing directive using current theme
+			// Default landing directive; theme handled separately by ThemeProvider
 			const landing: Directive = {
 				mode: 'landing',
 				data: {
 					variant: 'neutral',
 					highlights: [],
-					narration: '',
 					confidence: 0.7,
-					theme: themeName,
 				},
 			} as Directive;
 			onReady?.(landing);
 			return;
 		}
 
-		const raw = decodeDirective(encoded);
-		const validated = validateUrlDirective(raw);
+		const raw = decodeUrlState(encoded);
+		const validated = validateUrlState(raw);
 		if (!validated) {
 			// Clean URL if invalid
 			// Keep history consistent; push instead of replace
@@ -51,22 +49,18 @@ export function UrlStateInitializer({ onReady }: { onReady?: (initial: Directive
 				data: {
 					variant: 'neutral',
 					highlights: [],
-					narration: '',
 					confidence: 0.7,
-					theme: themeName,
 				},
 			} as Directive;
 			onReady?.(landing);
 			return;
 		}
 
-		// Enforce theme presence using current theme as fallback
-		const directiveWithTheme = ensureThemeInDirective(validated, themeName);
-		// Bridge to store Directive by ensuring narration exists (empty string default)
-		const storeDirective = toStoreDirective(directiveWithTheme);
+		// Bridge to store Directive (structure-only)
+		const storeDirective = toStoreDirectiveFromUrlState(validated);
 
 		// Apply theme from URL to ThemeProvider if different
-		const urlTheme: ThemeName | undefined = directiveWithTheme.data?.theme as ThemeName | undefined;
+		const urlTheme = validated.theme as ThemeName;
 		if (urlTheme && urlTheme !== themeName) {
 			setTheme(urlTheme);
 		}

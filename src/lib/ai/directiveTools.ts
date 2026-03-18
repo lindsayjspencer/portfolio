@@ -2,12 +2,8 @@ import { z } from 'zod';
 import { tool } from 'ai';
 import { getThemeNames, type ThemeName } from '~/lib/themes';
 
-const Theme = z.enum(getThemeNames() as [ThemeName, ...ThemeName[]]);
-
 const Base = {
-	narration: z.string().min(1),
 	highlights: z.array(z.string()).max(12).default([]),
-	theme: Theme.optional(),
 	confidence: z.number().min(0).max(1).default(0.7),
 	hints: z
 		.object({
@@ -22,7 +18,8 @@ const timelineDirectiveSchema = z.object({
 	variant: z.enum(['career', 'projects', 'skills']).default('career'),
 });
 export const timelineDirective = tool({
-	description: 'Show a timeline view (career, projects, or skills).',
+	description:
+		'Show a timeline view (career, projects, or skills). User-facing narration must be streamed, not included here.',
 	inputSchema: timelineDirectiveSchema,
 });
 
@@ -33,7 +30,7 @@ const projectsDirectiveSchema = z.object({
 	showMetrics: z.boolean().default(true),
 });
 export const projectsDirective = tool({
-	description: 'Show projects view.',
+	description: 'Show projects view. User-facing narration must be streamed, not included here.',
 	inputSchema: projectsDirectiveSchema,
 });
 
@@ -45,7 +42,8 @@ const skillsDirectiveSchema = z.object({
 	clusterBy: z.enum(['domain', 'recency', 'usage']).default('domain'),
 });
 export const skillsDirective = tool({
-	description: 'Show skills view (technical clusters, soft clusters, or matrix).',
+	description:
+		'Show skills view (technical clusters, soft clusters, or matrix). User-facing narration must be streamed, not included here.',
 	inputSchema: skillsDirectiveSchema,
 });
 
@@ -55,7 +53,7 @@ const valuesDirectiveSchema = z.object({
 	emphasizeStories: z.boolean().optional(),
 });
 export const valuesDirective = tool({
-	description: 'Show values view.',
+	description: 'Show values view. User-facing narration must be streamed, not included here.',
 	inputSchema: valuesDirectiveSchema,
 });
 
@@ -67,7 +65,7 @@ const compareDirectiveSchema = z.object({
 	showOverlap: z.boolean().default(true),
 });
 export const compareDirective = tool({
-	description: 'Show compare view (skills/projects).',
+	description: 'Show compare view (skills/projects). User-facing narration must be streamed, not included here.',
 	inputSchema: compareDirectiveSchema,
 });
 
@@ -77,7 +75,7 @@ const exploreDirectiveSchema = z.object({
 	filterTags: z.array(z.string()).optional(),
 });
 export const exploreDirective = tool({
-	description: 'Show explore view (all or filtered).',
+	description: 'Show explore view (all or filtered). User-facing narration must be streamed, not included here.',
 	inputSchema: exploreDirectiveSchema,
 });
 
@@ -89,11 +87,11 @@ const resumeDirectiveSchema = z.object({
 	...Base,
 });
 export const resumeDirective = tool({
-	description: 'Open résumé view.',
+	description: 'Open résumé view. User-facing narration must be streamed, not included here.',
 	inputSchema: resumeDirectiveSchema,
 });
 
-// Type definitions for each directive
+// Type definitions for each directive (structure-only; no narration, no theme)
 export type TimelineDirective = z.infer<typeof timelineDirectiveSchema>;
 export type ProjectsDirective = z.infer<typeof projectsDirectiveSchema>;
 export type SkillsDirective = z.infer<typeof skillsDirectiveSchema>;
@@ -113,3 +111,9 @@ export type Directive =
 	| { mode: 'explore'; data: ExploreDirective }
 	| { mode: 'landing'; data: LandingDirective }
 	| { mode: 'resume'; data: ResumeDirective };
+
+// Optional non-directive tool: ChangeTheme (kept separate from directives)
+export const changeThemeTool = tool({
+	description: 'Change the UI theme. This is not part of directives; update URL top-level theme.',
+	inputSchema: z.object({ theme: z.enum(getThemeNames() as [ThemeName, ...ThemeName[]]) }),
+});

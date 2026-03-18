@@ -12,27 +12,13 @@ export type ApplyDirectiveOptions = {
 export function useApplyDirective() {
 	const setDirective = usePortfolioStore((s) => s.setDirective);
 	const setLastDirective = usePortfolioStore((s) => s.setLastDirective);
-	const currentDirective = usePortfolioStore((s) => s.directive);
-	const { themeName } = useTheme();
+	// const currentDirective = usePortfolioStore((s) => s.directive);
 
 	return useCallback(
 		(directive: Directive, _opts?: ApplyDirectiveOptions) => {
-			const hasTheme = typeof (directive.data as { theme?: unknown }).theme !== 'undefined';
-			const incomingNarration = (directive.data as { narration?: string }).narration;
-			// Do not preserve previous narration; if none is provided, clear it to empty string
-			const narration = incomingNarration != null ? incomingNarration : '';
-			const normalized: Directive = {
-				...directive,
-				data: {
-					...directive.data,
-					narration,
-					...(hasTheme ? {} : { theme: themeName }),
-				},
-			} as Directive;
-
-			setLastDirective?.(normalized);
-			setDirective(normalized);
+			setLastDirective?.(directive);
+			setDirective(directive);
 		},
-		[setDirective, setLastDirective, themeName, currentDirective],
+		[setDirective, setLastDirective],
 	);
 }

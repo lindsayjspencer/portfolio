@@ -205,10 +205,7 @@ export type Graph = {
 export const graph: Graph = portfolioData as Graph;
 
 // Response types for multi-modal AI responses
-export type Response =
-	| { kind: 'directive'; data: Directive }
-	| { kind: 'clarify'; data: ClarifyPayload }
-	| { kind: 'narration'; text: string };
+export type Response = { kind: 'directive'; data: Directive } | { kind: 'clarify'; data: ClarifyPayload };
 
 export type ChatMessage = {
 	id: string;
@@ -273,10 +270,6 @@ export interface PortfolioState {
 export type PortfolioStoreApi = StoreApi<PortfolioState>;
 
 export function createPortfolioStore(initialDirective: Directive): PortfolioStoreApi {
-	if (initialDirective.mode === 'landing') {
-		// clear the narration
-		initialDirective.data.narration = '';
-	}
 	return createStore<PortfolioState>((set) => ({
 		directive: initialDirective,
 		messages: [],
@@ -317,7 +310,6 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 					data: {
 						variant: 'neutral',
 						highlights: [],
-						narration: '',
 						confidence: 0.7,
 					},
 				} as Directive,
@@ -325,7 +317,7 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 
 		// Chat actions
 		setInput: (input) => set({ input }),
-		// setNarrative removed; narrative lives in directive.data.narration
+		// setNarrative removed; narration is handled via streamed assistant messages, not directives
 
 		// New: Response actions
 		pushResponse: (response) =>

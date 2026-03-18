@@ -15,13 +15,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 interface ThemeProviderProps {
 	children: ReactNode;
 	initialTheme?: ThemeName;
-	serverTheme?: ThemeName;
 }
 
-export function ThemeProvider({ children, initialTheme = 'cold', serverTheme }: ThemeProviderProps) {
-	// Use server theme if provided, otherwise use initial theme
-	const defaultTheme = serverTheme || initialTheme;
-	const [themeName, setThemeName] = useState<ThemeName>(defaultTheme);
+export function ThemeProvider({ children, initialTheme = 'cold' }: ThemeProviderProps) {
+	const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
 
 	// Update document className when theme changes
 	useEffect(() => {
@@ -46,24 +43,6 @@ export function ThemeProvider({ children, initialTheme = 'cold', serverTheme }: 
 		// Optional: Persist to localStorage for client-side persistence
 		if (typeof localStorage !== 'undefined') {
 			localStorage.setItem('preferred-theme', newTheme);
-		}
-	};
-
-	// Function to check for server-side theme changes
-	const checkServerTheme = async () => {
-		try {
-			const response = await fetch('/api/theme', {
-				method: 'GET',
-				cache: 'no-store',
-			});
-			if (response.ok) {
-				const { theme } = await response.json();
-				if (theme && theme !== themeName) {
-					setThemeName(theme);
-				}
-			}
-		} catch (error) {
-			// Silently handle errors
 		}
 	};
 

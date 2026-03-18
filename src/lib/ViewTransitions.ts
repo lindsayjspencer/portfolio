@@ -680,12 +680,12 @@ function assertNever(x: never): never {
 
 /**
  * Returns a stable, structural signature of a directive for transition equality checks.
- * By default, ignores purely presentational or LLM-facing fields: narration, highlights, theme, confidence, hints.
+ * By default, ignores purely presentational fields: highlights, confidence, hints.
  * Per-mode/variant exceptions can omit additional fields considered non-structural (e.g., projects.showMetrics, compare.showOverlap).
  */
 export function structuralSignature(directive: Directive): string {
-	// Base fields to ignore across all modes
-	const baseIgnore = new Set<string>(['narration', 'highlights', 'theme', 'confidence', 'hints']);
+	// Base fields to ignore across all modes (theme is not part of directives anymore)
+	const baseIgnore = new Set<string>(['highlights', 'confidence', 'hints']);
 
 	// Per-mode/variant additional ignores (kept minimal; owner can review/tune)
 	// Keys below live inside directive.data

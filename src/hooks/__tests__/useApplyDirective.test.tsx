@@ -29,8 +29,7 @@ function TestHarness({
 			>
 				apply
 			</button>
-			<div data-testid={`narration-${id}`}>{(current.data as any).narration ?? ''}</div>
-			<div data-testid={`theme-${id}`}>{(current.data as any).theme ?? ''}</div>
+			<div data-testid={`variant-${id}`}>{(current.data as any).variant ?? ''}</div>
 		</>
 	);
 }
@@ -49,7 +48,6 @@ const landing = (overrides?: Partial<Directive>): Directive =>
 		data: {
 			variant: 'neutral',
 			highlights: [],
-			narration: '',
 			confidence: 0.7,
 			...((overrides?.data as any) || {}),
 		},
@@ -57,40 +55,25 @@ const landing = (overrides?: Partial<Directive>): Directive =>
 	}) as Directive;
 
 describe('useApplyDirective', () => {
-	it('ensures theme when missing on incoming directive', async () => {
-		const initial = landing({ data: { theme: 'cold' } as any });
-		const next = landing(); // no theme
+	it('applies directives without altering structure', async () => {
+		const initial = landing();
+		const next: Directive = {
+			mode: 'timeline',
+			data: { variant: 'projects', highlights: [], confidence: 0.7 },
+		} as any;
 
-		const onApplied = (_: Directive) => {};
+		let applied: Directive | null = null;
 		const { getByTestId } = renderWithProviders(
-			<TestHarness id="t1" next={next} onApplied={onApplied} />,
+			<TestHarness id="t1" next={next} onApplied={(d) => (applied = d)} />,
 			initial,
-			'elegant',
+			'cold',
 		);
 
 		await act(async () => {
 			getByTestId('apply-t1').click();
 		});
 
-		expect(getByTestId('theme-t1').textContent).toBe('elegant');
-	});
-
-	it('inherits narration when incoming directive narration is empty', async () => {
-		const initial = landing({ data: { theme: 'cold', narration: 'keep me' } as any });
-		const next = landing({ data: { narration: '' } as any });
-
-		let applied: Directive | null = null;
-		const { getByTestId } = renderWithProviders(
-			<TestHarness id="t2" next={next} onApplied={(d) => (applied = d)} />,
-			initial,
-			'cold',
-		);
-
-		await act(async () => {
-			getByTestId('apply-t2').click();
-		});
-
 		expect(applied).toBeTruthy();
-		expect(getByTestId('narration-t2').textContent).toBe('keep me');
+		expect(getByTestId('variant-t1').textContent).toBe('projects');
 	});
 });
