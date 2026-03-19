@@ -3,12 +3,12 @@
 import './ChatContainer.scss';
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
-import { useTheme } from '~/contexts/theme-context';
 import { MaterialIcon, Spinner } from '~/components/Ui';
 import { StreamingText } from '~/components/Ui/StreamingText';
 import { handleChatSubmit } from '~/lib/chat-actions';
 import { useState } from 'react';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
+import { createProjectsDirective } from '~/lib/ai/directiveTools';
 
 export interface ChatContainerProps {
 	onSubmitSuccess?: () => void;
@@ -23,6 +23,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		setInput,
 		setLoading,
 		setDirective,
+		setDirectiveTheme,
 		addMessage,
 		pendingClarify,
 		setPendingClarify,
@@ -31,12 +32,40 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	const hasHadInteraction = messages.length > 0;
 	const landingMode = directive.mode === 'landing' && !hasHadInteraction;
 
-	const { setTheme } = useTheme();
 	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 	const [streamedText, setStreamedText] = useState('');
 	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const applyDirective = useApplyDirective();
+	const submitChatMessage = useCallback(
+		async (userMessage: string) => {
+			setStreamedText('');
+
+			await handleChatSubmit({
+				userMessage,
+				messages,
+				directive,
+				addMessage,
+				setDirective,
+				setDirectiveTheme,
+				setLoading,
+				setPendingClarify,
+				onTextDelta: (delta) => setStreamedText((prev) => prev + delta),
+			});
+
+			onSubmitSuccess?.();
+		},
+		[
+			addMessage,
+			directive,
+			messages,
+			onSubmitSuccess,
+			setDirective,
+			setDirectiveTheme,
+			setLoading,
+			setPendingClarify,
+		],
+	);
 
 	// narrative now comes from directive data; no component seeding needed
 
@@ -48,7 +77,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		let match: RegExpExecArray | null;
 		let idx = 0;
 		while ((match = regex.exec(segment)) !== null) {
-			const [full, _gBoldAll, gBold2, gBold1, gItalic] = match as unknown as [
+			const [full, , gBold2, gBold1, gItalic] = match as unknown as [
 				string,
 				string,
 				string,
@@ -98,19 +127,18 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 						className="project-link"
 						onClick={(e) => {
 							e.preventDefault();
-							applyDirective({
-								mode: 'projects',
-								data: {
+							applyDirective(
+								createProjectsDirective(directive.theme, {
 									variant: 'case-study',
 									highlights: [projectId],
 									confidence: 1,
 									showMetrics: true,
-								},
-							});
+								}),
+							);
 						}}
 						key={`proj-${lineIdx}-${projIdx++}`}
 					>
-						<StreamingText as="span">{processEmphasis((label ?? '') as string, lineIdx)}</StreamingText>
+						<StreamingText as="span">{processEmphasis(label ?? '', lineIdx)}</StreamingText>
 					</a>,
 				);
 				projLast = end;
@@ -118,7 +146,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			if (projLast < text.length) nodes.push(...processEmphasis(text.slice(projLast), lineIdx));
 			return nodes;
 		},
-		[applyDirective, processEmphasis],
+		[applyDirective, directive.theme, processEmphasis],
 	);
 
 	// No directive-based narration; all user-facing text is streamed
@@ -172,21 +200,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		});
 
 		// reset streamed text and begin streaming
-		setStreamedText('');
-
-		await handleChatSubmit({
-			userMessage,
-			messages,
-			directive,
-			addMessage,
-			setDirective,
-			setLoading,
-			setPendingClarify,
-			setTheme,
-			onTextDelta: (delta) => setStreamedText((prev) => prev + delta),
-		});
-
-		onSubmitSuccess?.();
+		await submitChatMessage(userMessage);
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -200,7 +214,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	};
 
 	const handleOptionClick = (option: string) => {
-		if (!pendingClarify || pendingClarify.kind !== 'choice') return;
+		if (pendingClarify?.kind !== 'choice') return;
 
 		if (pendingClarify.multi) {
 			setSelectedOptions((prev) =>
@@ -209,24 +223,12 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		} else {
 			// Single choice - auto submit
 			setSelectedOptions([option]);
-			setTimeout(async () => {
-				const userMessage = `[clarify:${pendingClarify.slot}] ${option}`;
-				setSelectedOptions([]);
-				setStreamedText('');
-
-				await handleChatSubmit({
-					userMessage,
-					messages,
-					directive,
-					addMessage,
-					setDirective,
-					setLoading,
-					setPendingClarify,
-					setTheme,
-					onTextDelta: (delta) => setStreamedText((prev) => prev + delta),
-				});
-
-				onSubmitSuccess?.();
+			setTimeout(() => {
+				void (async () => {
+					const userMessage = `[clarify:${pendingClarify.slot}] ${option}`;
+					setSelectedOptions([]);
+					await submitChatMessage(userMessage);
+				})();
 			}, 100);
 		}
 	};
@@ -266,6 +268,15 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		};
 	}, []);
 
+	const hasTypedInput = input.trim().length > 0;
+	const isMultiChoiceClarify = pendingClarify?.kind === 'choice' && (pendingClarify.multi ?? false);
+	const isSubmitDisabled =
+		isLoading ||
+		(pendingClarify?.kind === 'choice' && !pendingClarify.multi && selectedOptions.length === 0) ||
+		(isMultiChoiceClarify && selectedOptions.length === 0 && !hasTypedInput) ||
+		(pendingClarify?.kind === 'free' && !hasTypedInput) ||
+		(!pendingClarify && !hasTypedInput);
+
 	return (
 		<div ref={containerRef} className={`chat-container ${landingMode ? 'landing-mode' : ''}`}>
 			<form onSubmit={onSubmit} className="chat-form">
@@ -299,7 +310,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 						onKeyDown={handleKeyDown}
 						placeholder={
 							pendingClarify?.kind === 'free'
-								? pendingClarify.placeholder || 'Type your answer...'
+								? (pendingClarify.placeholder ?? 'Type your answer...')
 								: pendingClarify?.kind === 'choice' && pendingClarify.multi
 									? 'Click options above or type a custom answer...'
 									: 'Ask me anything'
@@ -315,32 +326,8 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 					/>
 					<button
 						type="submit"
-						disabled={
-							isLoading ||
-							(pendingClarify?.kind === 'choice' &&
-								!pendingClarify.multi &&
-								selectedOptions.length === 0) ||
-							(pendingClarify?.kind === 'choice' &&
-								pendingClarify.multi &&
-								selectedOptions.length === 0 &&
-								!input.trim()) ||
-							(pendingClarify?.kind === 'free' && !input.trim()) ||
-							(!pendingClarify && !input.trim())
-						}
-						className={`submit-button ${
-							isLoading ||
-							(pendingClarify?.kind === 'choice' &&
-								!pendingClarify.multi &&
-								selectedOptions.length === 0) ||
-							(pendingClarify?.kind === 'choice' &&
-								pendingClarify.multi &&
-								selectedOptions.length === 0 &&
-								!input.trim()) ||
-							(pendingClarify?.kind === 'free' && !input.trim()) ||
-							(!pendingClarify && !input.trim())
-								? 'disabled'
-								: 'enabled'
-						}`}
+						disabled={isSubmitDisabled}
+						className={`submit-button ${isSubmitDisabled ? 'disabled' : 'enabled'}`}
 					>
 						{isLoading ? (
 							<Spinner size="sm" color="neutral-500" />

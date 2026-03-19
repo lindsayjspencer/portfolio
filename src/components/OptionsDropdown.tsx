@@ -1,9 +1,24 @@
 import { MaterialIcon } from '~/components/Ui';
-import { useRouter } from 'next/navigation';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useTheme } from '~/contexts/theme-context';
 import './OptionsDropdown.scss';
-import type { Directive } from '~/lib/ai/directiveTools';
+import {
+	createCompareDirective,
+	createExploreDirective,
+	createProjectsDirective,
+	createResumeDirective,
+	createSkillsDirective,
+	createTimelineDirective,
+	createValuesDirective,
+	getDirectiveVariant,
+	type CompareDirective,
+	type Directive,
+	type DirectiveMode,
+	type ProjectsDirective,
+	type SkillsDirective,
+	type TimelineDirective,
+	type ValuesDirective,
+} from '~/lib/ai/directiveTools';
 import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
 import { filterNodesByType } from '~/lib/ViewTransitions';
@@ -11,12 +26,28 @@ import type { SkillNode, ProjectNode } from '~/lib/PortfolioStore';
 
 // Component no longer needs props as it accesses store directly
 
-// Define the menu structure with variants
-type MenuOption = {
-	mode: string;
-	label: string;
-	variants?: { value: string; label: string }[];
-};
+type TimelineVariant = TimelineDirective['variant'];
+type ProjectsVariant = ProjectsDirective['variant'];
+type SkillsVariant = SkillsDirective['variant'];
+type ValuesVariant = ValuesDirective['variant'];
+type CompareVariant = CompareDirective['variant'];
+type MenuVariant = TimelineVariant | ProjectsVariant | SkillsVariant | ValuesVariant | CompareVariant;
+type NonLandingDirectiveMode = Exclude<DirectiveMode, 'landing'>;
+
+type MenuOption =
+	| { mode: 'timeline'; label: string; variants: { value: TimelineVariant; label: string }[] }
+	| { mode: 'projects'; label: string; variants: { value: ProjectsVariant; label: string }[] }
+	| { mode: 'skills'; label: string; variants: { value: SkillsVariant; label: string }[] }
+	| { mode: 'values'; label: string; variants: { value: ValuesVariant; label: string }[] }
+	| { mode: 'compare'; label: string; variants: { value: CompareVariant; label: string }[] }
+	| { mode: 'explore'; label: string; variants?: undefined }
+	| { mode: 'resume'; label: string; variants?: undefined };
+
+const TIMELINE_VARIANTS = ['career', 'skills', 'projects'] as const;
+const PROJECT_VARIANTS = ['grid', 'radial', 'case-study'] as const;
+const SKILL_VARIANTS = ['technical', 'soft', 'matrix'] as const;
+const VALUE_VARIANTS = ['mindmap', 'evidence'] as const;
+const COMPARE_VARIANTS = ['skills', 'projects', 'frontend-vs-backend'] as const;
 
 const MENU_OPTIONS: MenuOption[] = [
 	{
@@ -66,27 +97,26 @@ const MENU_OPTIONS: MenuOption[] = [
 	{
 		mode: 'explore',
 		label: 'Explore',
-		variants: [
-			{ value: 'all', label: 'All' },
-			{ value: 'filtered', label: 'Filtered' },
-		],
 	},
 	{ mode: 'resume', label: 'Resume' },
 ];
 
+function isVariantForMode<T extends MenuVariant>(value: string | undefined, allowed: readonly T[]): value is T {
+	return value !== undefined && (allowed as readonly string[]).includes(value);
+}
+
+function assertUnreachable(value: never): never {
+	throw new Error(`Unsupported mode: ${String(value)}`);
+}
+
 export function OptionsDropdown() {
-	const router = useRouter();
 	const { themeName, availableThemes, setTheme } = useTheme();
 	const currentDirective = usePortfolioStore((state) => state.directive);
 	const clearMessages = usePortfolioStore((s) => s.clearMessages);
 	const applyDirective = useApplyDirective();
-	const messages = usePortfolioStore((state) => state.messages);
-
-	const hasHadInteraction = messages.length > 0;
-	const landingMode = currentDirective.mode === 'landing' && !hasHadInteraction;
 
 	function getTwoRandomIds<T extends { id: string }>(items: T[]): [string, string] {
-		if (!items || items.length === 0) return ['', ''];
+		if (items.length === 0) return ['', ''];
 		if (items.length === 1) {
 			const only = items[0]!;
 			return [only.id, only.id];
@@ -99,105 +129,62 @@ export function OptionsDropdown() {
 		return [a.id, b.id];
 	}
 
-	const createDirective = (mode: string, variant?: string): Directive => {
-		// Helper function to create a proper directive based on mode and variant
-		const base = {
-			highlights: [],
-			confidence: 0.7,
-		};
+	const createDirective = (mode: NonLandingDirectiveMode, variant?: MenuVariant): Directive => {
+		const theme = currentDirective.theme;
 
 		switch (mode) {
-			case 'timeline':
-				return {
-					mode: 'timeline',
-					data: {
-						variant: (variant as 'career' | 'skills' | 'projects') || 'career',
-						axis: 'months',
-						...base,
-					},
-				} as Directive;
-			case 'projects':
-				return {
-					mode: 'projects',
-					data: {
-						variant: (variant as 'grid' | 'radial' | 'case-study') || 'grid',
-						showMetrics: true,
-						...base,
-					},
-				} as Directive;
-			case 'skills':
-				return {
-					mode: 'skills',
-					data: {
-						variant: (variant as 'technical' | 'soft' | 'matrix') || 'technical',
-						clusterBy: 'domain',
-						...base,
-					},
-				} as Directive;
-			case 'values':
-				return {
-					mode: 'values',
-					data: {
-						variant: (variant as 'mindmap' | 'evidence') || 'mindmap',
-						...base,
-					},
-				} as Directive;
+			case 'timeline': {
+				const resolvedVariant = isVariantForMode(variant, TIMELINE_VARIANTS) ? variant : 'career';
+				return createTimelineDirective(theme, {
+					variant: resolvedVariant,
+				});
+			}
+			case 'projects': {
+				const resolvedVariant = isVariantForMode(variant, PROJECT_VARIANTS) ? variant : 'grid';
+				return createProjectsDirective(theme, {
+					variant: resolvedVariant,
+				});
+			}
+			case 'skills': {
+				const resolvedVariant = isVariantForMode(variant, SKILL_VARIANTS) ? variant : 'technical';
+				return createSkillsDirective(theme, {
+					variant: resolvedVariant,
+					clusterBy: 'domain',
+				});
+			}
+			case 'values': {
+				const resolvedVariant = isVariantForMode(variant, VALUE_VARIANTS) ? variant : 'mindmap';
+				return createValuesDirective(theme, {
+					variant: resolvedVariant,
+				});
+			}
 			case 'explore':
-				return {
-					mode: 'explore',
-					data: {
-						variant: (variant as 'all' | 'filtered') || 'all',
-						...base,
-					},
-				} as Directive;
-			case 'landing':
-				return {
-					mode: 'landing',
-					data: {
-						variant: 'neutral',
-						...base,
-					},
-				} as Directive;
+				return createExploreDirective(theme);
 			case 'compare': {
-				const finalVariant = (variant as 'skills' | 'projects' | 'frontend-vs-backend') || 'skills';
+				const finalVariant = isVariantForMode(variant, COMPARE_VARIANTS) ? variant : 'skills';
 				let leftId = '';
 				let rightId = '';
 
-				if (finalVariant === 'skills' && graph?.nodes) {
+				if (finalVariant === 'skills') {
 					const skills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
 					[leftId, rightId] = getTwoRandomIds(skills);
-				} else if (finalVariant === 'projects' && graph?.nodes) {
+				} else if (finalVariant === 'projects') {
 					const projects = filterNodesByType<ProjectNode>(graph.nodes, 'project');
 					[leftId, rightId] = getTwoRandomIds(projects);
 				}
 
-				return {
-					mode: 'compare',
-					data: {
-						leftId,
-						rightId,
-						showOverlap: true,
-						variant: finalVariant,
-						...base,
-					},
-				} as Directive;
+				return createCompareDirective(theme, {
+					leftId,
+					rightId,
+					showOverlap: true,
+					variant: finalVariant,
+				});
 			}
 			case 'resume':
-				return {
-					mode: 'resume',
-					data: {
-						...base,
-					},
-				} as Directive;
-			default:
-				return {
-					mode: 'landing',
-					data: {
-						variant: 'neutral',
-						...base,
-					},
-				} as Directive;
+				return createResumeDirective(theme);
 		}
+
+		return assertUnreachable(mode);
 	};
 
 	const activeOption = MENU_OPTIONS.find((option) => option.mode === currentDirective.mode);
@@ -233,9 +220,7 @@ export function OptionsDropdown() {
 												{option.variants.map((variant) => {
 													const isActive =
 														currentDirective.mode === option.mode &&
-														currentDirective.data &&
-														'variant' in currentDirective.data &&
-														currentDirective.data.variant === variant.value;
+														getDirectiveVariant(currentDirective) === variant.value;
 													return (
 														<DropdownMenu.Item
 															key={variant.value}
@@ -293,13 +278,11 @@ export function OptionsDropdown() {
 
 						<div className="dropdown-separator" />
 
-						{/* Home reset: clears chat and resets directive; UrlStateSync will clean URL to '/' */}
+						{/* Home reset: clears chat and resets directive; UrlStateSync will push the clean URL */}
 						<DropdownMenu.Item
 							className="mode-button"
 							onSelect={() => {
 								clearMessages();
-								// Let UrlStateSync write landing; keep history by pushing
-								router.push('/');
 							}}
 						>
 							Go Home (clear chat)

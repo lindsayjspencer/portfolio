@@ -12,7 +12,7 @@ import type {
 } from './ValuesEvidenceCard';
 import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
-import type { Directive } from '~/lib/ai/directiveTools';
+import { createProjectsDirective } from '~/lib/ai/directiveTools';
 
 interface ValuesEvidenceViewProps {
 	dataSnapshot: ValuesEvidenceSnapshot;
@@ -72,16 +72,12 @@ export function ValuesEvidenceView({
 		if (!node) return;
 
 		if (node.type === 'project') {
-			// Apply a directive to open the case study for this project
-			const directive: Directive = {
-				mode: 'projects',
-				data: {
-					variant: 'case-study',
-					highlights: [node.id],
-					confidence: 0.7,
-					showMetrics: true,
-				},
-			};
+			const directive = createProjectsDirective(dataSnapshot.directive.theme, {
+				variant: 'case-study',
+				highlights: [node.id],
+				confidence: 0.7,
+				showMetrics: true,
+			});
 			applyDirective(directive);
 			return;
 		}

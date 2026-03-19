@@ -1,10 +1,10 @@
-import { createStore, type StoreApi } from 'zustand';
+import { createStore, type StoreApi, useStore } from 'zustand';
 import { useContext, createContext } from 'react';
-import { useStore } from 'zustand';
 import portfolioData from '~/data/portfolio.json';
 import type { ClarifyPayload } from './ai/clarifyTool';
 import type { ForceDirectedGraphNode } from '~/components/ForceGraph/Common';
-import type { Directive, LandingDirective } from './ai/directiveTools';
+import { createDefaultLandingDirective, type Directive } from './ai/directiveTools';
+import type { ThemeName } from './themes';
 
 // ===== Portfolio Graph Types =====
 
@@ -248,6 +248,7 @@ export interface PortfolioState {
 
 	// Actions
 	setDirective: (directive: Directive) => void;
+	setDirectiveTheme: (theme: ThemeName) => void;
 	addMessage: (message: Omit<ChatMessage, 'id'>) => void;
 	setLoading: (loading: boolean) => void;
 	clearMessages: () => void;
@@ -288,6 +289,10 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 		lastDirective: undefined,
 
 		setDirective: (directive) => set({ directive }),
+		setDirectiveTheme: (theme) =>
+			set((state) => ({
+				directive: state.directive.theme === theme ? state.directive : { ...state.directive, theme },
+			})),
 
 		addMessage: (message) =>
 			set((state) => ({
@@ -305,14 +310,8 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 		clearMessages: () =>
 			set({
 				messages: [],
-				directive: {
-					mode: 'landing',
-					data: {
-						variant: 'neutral',
-						highlights: [],
-						confidence: 0.7,
-					},
-				} as Directive,
+				directive: createDefaultLandingDirective(),
+				pendingClarify: undefined,
 			}),
 
 		// Chat actions
@@ -341,14 +340,14 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 // React context exported here to avoid circular imports
 export const PortfolioStoreContext = createContext<PortfolioStoreApi | null>(null);
 
+const selectPortfolioState = (state: PortfolioState) => state;
+
 // Hook compatible with existing call sites: usePortfolioStore(selector?)
 export function usePortfolioStore(): PortfolioState;
 export function usePortfolioStore<T>(selector: (state: PortfolioState) => T): T;
-export function usePortfolioStore<T>(selector?: (state: PortfolioState) => T): T | PortfolioState {
+export function usePortfolioStore<T = PortfolioState>(selector?: (state: PortfolioState) => T): T {
 	const store = useContext(PortfolioStoreContext);
 	if (!store) throw new Error('usePortfolioStore must be used within a PortfolioStoreProvider');
-	if (selector) {
-		return useStore(store, selector);
-	}
-	return useStore(store, (s) => s);
+
+	return useStore(store, selector ?? (selectPortfolioState as (state: PortfolioState) => T));
 }

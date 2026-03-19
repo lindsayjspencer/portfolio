@@ -1,7 +1,6 @@
 import '~/styles/main.scss';
 import { type Metadata } from 'next';
 import { headers } from 'next/headers';
-import { ThemeProvider } from '~/contexts/theme-context';
 import { IconPreloader } from '~/components/Ui';
 import Script from 'next/script';
 
@@ -110,9 +109,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				/>
 			</head>
 			<body>
-				<ThemeProvider>
-					<IconPreloader>{children}</IconPreloader>
-				</ThemeProvider>
+				<IconPreloader>{children}</IconPreloader>
 			</body>
 		</html>
 	);

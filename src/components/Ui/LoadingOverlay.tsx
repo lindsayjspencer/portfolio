@@ -1,8 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Spinner } from './Spinner';
-import { useComponentColor } from '~/hooks/UseComponentColor';
 
 export interface LoadingOverlayProps {
 	/** Whether the overlay is visible */
@@ -18,14 +16,7 @@ export interface LoadingOverlayProps {
  * Used during Material Icons font loading
  */
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, message, className = '' }) => {
-	const backgroundColor = useComponentColor('background');
-	const textColor = useComponentColor('text');
-
 	if (!isVisible) return null;
-
-	// Fallback colors in case theme isn't ready yet
-	const bgColor = backgroundColor || 'rgb(255, 255, 255)';
-	const fgColor = textColor || 'rgb(0, 0, 0)';
 
 	return (
 		<div
@@ -36,8 +27,8 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
 				left: 0,
 				right: 0,
 				bottom: 0,
-				backgroundColor: bgColor,
-				color: fgColor,
+				backgroundColor: 'rgb(255, 255, 255)',
+				color: 'rgb(15, 23, 42)',
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',
@@ -53,9 +44,16 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
 			role="dialog"
 		>
 			{/* Loading spinner */}
-			<div>
-				<Spinner size="lg" color="primary-500" aria-label="Loading spinner" />
-			</div>
+			<div
+				aria-hidden="true"
+				style={{
+					width: '44px',
+					height: '44px',
+					borderRadius: '9999px',
+					border: '4px solid rgba(37, 99, 235, 0.14)',
+					borderTopColor: 'rgb(37, 99, 235)',
+				}}
+			/>
 
 			{/* Loading message */}
 			{message !== undefined ? (

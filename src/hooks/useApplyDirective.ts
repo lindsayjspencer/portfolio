@@ -2,7 +2,6 @@
 
 import { useCallback } from 'react';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
-import { useTheme } from '~/contexts/theme-context';
 import type { Directive } from '~/lib/ai/directiveTools';
 
 export type ApplyDirectiveOptions = {

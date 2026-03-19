@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { handleChatSubmit } from '~/lib/chat-actions';
-import { useTheme } from '~/contexts/theme-context';
 import './SuggestionChips.scss';
 
 const ALL_QUESTIONS = [
@@ -28,9 +27,17 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export function SuggestionChips() {
-	const { messages, directive, isLoading, addMessage, setDirective, setLoading, setPendingClarify, setInput } =
-		usePortfolioStore();
-	const { setTheme } = useTheme();
+	const {
+		messages,
+		directive,
+		isLoading,
+		addMessage,
+		setDirective,
+		setDirectiveTheme,
+		setLoading,
+		setPendingClarify,
+		setInput,
+	} = usePortfolioStore();
 
 	const hasHadInteraction = messages.length > 0;
 	const landingMode = directive.mode === 'landing' && !hasHadInteraction;
@@ -99,9 +106,9 @@ export function SuggestionChips() {
 			directive,
 			addMessage,
 			setDirective,
+			setDirectiveTheme,
 			setLoading,
 			setPendingClarify,
-			setTheme,
 		});
 	};
 

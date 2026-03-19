@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, type SetStateAction } from 'react';
 import { forceCollide } from 'd3-force-3d';
 import { ForceGraphView } from '~/components/ForceGraph/ForceGraphView';
 import { ProjectsGridView } from '~/components/ProjectsView/ProjectsGridView';
@@ -10,25 +10,19 @@ import { ResumeView } from '~/components/ResumeView/ResumeView';
 import {
 	type ViewInstanceState,
 	type ViewTransitionState,
+	type TransitionDecision,
 	type TransitionCallbacks,
 	COMPONENT_TRANSITION_TIMINGS,
 	createDataSnapshot,
-	shouldTransition,
-	structuralSignature,
+	getTransitionDecision,
 } from '~/lib/ViewTransitions';
 import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import './ViewTransitionManager.scss';
 import './CompareLegends.scss';
 import { FORCE_CONFIG } from '../ForceGraph/constants';
-import type {
-	CompareSkillsSnapshot,
-	CompareProjectsSnapshot,
-	CompareFrontendVsBackendSnapshot,
-} from '~/lib/ViewTransitions';
-import type { Directive } from '~/lib/ai/directiveTools';
+import { getDirectiveViewKey, type Directive } from '~/lib/ai/directiveTools';
 
-// Inline legend components for compare views
-function CompareSkillsLegend({ dataSnapshot }: { dataSnapshot: CompareSkillsSnapshot }) {
+function CompareSkillsLegend() {
 	return (
 		<div className="compare-legend compare-legend--skills">
 			<div className="compare-legend__container">
@@ -53,7 +47,7 @@ function CompareSkillsLegend({ dataSnapshot }: { dataSnapshot: CompareSkillsSnap
 	);
 }
 
-function CompareProjectsLegend({ dataSnapshot }: { dataSnapshot: CompareProjectsSnapshot }) {
+function CompareProjectsLegend() {
 	return (
 		<div className="compare-legend compare-legend--projects">
 			<div className="compare-legend__container">
@@ -78,7 +72,7 @@ function CompareProjectsLegend({ dataSnapshot }: { dataSnapshot: CompareProjects
 	);
 }
 
-function CompareFrontendVsBackendLegend({ dataSnapshot }: { dataSnapshot: CompareFrontendVsBackendSnapshot }) {
+function CompareFrontendVsBackendLegend() {
 	return (
 		<div className="compare-legend compare-legend--spectrum">
 			<div className="compare-legend__container">
@@ -103,211 +97,422 @@ function CompareFrontendVsBackendLegend({ dataSnapshot }: { dataSnapshot: Compar
 	);
 }
 
+type ChargeForceLike = {
+	strength: (value: number) => ChargeForceLike;
+};
+
+type LinkForceLike = {
+	distance: (value: number | ((link: { rel?: string }) => number)) => LinkForceLike;
+	strength: (value: number | ((link: { rel?: string }) => number)) => LinkForceLike;
+};
+
+type TransitionDebugEntry = {
+	id: string;
+	at: string;
+	event: string;
+	details?: Record<string, unknown>;
+};
+
+const DEBUG_QUERY_KEY = 'debugTransitions';
+const DEBUG_STORAGE_KEY = 'portfolio:debug-transitions';
+
+function isChargeForce(force: unknown): force is ChargeForceLike {
+	return (
+		typeof force === 'object' &&
+		force !== null &&
+		'strength' in force &&
+		typeof force.strength === 'function'
+	);
+}
+
+function isLinkForce(force: unknown): force is LinkForceLike {
+	return (
+		typeof force === 'object' &&
+		force !== null &&
+		'distance' in force &&
+		typeof force.distance === 'function' &&
+		'strength' in force &&
+		typeof force.strength === 'function'
+	);
+}
+
 export function ViewTransitionManager() {
 	const directive = usePortfolioStore((state) => state.directive);
-	const currentMode = directive.mode;
-	// Create initial data snapshot using utility (graph is static)
-	const initialDataSnapshot = useMemo(() => createDataSnapshot(graph, directive), [directive]);
 
-	const [transitionState, setTransitionState] = useState<ViewTransitionState>({
-		instances: [
-			{
-				mode: currentMode,
-				phase: 'entering',
-				zIndex: 1,
-				key: `${currentMode}-${Date.now()}`,
-				dataSnapshot: initialDataSnapshot,
-			},
-		],
-		isTransitioning: true,
+	const [transitionState, setTransitionState] = useState<ViewTransitionState>(() => {
+		const initialDataSnapshot = createDataSnapshot(graph, directive);
+		return {
+			instances: [
+				{
+					mode: directive.mode,
+					phase: 'entering',
+					zIndex: 1,
+					key: `${directive.mode}-${Date.now()}`,
+					dataSnapshot: initialDataSnapshot,
+				},
+			],
+			isTransitioning: true,
+		};
 	});
+	const [debugEnabled, setDebugEnabled] = useState(false);
+	const [debugEvents, setDebugEvents] = useState<TransitionDebugEntry[]>([]);
 
+	const transitionStateRef = useRef(transitionState);
 	const transitionCallbacks = useRef<Map<string, TransitionCallbacks>>(new Map());
+	const transitionCallbackRegistrars = useRef<Map<string, (callbacks: TransitionCallbacks) => void>>(new Map());
 	const transitionTimeouts = useRef<NodeJS.Timeout[]>([]);
-	// Guard to suppress repeated transitions to the same target
 	const lastTransitionKeyRef = useRef<string | null>(null);
+	const isUnmountedRef = useRef(false);
+	const lastDecisionRef = useRef<TransitionDecision | null>(null);
 
-	// Clean up timeouts on unmount
 	useEffect(() => {
-		return () => {
-			transitionTimeouts.current.forEach(clearTimeout);
-		};
-	}, []);
+		transitionStateRef.current = transitionState;
+	}, [transitionState]);
 
-	// Run an initial enter transition once on mount so first view animates in
 	useEffect(() => {
-		let cancelled = false;
-		const waitForCallbacks = (key: string, timeoutMs = 300): Promise<void> => {
-			const start = Date.now();
-			return new Promise((resolve) => {
-				const tick = () => {
-					if (cancelled) return resolve();
-					if (transitionCallbacks.current.has(key) || Date.now() - start > timeoutMs) {
-						resolve();
-					} else {
-						setTimeout(tick, 16);
-					}
-				};
-				tick();
-			});
-		};
-
-		const run = async () => {
-			const current = transitionState.instances[0];
-			if (!current || current.phase !== 'entering') return;
-
-			const enterTiming = COMPONENT_TRANSITION_TIMINGS[current.mode] || COMPONENT_TRANSITION_TIMINGS.landing;
-			await waitForCallbacks(current.key);
-			const callbacks = transitionCallbacks.current.get(current.key);
-			// Fire-and-forget; CSS transitions handle timing, we await duration below
-			callbacks?.onTransitionIn(enterTiming.in);
-
-			await new Promise((resolve) => {
-				const timeout = setTimeout(resolve, enterTiming.in);
-				transitionTimeouts.current.push(timeout);
-			});
-
-			if (cancelled) return;
-			setTransitionState((prev) => ({
-				instances: [
-					{
-						mode: prev.instances[0]?.mode ?? current.mode,
-						phase: 'stable',
-						zIndex: 1,
-						key: prev.instances[0]?.key ?? current.key,
-						dataSnapshot: prev.instances[0]?.dataSnapshot ?? current.dataSnapshot,
-					},
-				],
-				isTransitioning: false,
-			}));
-		};
-
-		run();
-		return () => {
-			cancelled = true;
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	// Handle directive changes (trigger transitions only on mode/variant change; otherwise update snapshot in place)
-	useEffect(() => {
-		const currentStableView = transitionState.instances.find((i) => i.phase === 'stable');
-		if (!currentStableView) return;
-
-		// Don't start a new transition while one is in progress
-		if (transitionState.isTransitioning) return;
-
-		const prevSnapshot = currentStableView.dataSnapshot;
-		const prevDirective = prevSnapshot.directive;
-		const nextDirective = directive;
-		const doTransition = shouldTransition(prevDirective, nextDirective);
-		if (doTransition) {
-			const nextMode = nextDirective.mode;
-			// Include structural signature so legitimate same-mode changes can transition
-			const sig = structuralSignature(nextDirective);
-			const nextKey = `${nextMode}:${(nextDirective as any).data?.variant ?? ''}:${sig}`;
-			if (lastTransitionKeyRef.current === nextKey) return;
-			lastTransitionKeyRef.current = nextKey;
-			startTransition(nextMode);
+		if (typeof window === 'undefined') {
 			return;
 		}
 
-		// No transition needed; update snapshot in place for presentational-only changes
-		const nextSnapshot = createDataSnapshot(graph, nextDirective);
+		const params = new URLSearchParams(window.location.search);
+		const queryValue = params.get(DEBUG_QUERY_KEY);
+		if (queryValue === '1') {
+			window.localStorage.setItem(DEBUG_STORAGE_KEY, '1');
+		} else if (queryValue === '0') {
+			window.localStorage.removeItem(DEBUG_STORAGE_KEY);
+		}
+
+		const stored = window.localStorage.getItem(DEBUG_STORAGE_KEY) === '1';
+		setDebugEnabled(queryValue === '1' || (queryValue !== '0' && stored));
+	}, []);
+
+	const pushDebug = useCallback(
+		(event: string, details?: Record<string, unknown>) => {
+			if (!debugEnabled) {
+				return;
+			}
+
+			const entry: TransitionDebugEntry = {
+				id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+				at: new Date().toISOString(),
+				event,
+				details,
+			};
+
+			setDebugEvents((prev) => [entry, ...prev].slice(0, 12));
+			console.debug('[transition-debug]', event, details ?? {});
+
+			if (typeof window !== 'undefined') {
+				const debugWindow = window as Window & { __portfolioTransitionDebug?: TransitionDebugEntry[] };
+				debugWindow.__portfolioTransitionDebug = [entry, ...(debugWindow.__portfolioTransitionDebug ?? [])].slice(
+					0,
+					50,
+				);
+			}
+		},
+		[debugEnabled],
+	);
+
+	useEffect(() => {
+		pushDebug('state-updated', {
+			isTransitioning: transitionState.isTransitioning,
+			instances: transitionState.instances.map((instance) => ({
+				key: instance.key,
+				mode: instance.mode,
+				phase: instance.phase,
+				zIndex: instance.zIndex,
+			})),
+		});
+	}, [pushDebug, transitionState]);
+
+	const setManagedTransitionState = useCallback((updater: SetStateAction<ViewTransitionState>) => {
 		setTransitionState((prev) => {
-			const stableIdx = prev.instances.findIndex((i) => i.phase === 'stable');
-			if (stableIdx === -1 || prev.isTransitioning) return prev;
-			const prevStable = prev.instances[stableIdx]!;
-			const updatedStable: ViewInstanceState = { ...prevStable, dataSnapshot: nextSnapshot };
+			const next = typeof updater === 'function' ? updater(prev) : updater;
+			transitionStateRef.current = next;
+			return next;
+		});
+	}, []);
+
+	const clearTransitionTimeouts = useCallback(() => {
+		transitionTimeouts.current.forEach(clearTimeout);
+		transitionTimeouts.current = [];
+	}, []);
+
+	const waitForDuration = useCallback((duration: number) => {
+		return new Promise<void>((resolve) => {
+			const timeout = setTimeout(() => {
+				transitionTimeouts.current = transitionTimeouts.current.filter((tracked) => tracked !== timeout);
+				resolve();
+			}, duration);
+			transitionTimeouts.current.push(timeout);
+		});
+	}, []);
+
+	const waitForCallbacks = useCallback(
+		async (key: string, timeoutMs = 300) => {
+			const start = Date.now();
+			while (
+				!isUnmountedRef.current &&
+				!transitionCallbacks.current.has(key) &&
+				Date.now() - start <= timeoutMs
+			) {
+				await waitForDuration(16);
+			}
+
+			pushDebug('callbacks-ready-check', {
+				key,
+				found: transitionCallbacks.current.has(key),
+				waitedMs: Date.now() - start,
+			});
+		},
+		[pushDebug, waitForDuration],
+	);
+
+	const getTransitionTiming = useCallback(
+		(mode: Directive['mode']) => COMPONENT_TRANSITION_TIMINGS[mode] ?? COMPONENT_TRANSITION_TIMINGS.landing,
+		[],
+	);
+
+	const finalizeStableInstance = useCallback(
+		(instance: ViewInstanceState) => {
+			pushDebug('finalize-stable', {
+				key: instance.key,
+				mode: instance.mode,
+			});
+			setManagedTransitionState({
+				instances: [
+					{
+						...instance,
+						phase: 'stable',
+						zIndex: 1,
+					},
+				],
+				isTransitioning: false,
+			});
+		},
+		[pushDebug, setManagedTransitionState],
+	);
+
+	useEffect(() => {
+		const callbackRegistrars = transitionCallbackRegistrars.current;
+		isUnmountedRef.current = false;
+		pushDebug('manager-mounted');
+		return () => {
+			isUnmountedRef.current = true;
+			pushDebug('manager-unmounted');
+			clearTransitionTimeouts();
+			callbackRegistrars.clear();
+		};
+	}, [clearTransitionTimeouts, pushDebug]);
+
+	useEffect(() => {
+		const runInitialEnter = async () => {
+			const current = transitionStateRef.current.instances[0];
+			if (current?.phase !== 'entering') {
+				return;
+			}
+
+			pushDebug('initial-enter-start', {
+				key: current.key,
+				mode: current.mode,
+			});
+			const enterTiming = getTransitionTiming(current.mode);
+			await waitForCallbacks(current.key);
+			if (isUnmountedRef.current) {
+				pushDebug('initial-enter-aborted', { reason: 'unmounted' });
+				return;
+			}
+
+			const callbacks = transitionCallbacks.current.get(current.key);
+			if (callbacks) {
+				pushDebug('initial-enter-callback', { key: current.key, duration: enterTiming.in });
+				await callbacks.onTransitionIn(enterTiming.in);
+			}
+
+			await waitForDuration(enterTiming.in);
+			if (isUnmountedRef.current) {
+				pushDebug('initial-enter-aborted', { reason: 'unmounted-after-wait' });
+				return;
+			}
+
+			finalizeStableInstance(current);
+		};
+
+		void runInitialEnter();
+	}, [finalizeStableInstance, getTransitionTiming, pushDebug, waitForCallbacks, waitForDuration]);
+
+	const startTransition = useCallback(
+		async (nextDirective: Directive) => {
+			const currentState = transitionStateRef.current;
+			if (currentState.isTransitioning) {
+				return;
+			}
+
+			const stableInstance = currentState.instances.find((instance) => instance.phase === 'stable');
+			if (!stableInstance) {
+				pushDebug('transition-skipped', { reason: 'no-stable-instance' });
+				return;
+			}
+
+			const incomingInstance: ViewInstanceState = {
+				mode: nextDirective.mode,
+				phase: 'entering',
+				zIndex: 2,
+				key: `${nextDirective.mode}-${Date.now()}`,
+				dataSnapshot: createDataSnapshot(graph, nextDirective),
+			};
+
+			const exitingInstance: ViewInstanceState = {
+				...stableInstance,
+				phase: 'exiting',
+				zIndex: 1,
+			};
+
+			setManagedTransitionState({
+				instances: [exitingInstance, incomingInstance],
+				isTransitioning: true,
+			});
+			pushDebug('transition-start', {
+				from: exitingInstance.key,
+				to: incomingInstance.key,
+				fromMode: exitingInstance.mode,
+				toMode: incomingInstance.mode,
+			});
+
+			const exitTiming = getTransitionTiming(exitingInstance.mode);
+			const enterTiming = getTransitionTiming(incomingInstance.mode);
+
+			try {
+				const exitCallbacks = transitionCallbacks.current.get(exitingInstance.key);
+				if (exitCallbacks) {
+					pushDebug('transition-exit-callback', {
+						key: exitingInstance.key,
+						duration: exitTiming.out,
+					});
+					await exitCallbacks.onTransitionOut(exitTiming.out);
+				}
+				await waitForDuration(exitTiming.out);
+				if (isUnmountedRef.current) {
+					pushDebug('transition-aborted', { reason: 'unmounted-after-exit' });
+					return;
+				}
+
+				await waitForCallbacks(incomingInstance.key);
+				if (isUnmountedRef.current) {
+					return;
+				}
+
+				const enterCallbacks = transitionCallbacks.current.get(incomingInstance.key);
+				if (enterCallbacks) {
+					pushDebug('transition-enter-callback', {
+						key: incomingInstance.key,
+						duration: enterTiming.in,
+					});
+					await enterCallbacks.onTransitionIn(enterTiming.in);
+				}
+				await waitForDuration(enterTiming.in);
+				if (isUnmountedRef.current) {
+					pushDebug('transition-aborted', { reason: 'unmounted-after-enter' });
+					return;
+				}
+
+				finalizeStableInstance(incomingInstance);
+			} catch (error) {
+				console.error('View transition failed:', error);
+				pushDebug('transition-error', {
+					message: error instanceof Error ? error.message : 'unknown error',
+				});
+				if (!isUnmountedRef.current) {
+					finalizeStableInstance(incomingInstance);
+				}
+			} finally {
+				transitionCallbacks.current.delete(exitingInstance.key);
+				transitionCallbackRegistrars.current.delete(exitingInstance.key);
+				lastTransitionKeyRef.current = null;
+			}
+		},
+		[finalizeStableInstance, getTransitionTiming, pushDebug, setManagedTransitionState, waitForCallbacks, waitForDuration],
+	);
+
+	useEffect(() => {
+		const currentState = transitionStateRef.current;
+		const currentStableView = currentState.instances.find((instance) => instance.phase === 'stable');
+		if (!currentStableView || currentState.isTransitioning) {
+			if (!currentStableView) {
+				pushDebug('directive-evaluation-skipped', { reason: 'no-stable-view' });
+			}
+			return;
+		}
+
+		const prevDirective = currentStableView.dataSnapshot.directive;
+		const nextDirective = directive;
+		const decision = getTransitionDecision(prevDirective, nextDirective);
+		lastDecisionRef.current = decision;
+		pushDebug('directive-evaluated', {
+			prevViewKey: getDirectiveViewKey(prevDirective),
+			nextViewKey: getDirectiveViewKey(nextDirective),
+			reason: decision.reason,
+			shouldTransition: decision.shouldTransition,
+		});
+
+		if (decision.shouldTransition) {
+			const nextKey = `${getDirectiveViewKey(nextDirective)}:${decision.nextSignature}`;
+			if (lastTransitionKeyRef.current === nextKey) {
+				pushDebug('transition-suppressed', { reason: 'duplicate-target', nextKey });
+				return;
+			}
+			lastTransitionKeyRef.current = nextKey;
+			void startTransition(nextDirective);
+			return;
+		}
+
+		const nextSnapshot = createDataSnapshot(graph, nextDirective);
+		pushDebug('snapshot-updated-in-place', {
+			viewKey: getDirectiveViewKey(nextDirective),
+			reason: decision.reason,
+		});
+		setManagedTransitionState((prev) => {
+			const stableIdx = prev.instances.findIndex((instance) => instance.phase === 'stable');
+			if (stableIdx === -1 || prev.isTransitioning) {
+				return prev;
+			}
+
+			const stableInstance = prev.instances[stableIdx];
+			if (!stableInstance) {
+				return prev;
+			}
+
 			const instances = prev.instances.slice();
-			instances[stableIdx] = updatedStable;
+			instances[stableIdx] = { ...stableInstance, dataSnapshot: nextSnapshot };
 			return { ...prev, instances };
 		});
-	}, [directive, transitionState.isTransitioning]);
+	}, [directive, pushDebug, setManagedTransitionState, startTransition, transitionState.isTransitioning]);
 
-	const startTransition = async (newMode: Directive['mode']) => {
-		const currentInstances = transitionState.instances;
-		const stableInstance = currentInstances.find((i) => i.phase === 'stable');
-
-		if (!stableInstance) return;
-
-		// Create new incoming view instance with current directive snapshot
-		const incomingInstance: ViewInstanceState = {
-			mode: newMode,
-			phase: 'entering',
-			zIndex: 2,
-			key: `${newMode}-${Date.now()}`,
-			dataSnapshot: createDataSnapshot(graph, directive),
-		};
-
-		// Mark current as exiting
-		const exitingInstance: ViewInstanceState = {
-			...stableInstance,
-			phase: 'exiting',
-			zIndex: 1,
-		};
-
-		// Update state to show both views
-		setTransitionState({
-			instances: [exitingInstance, incomingInstance],
-			isTransitioning: true,
-		});
-
-		// Get component-specific timings with fallback
-		const exitTiming = COMPONENT_TRANSITION_TIMINGS[exitingInstance.mode] || COMPONENT_TRANSITION_TIMINGS.landing;
-		const enterTiming = COMPONENT_TRANSITION_TIMINGS[incomingInstance.mode] || COMPONENT_TRANSITION_TIMINGS.landing;
-
-		// Start exit transition
-		const exitCallbacks = transitionCallbacks.current.get(exitingInstance.key);
-		// Fire-and-forget; wait only for duration
-		exitCallbacks?.onTransitionOut(exitTiming.out);
-
-		// Wait for exit duration
-		await new Promise((resolve) => {
-			const timeout = setTimeout(resolve, exitTiming.out);
-			transitionTimeouts.current.push(timeout);
-		});
-
-		// Start enter transition
-		const enterCallbacks = transitionCallbacks.current.get(incomingInstance.key);
-		// Fire-and-forget; wait only for duration
-		enterCallbacks?.onTransitionIn(enterTiming.in);
-
-		// Wait for enter duration
-		await new Promise((resolve) => {
-			const timeout = setTimeout(resolve, enterTiming.in);
-			transitionTimeouts.current.push(timeout);
-		});
-
-		// Transition complete - keep only the new stable view
-		setTransitionState({
-			instances: [
-				{
-					mode: newMode,
-					phase: 'stable',
-					zIndex: 1,
-					key: incomingInstance.key,
-					dataSnapshot: incomingInstance.dataSnapshot,
-				},
-			],
-			isTransitioning: false,
-		});
-
-		// Clean up callbacks for removed instance
-		transitionCallbacks.current.delete(exitingInstance.key);
-		// Reset loop guard to allow future transitions to recompute target key
-		lastTransitionKeyRef.current = null;
-	};
-
-	const registerTransitionCallbacks = (key: string, callbacks: TransitionCallbacks) => {
+	const registerTransitionCallbacks = useCallback((key: string, callbacks: TransitionCallbacks) => {
 		transitionCallbacks.current.set(key, callbacks);
-	};
+		pushDebug('callbacks-registered', { key });
+	}, [pushDebug]);
+
+	const getCallbackRegistrar = useCallback(
+		(key: string) => {
+			const existing = transitionCallbackRegistrars.current.get(key);
+			if (existing) {
+				return existing;
+			}
+
+			const registrar = (callbacks: TransitionCallbacks) => {
+				registerTransitionCallbacks(key, callbacks);
+			};
+			transitionCallbackRegistrars.current.set(key, registrar);
+			return registrar;
+		},
+		[registerTransitionCallbacks],
+	);
 
 	const renderViewComponent = (instance: ViewInstanceState) => {
 		const commonProps = {
 			transitionPhase: instance.phase,
-			onRegisterCallbacks: (callbacks: TransitionCallbacks) =>
-				registerTransitionCallbacks(instance.key, callbacks),
+			onRegisterCallbacks: getCallbackRegistrar(instance.key),
 		};
 
 		const { dataSnapshot } = instance;
@@ -316,21 +521,7 @@ export function ViewTransitionManager() {
 			case 'timeline':
 				switch (dataSnapshot.variant) {
 					case 'career':
-						return (
-							<ForceGraphView
-								key={instance.key}
-								graphData={dataSnapshot.forceGraphData}
-								{...commonProps}
-							/>
-						);
 					case 'projects':
-						return (
-							<ForceGraphView
-								key={instance.key}
-								graphData={dataSnapshot.forceGraphData}
-								{...commonProps}
-							/>
-						);
 					case 'skills':
 						return (
 							<ForceGraphView
@@ -355,7 +546,6 @@ export function ViewTransitionManager() {
 								warmupTicks={80}
 								cooldownTime={2000}
 								onCollisionForceSetup={(forceGraphRef) => {
-									// Custom collision setup with full access to force graph ref
 									if (forceGraphRef) {
 										forceGraphRef.d3Force('collision', forceCollide(FORCE_CONFIG.collisionRadius));
 									}
@@ -372,13 +562,6 @@ export function ViewTransitionManager() {
 			case 'skills':
 				switch (dataSnapshot.variant) {
 					case 'technical':
-						return (
-							<ForceGraphView
-								key={instance.key}
-								graphData={dataSnapshot.forceGraphData}
-								{...commonProps}
-							/>
-						);
 					case 'soft':
 						return (
 							<ForceGraphView
@@ -394,8 +577,6 @@ export function ViewTransitionManager() {
 								matrix={dataSnapshot.matrix}
 								highlights={dataSnapshot.directive.data.highlights}
 								background="gradient-neutral"
-								// Available options: 'none', 'gradient-neutral', 'gradient-colored', 'gradient-fade',
-								// 'pattern-dots', 'pattern-grid', 'pattern-diagonal', 'pattern-noise', 'floating-icons'
 								{...commonProps}
 							/>
 						);
@@ -412,7 +593,6 @@ export function ViewTransitionManager() {
 								warmupTicks={4}
 								onCollisionForceSetup={(forceGraphRef) => {
 									if (forceGraphRef) {
-										// Custom collision radii based on node type
 										forceGraphRef.d3Force(
 											'collision',
 											forceCollide<
@@ -425,32 +605,36 @@ export function ViewTransitionManager() {
 													vy?: number;
 													vz?: number;
 												}
-											>().radius((n) => {
-												switch (n.type) {
+											>().radius((node) => {
+												switch (node.type) {
 													case 'person':
-														return 30; // Person node (center) - largest
+														return 30;
 													case 'value':
-														return 26; // Value nodes - large
+														return 26;
 													case 'project':
-														return 20; // Project evidence - medium
+														return 20;
 													case 'story':
-														return 18; // Story evidence - medium
 													case 'role':
-														return 18; // Role evidence - medium
+														return 18;
 													case 'tag':
-														return 12; // Tag nodes - small
+														return 12;
 													default:
-														return 14; // Default - small
+														return 14;
 												}
 											}),
 										);
-										// Set up mild charge for organic layout
-										forceGraphRef.d3Force('charge')?.strength(-100);
-										// Set up link distances (person→value stronger, value→evidence softer)
-										forceGraphRef
-											.d3Force('link')
-											?.distance((l: { rel?: string }) => (l.rel === 'values' ? 110 : 80))
-											.strength((l: { rel?: string }) => (l.rel === 'values' ? 0.6 : 0.3));
+
+										const chargeForce = forceGraphRef.d3Force('charge');
+										if (isChargeForce(chargeForce)) {
+											chargeForce.strength(-100);
+										}
+
+										const linkForce = forceGraphRef.d3Force('link');
+										if (isLinkForce(linkForce)) {
+											linkForce
+												.distance((link) => (link.rel === 'values' ? 110 : 80))
+												.strength((link) => (link.rel === 'values' ? 0.6 : 0.3));
+										}
 									}
 								}}
 								{...commonProps}
@@ -468,7 +652,7 @@ export function ViewTransitionManager() {
 							<ForceGraphView
 								key={instance.key}
 								graphData={dataSnapshot.forceGraphData}
-								overlay={<CompareSkillsLegend dataSnapshot={dataSnapshot} />}
+								overlay={<CompareSkillsLegend />}
 								{...commonProps}
 							/>
 						);
@@ -477,7 +661,7 @@ export function ViewTransitionManager() {
 							<ForceGraphView
 								key={instance.key}
 								graphData={dataSnapshot.forceGraphData}
-								overlay={<CompareProjectsLegend dataSnapshot={dataSnapshot} />}
+								overlay={<CompareProjectsLegend />}
 								{...commonProps}
 							/>
 						);
@@ -486,44 +670,24 @@ export function ViewTransitionManager() {
 							<ForceGraphView
 								key={instance.key}
 								graphData={dataSnapshot.forceGraphData}
-								overlay={<CompareFrontendVsBackendLegend dataSnapshot={dataSnapshot} />}
+								overlay={<CompareFrontendVsBackendLegend />}
 								{...commonProps}
 							/>
 						);
 				}
 
 			case 'explore':
-				switch (dataSnapshot.variant) {
-					case 'all':
-						// TODO: Create ExploreAllView component
-						return (
-							<ForceGraphView
-								key={instance.key}
-								graphData={dataSnapshot.forceGraphData}
-								{...commonProps}
-							/>
-						);
-					case 'filtered':
-						// TODO: Create ExploreFilteredView component
-						return (
-							<ForceGraphView
-								key={instance.key}
-								graphData={dataSnapshot.forceGraphData}
-								{...commonProps}
-							/>
-						);
-				}
-				break;
+				return (
+					<ForceGraphView key={instance.key} graphData={dataSnapshot.forceGraphData} {...commonProps} />
+				);
 
 			case 'landing':
 				return <LandingView key={instance.key} {...commonProps} />;
 
 			case 'resume':
-				// TODO: Create or enhance ResumeView component to use dataSnapshot.resumeData
 				return <ResumeView key={instance.key} {...commonProps} />;
 
 			default:
-				// Fallback
 				return <LandingView key={instance.key} {...commonProps} />;
 		}
 	};
@@ -539,6 +703,50 @@ export function ViewTransitionManager() {
 					{renderViewComponent(instance)}
 				</div>
 			))}
+			{debugEnabled && (
+				<div
+					style={{
+						position: 'fixed',
+						right: '1rem',
+						bottom: '1rem',
+						zIndex: 9999,
+						width: 'min(32rem, calc(100vw - 2rem))',
+						maxHeight: '40vh',
+						overflow: 'auto',
+						padding: '0.75rem',
+						borderRadius: '0.75rem',
+						background: 'rgba(0, 0, 0, 0.82)',
+						color: '#fff',
+						fontFamily: 'monospace',
+						fontSize: '12px',
+						lineHeight: 1.45,
+						boxShadow: '0 10px 30px rgba(0, 0, 0, 0.35)',
+					}}
+				>
+					<div>transition-debug</div>
+					<div>directive: {getDirectiveViewKey(directive)}</div>
+					<div>isTransitioning: {String(transitionState.isTransitioning)}</div>
+					<div>
+						instances:{' '}
+						{transitionState.instances
+							.map((instance) => `${instance.mode}:${instance.phase}:${instance.key}`)
+							.join(' | ')}
+					</div>
+					{lastDecisionRef.current && (
+						<div>
+							lastDecision: {lastDecisionRef.current.reason} /{' '}
+							{String(lastDecisionRef.current.shouldTransition)}
+						</div>
+					)}
+					<div style={{ marginTop: '0.5rem' }}>recent events:</div>
+					{debugEvents.map((entry) => (
+						<div key={entry.id} style={{ marginTop: '0.35rem', whiteSpace: 'pre-wrap' }}>
+							[{entry.at.slice(11, 23)}] {entry.event}
+							{entry.details ? ` ${JSON.stringify(entry.details)}` : ''}
+						</div>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }

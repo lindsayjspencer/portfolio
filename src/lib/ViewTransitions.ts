@@ -14,7 +14,10 @@ import {
 	type CaseStudyViewModel,
 } from './PortfolioToProject';
 import { createSkillClusters, createSkillMatrix, skillsToForceGraph } from './PortfolioToSkills';
-import type { Directive, ValuesDirective } from './ai/directiveTools';
+import {
+	getDirectiveVariant,
+	type Directive,
+} from './ai/directiveTools';
 
 export type TransitionPhase = 'entering' | 'stable' | 'exiting';
 
@@ -46,10 +49,6 @@ export interface ValueEvidence {
 	roles: RoleNode[];
 	projects: ProjectNode[];
 	stories: StoryNode[];
-}
-
-export interface ComparisonData {
-	// TODO: Implement comparison data structure
 }
 
 // ===== Mode-Specific DataSnapshot Types =====
@@ -194,22 +193,12 @@ export interface CompareFrontendVsBackendSnapshot extends BaseDataSnapshot {
 type CompareDataSnapshot = CompareSkillsSnapshot | CompareProjectsSnapshot | CompareFrontendVsBackendSnapshot;
 
 // Explore DataSnapshots
-interface ExploreAllSnapshot extends BaseDataSnapshot {
+export interface ExploreSnapshot extends BaseDataSnapshot {
 	mode: 'explore';
-	variant: 'all';
 	forceGraphData: ForceDirectedGraphData;
-	allNodes: Node[];
+	nodes: Node[];
+	filterTags?: string[];
 }
-
-interface ExploreFilteredSnapshot extends BaseDataSnapshot {
-	mode: 'explore';
-	variant: 'filtered';
-	forceGraphData: ForceDirectedGraphData;
-	filteredNodes: Node[];
-	filterTags: string[];
-}
-
-type ExploreDataSnapshot = ExploreAllSnapshot | ExploreFilteredSnapshot;
 
 // Landing DataSnapshot (no variants)
 interface LandingSnapshot extends BaseDataSnapshot {
@@ -228,7 +217,7 @@ export type DataSnapshot =
 	| SkillsDataSnapshot
 	| ValuesDataSnapshot
 	| CompareDataSnapshot
-	| ExploreDataSnapshot
+	| ExploreSnapshot
 	| LandingSnapshot
 	| ResumeSnapshot;
 
@@ -243,6 +232,15 @@ export interface ViewInstanceState {
 export interface ViewTransitionState {
 	instances: ViewInstanceState[];
 	isTransitioning: boolean;
+}
+
+export interface TransitionDecision {
+	shouldTransition: boolean;
+	reason: 'mode-changed' | 'variant-changed' | 'structure-changed' | 'cosmetic-only';
+	prevSignature: string;
+	nextSignature: string;
+	prevVariant: string | null;
+	nextVariant: string | null;
 }
 
 export interface TransitionCallbacks {
@@ -264,6 +262,15 @@ export const COMPONENT_TRANSITION_TIMINGS = {
 	resume: { in: 400, out: 300 },
 } as const;
 
+const ANY_VARIANT_KEY = '__any__';
+
+const PRESENTATIONAL_IGNORE_FIELDS: ReadonlySet<string> = new Set(['highlights', 'confidence', 'hints']);
+
+const PRESENTATIONAL_IGNORE_BY_MODE: Partial<Record<Directive['mode'], Partial<Record<string, readonly string[]>>>> = {
+	projects: { [ANY_VARIANT_KEY]: ['showMetrics'] },
+	compare: { [ANY_VARIANT_KEY]: ['showOverlap'] },
+};
+
 // ===== Data Processing Utility Functions =====
 
 /**
@@ -272,15 +279,19 @@ export const COMPONENT_TRANSITION_TIMINGS = {
  * so later in-place mutations (e.g., highlights array) don't mutate past snapshots.
  */
 function deepClone<T>(value: T): T {
-	const sc: ((value: unknown) => unknown) | undefined = (globalThis as any)?.structuredClone;
-	if (typeof sc === 'function') {
-		return sc(value) as T;
+	const structuredCloneFn = globalThis.structuredClone;
+	if (typeof structuredCloneFn === 'function') {
+		return structuredCloneFn(value);
 	}
 	// Fallback suitable for Directive's plain data
 	return JSON.parse(JSON.stringify(value)) as T;
 }
 
-function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence[] {
+function isDefined<T>(value: T | undefined): value is T {
+	return value !== undefined;
+}
+
+function createValueEvidence(graph: Graph): ValueEvidence[] {
 	const values = filterNodesByType<ValueNode>(graph.nodes, 'value');
 	const allRoles = filterNodesByType<RoleNode>(graph.nodes, 'role');
 	const allProjects = filterNodesByType<ProjectNode>(graph.nodes, 'project');
@@ -313,7 +324,7 @@ function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence
 		for (const edge of happenedDuring) {
 			// story -> (role|project)
 			const storyNode = graph.nodes.find((n) => n.id === edge.source);
-			if (!storyNode || storyNode.type !== 'story') continue;
+			if (storyNode?.type !== 'story') continue;
 
 			if (roleIds.has(edge.target) || projectIds.has(edge.target)) {
 				storyIds.add(storyNode.id);
@@ -323,15 +334,15 @@ function createValueEvidence(graph: Graph, data: ValuesDirective): ValueEvidence
 		// Materialize nodes from ids
 		const roles: RoleNode[] = Array.from(roleIds)
 			.map((id) => allRoles.find((r) => r.id === id))
-			.filter(Boolean) as RoleNode[];
+			.filter(isDefined);
 
 		const projects: ProjectNode[] = Array.from(projectIds)
 			.map((id) => allProjects.find((p) => p.id === id))
-			.filter(Boolean) as ProjectNode[];
+			.filter(isDefined);
 
 		const stories: StoryNode[] = Array.from(storyIds)
 			.map((id) => allStories.find((s) => s.id === id))
-			.filter(Boolean) as StoryNode[];
+			.filter(isDefined);
 
 		return {
 			valueId: value.id,
@@ -354,6 +365,24 @@ function findNodeById<T extends Node>(graph: Graph, id: string, type: T['type'])
 function filterNodesByTags(nodes: Node[], tags?: string[]): Node[] {
 	if (!tags || tags.length === 0) return nodes;
 	return nodes.filter((node) => node.tags?.some((tag) => tags.includes(tag)));
+}
+
+function filterGraphByTags(graph: Graph, tags?: string[]): Graph {
+	if (!tags || tags.length === 0) {
+		return graph;
+	}
+
+	const filteredNodes = filterNodesByTags(graph.nodes, tags);
+	const filteredNodeIds = new Set(filteredNodes.map((node) => node.id));
+	const filteredEdges = graph.edges.filter(
+		(edge) => filteredNodeIds.has(edge.source) && filteredNodeIds.has(edge.target),
+	);
+
+	return {
+		nodes: filteredNodes,
+		edges: filteredEdges,
+		meta: graph.meta,
+	};
 }
 
 // ===== Main createDataSnapshot Function =====
@@ -530,7 +559,7 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						mode: 'values',
 						variant: 'evidence',
 						values: allValues,
-						evidence: createValueEvidence(graph, directive.data),
+						evidence: createValueEvidence(graph),
 						emphasizeStories: directive.data.emphasizeStories,
 					};
 			}
@@ -623,27 +652,15 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 		}
 
 		case 'explore': {
-			const allNodes = graph.nodes;
-
-			switch (directive.data.variant) {
-				case 'all':
-					return {
-						...baseData,
-						mode: 'explore',
-						variant: 'all',
-						forceGraphData: portfolioToForceGraph(graph, directive),
-						allNodes,
-					};
-				case 'filtered':
-					return {
-						...baseData,
-						mode: 'explore',
-						variant: 'filtered',
-						forceGraphData: portfolioToForceGraph(graph, directive),
-						filteredNodes: filterNodesByTags(allNodes, directive.data.filterTags),
-						filterTags: directive.data.filterTags || [],
-					};
-			}
+			const filterTags = directive.data.filterTags;
+			const filteredGraph = filterGraphByTags(graph, filterTags);
+			return {
+				...baseData,
+				mode: 'explore',
+				forceGraphData: portfolioToForceGraph(filteredGraph, directive),
+				nodes: filteredGraph.nodes,
+				filterTags: filterTags && filterTags.length > 0 ? filterTags : undefined,
+			};
 		}
 
 		case 'landing': {
@@ -671,9 +688,21 @@ export function filterNodesByType<T extends { type: string }>(nodes: { type: str
 	return nodes.filter((node) => node.type === type) as T[];
 }
 
-function assertNever(x: never): never {
+function assertNever(_x: never): never {
 	// Fallback - should never reach here with proper typing
 	throw new Error('Unknown directive mode');
+}
+
+function sanitizeDirectiveData<T extends Directive['data']>(data: T, ignore: ReadonlySet<string>): Record<string, unknown> {
+	const out: Record<string, unknown> = {};
+	for (const key of Object.keys(data) as Array<keyof T>) {
+		const stringKey = String(key);
+		if (ignore.has(stringKey)) {
+			continue;
+		}
+		out[stringKey] = data[key];
+	}
+	return out;
 }
 
 // ===== Transition decision helpers =====
@@ -684,41 +713,14 @@ function assertNever(x: never): never {
  * Per-mode/variant exceptions can omit additional fields considered non-structural (e.g., projects.showMetrics, compare.showOverlap).
  */
 export function structuralSignature(directive: Directive): string {
-	// Base fields to ignore across all modes (theme is not part of directives anymore)
-	const baseIgnore = new Set<string>(['highlights', 'confidence', 'hints']);
-
-	// Per-mode/variant additional ignores (kept minimal; owner can review/tune)
-	// Keys below live inside directive.data
-	const modeVariantIgnores: Partial<Record<Directive['mode'], Record<string | '__any__', string[]>>> = {
-		// projects: `showMetrics` often toggles chrome without requiring a full transition
-		projects: { __any__: ['showMetrics'] },
-		// compare: `showOverlap` toggles overlay layering; treat as cosmetic by default
-		compare: { __any__: ['showOverlap'] },
-		// skills: treat display "hints" already covered by baseIgnore; nothing extra here for now
-	};
-
-	const prevVariant = (directive as any)?.data?.variant as string | undefined;
-	const additionalIgnores =
-		modeVariantIgnores[directive.mode]?.[prevVariant ?? '__any__'] ??
-		modeVariantIgnores[directive.mode]?.['__any__'] ??
-		[];
-
-	const ignore = new Set<string>([...baseIgnore, ...additionalIgnores]);
-
-	// Create a sanitized shallow copy of directive.data excluding ignored keys
-	const sanitizeData = (data: Record<string, unknown> | undefined) => {
-		if (!data) return {} as Record<string, unknown>;
-		const out: Record<string, unknown> = {};
-		for (const key of Object.keys(data)) {
-			if (ignore.has(key)) continue;
-			out[key] = (data as any)[key];
-		}
-		return out;
-	};
+	const variantKey = getDirectiveVariant(directive) ?? ANY_VARIANT_KEY;
+	const modeSpecificIgnores = PRESENTATIONAL_IGNORE_BY_MODE[directive.mode];
+	const additionalIgnores = modeSpecificIgnores?.[variantKey] ?? modeSpecificIgnores?.[ANY_VARIANT_KEY] ?? [];
+	const ignore = new Set<string>([...PRESENTATIONAL_IGNORE_FIELDS, ...additionalIgnores]);
 
 	const structural = {
 		mode: directive.mode,
-		data: sanitizeData((directive as any).data),
+		data: sanitizeDirectiveData(directive.data, ignore),
 	} as const;
 
 	return stableStringify(structural);
@@ -732,31 +734,74 @@ export function structuralSignature(directive: Directive): string {
  *  - Structural signature changed (after ignoring purely cosmetic keys) -> transition
  *  - Else -> no transition; update snapshot in place
  */
+export function getTransitionDecision(prev: Directive, next: Directive): TransitionDecision {
+	const prevSignature = structuralSignature(prev);
+	const nextSignature = structuralSignature(next);
+	const prevVariant = getDirectiveVariant(prev);
+	const nextVariant = getDirectiveVariant(next);
+
+	if (prev.mode !== next.mode) {
+		return {
+			shouldTransition: true,
+			reason: 'mode-changed',
+			prevSignature,
+			nextSignature,
+			prevVariant,
+			nextVariant,
+		};
+	}
+
+	if (prevVariant !== nextVariant) {
+		return {
+			shouldTransition: true,
+			reason: 'variant-changed',
+			prevSignature,
+			nextSignature,
+			prevVariant,
+			nextVariant,
+		};
+	}
+
+	if (prevSignature !== nextSignature) {
+		return {
+			shouldTransition: true,
+			reason: 'structure-changed',
+			prevSignature,
+			nextSignature,
+			prevVariant,
+			nextVariant,
+		};
+	}
+
+	return {
+		shouldTransition: false,
+		reason: 'cosmetic-only',
+		prevSignature,
+		nextSignature,
+		prevVariant,
+		nextVariant,
+	};
+}
+
 export function shouldTransition(prev: Directive, next: Directive): boolean {
-	if (prev.mode !== next.mode) return true;
-
-	const prevVariant = (prev as any)?.data?.variant as string | undefined;
-	const nextVariant = (next as any)?.data?.variant as string | undefined;
-	if (prevVariant !== nextVariant) return true; // includes defined->undefined
-
-	const prevSig = structuralSignature(prev);
-	const nextSig = structuralSignature(next);
-	return prevSig !== nextSig;
+	return getTransitionDecision(prev, next).shouldTransition;
 }
 
 /**
  * Stable stringify that sorts object keys recursively to ensure consistent signatures.
  */
 function stableStringify(value: unknown): string {
-	const seen = new WeakSet();
-	const helper = (v: any): any => {
-		if (v === null || typeof v !== 'object') return v;
-		if (seen.has(v)) return undefined; // avoid cycles (shouldn't occur for directives)
-		seen.add(v);
-		if (Array.isArray(v)) return v.map(helper);
-		const keys = Object.keys(v).sort();
+	const seen = new WeakSet<object>();
+	const helper = (input: unknown): unknown => {
+		if (input === null || typeof input !== 'object') return input;
+		if (seen.has(input)) return undefined; // avoid cycles (shouldn't occur for directives)
+		seen.add(input);
+		if (Array.isArray(input)) return input.map(helper);
 		const out: Record<string, unknown> = {};
-		for (const k of keys) out[k] = helper(v[k]);
+		const record = input as Record<string, unknown>;
+		for (const key of Object.keys(record).sort()) {
+			out[key] = helper(record[key]);
+		}
 		return out;
 	};
 	return JSON.stringify(helper(value));

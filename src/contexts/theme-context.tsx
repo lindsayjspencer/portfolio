@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { themes, type ThemeName, type SemanticColors, type ColorVariation, type SemanticColor } from '~/lib/themes';
+import { usePortfolioStore } from '~/lib/PortfolioStore';
 
 interface ThemeContextType {
 	themeName: ThemeName;
@@ -14,11 +15,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 interface ThemeProviderProps {
 	children: ReactNode;
-	initialTheme?: ThemeName;
 }
 
-export function ThemeProvider({ children, initialTheme = 'cold' }: ThemeProviderProps) {
-	const [themeName, setThemeName] = useState<ThemeName>(initialTheme);
+export function ThemeProvider({ children }: ThemeProviderProps) {
+	const themeName = usePortfolioStore((state) => state.directive.theme);
+	const setTheme = usePortfolioStore((state) => state.setDirectiveTheme);
 
 	// Update document className when theme changes
 	useEffect(() => {
@@ -36,15 +37,6 @@ export function ThemeProvider({ children, initialTheme = 'cold' }: ThemeProvider
 			document.documentElement.classList.add(`theme-${themeName}`);
 		}
 	}, [themeName]);
-
-	const setTheme = (newTheme: ThemeName) => {
-		setThemeName(newTheme);
-
-		// Optional: Persist to localStorage for client-side persistence
-		if (typeof localStorage !== 'undefined') {
-			localStorage.setItem('preferred-theme', newTheme);
-		}
-	};
 
 	const value: ThemeContextType = {
 		themeName,

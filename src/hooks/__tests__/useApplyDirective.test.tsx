@@ -5,7 +5,12 @@ import { ThemeProvider } from '~/contexts/theme-context';
 import { PortfolioStoreProvider } from '~/lib/PortfolioStoreProvider';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
-import type { Directive } from '~/lib/ai/directiveTools';
+import {
+	createDefaultLandingDirective,
+	createTimelineDirective,
+	getDirectiveVariant,
+	type Directive,
+} from '~/lib/ai/directiveTools';
 
 function TestHarness({
 	next,
@@ -29,38 +34,23 @@ function TestHarness({
 			>
 				apply
 			</button>
-			<div data-testid={`variant-${id}`}>{(current.data as any).variant ?? ''}</div>
+			<div data-testid={`variant-${id}`}>{getDirectiveVariant(current) ?? ''}</div>
 		</>
 	);
 }
 
 function renderWithProviders(ui: React.ReactElement, initialDirective: Directive, theme: 'cold' | 'elegant' = 'cold') {
 	return render(
-		<ThemeProvider initialTheme={theme}>
-			<PortfolioStoreProvider initialDirective={initialDirective}>{ui}</PortfolioStoreProvider>
-		</ThemeProvider>,
+		<PortfolioStoreProvider initialDirective={{ ...initialDirective, theme }}>
+			<ThemeProvider>{ui}</ThemeProvider>
+		</PortfolioStoreProvider>,
 	);
 }
 
-const landing = (overrides?: Partial<Directive>): Directive =>
-	({
-		mode: 'landing',
-		data: {
-			variant: 'neutral',
-			highlights: [],
-			confidence: 0.7,
-			...((overrides?.data as any) || {}),
-		},
-		...(overrides || {}),
-	}) as Directive;
-
 describe('useApplyDirective', () => {
 	it('applies directives without altering structure', async () => {
-		const initial = landing();
-		const next: Directive = {
-			mode: 'timeline',
-			data: { variant: 'projects', highlights: [], confidence: 0.7 },
-		} as any;
+		const initial = createDefaultLandingDirective();
+		const next = createTimelineDirective('cold', { variant: 'projects' });
 
 		let applied: Directive | null = null;
 		const { getByTestId } = renderWithProviders(

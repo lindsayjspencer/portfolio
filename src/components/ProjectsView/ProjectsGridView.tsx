@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { TransitionPhase, TransitionCallbacks, ProjectsGridSnapshot } from '~/lib/ViewTransitions';
 import type { ProjectCard } from '~/lib/PortfolioToProject';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
-import type { Directive } from '~/lib/ai/directiveTools';
+import { createProjectsDirective } from '~/lib/ai/directiveTools';
 import './ProjectsGridView.scss';
 import Tag from '~/components/Ui/Tag';
 
@@ -141,17 +141,12 @@ export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCall
 	}, [onRegisterCallbacks]);
 
 	const handleProjectClick = (project: ProjectCard) => {
-		// Navigate to the case study view for this project by applying a directive
-		const directive: Directive = {
-			mode: 'projects',
-			data: {
-				variant: 'case-study',
-				// Use highlights to select the focus project inside the case-study snapshot
-				highlights: [project.id],
-				confidence: 0.7,
-				showMetrics: true,
-			},
-		};
+		const directive = createProjectsDirective(dataSnapshot.directive.theme, {
+			variant: 'case-study',
+			highlights: [project.id],
+			confidence: 0.7,
+			showMetrics: true,
+		});
 		applyDirective(directive);
 	};
 

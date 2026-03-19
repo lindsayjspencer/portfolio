@@ -1,57 +1,32 @@
-'use client';
-
-import { ViewTransitionManager } from '~/components/ViewTransitionManager/ViewTransitionManager';
+import { redirect } from 'next/navigation';
+import { createDefaultLandingDirective } from '~/lib/ai/directiveTools';
+import { decodeUrlState, toStoreDirectiveFromUrlState, validateUrlState } from '~/utils/urlState';
 import './page.scss';
-import { OptionsDropdown } from '~/components/OptionsDropdown';
-import { ChatContainer } from '~/components/ChatContainer';
-import { WelcomeMessage } from '~/components/WelcomeMessage';
-import { SuggestionChips } from '~/components/SuggestionChips';
-import { SlidingPanel } from '~/components/Ui/SlidingPanel';
-import { UrlStateInitializer } from '~/components/AppPreloader/UrlStateInitializer';
-import { UrlStateLogger } from '~/components/AppPreloader/UrlStateLogger';
-import { UrlStateSync } from '~/components/AppPreloader/UrlStateSync';
-import { useState } from 'react';
-import { PortfolioStoreProvider } from '~/lib/PortfolioStoreProvider';
-import type { Directive } from '~/lib/ai/directiveTools';
+import { HomePageClient } from './HomePageClient';
 
-export default function HomePage() {
-	const [initialDirective, setInitialDirective] = useState<Directive | null>(null);
+type HomePageProps = {
+	searchParams?: {
+		state?: string | string[];
+	};
+};
 
-	if (!initialDirective) {
-		return (
-			<>
-				<UrlStateInitializer onReady={setInitialDirective} />
-			</>
-		);
+function getSingleValue(value: string | string[] | undefined): string | undefined {
+	return Array.isArray(value) ? value[0] : value;
+}
+
+export default function HomePage({ searchParams }: HomePageProps) {
+	const encodedState = getSingleValue(searchParams?.state);
+
+	if (!encodedState) {
+		return <HomePageClient initialDirective={createDefaultLandingDirective()} />;
 	}
 
-	return (
-		<PortfolioStoreProvider initialDirective={initialDirective}>
-			<div className="home-page-wrapper">
-				{/* Dev-only logger */}
-				<UrlStateLogger />
-				{/* Sync store <-> URL and handle back/forward */}
-				<UrlStateSync />
-				<div className="home-page">
-					{/* Top nav bar with debug dropdown */}
-					<OptionsDropdown />
+	const rawState = decodeUrlState(encodedState);
+	const validatedState = validateUrlState(rawState);
 
-					{/* Main view area */}
-					<div className="view-container">
-						<ViewTransitionManager />
-					</div>
+	if (!validatedState) {
+		redirect('/');
+	}
 
-					{/* Welcome message - manages its own visibility */}
-					<WelcomeMessage />
-
-					{/* Suggestion chips - only visible in landing mode */}
-					<SuggestionChips />
-
-					{/* Floating chat input at bottom */}
-					<ChatContainer />
-				</div>
-				<SlidingPanel />
-			</div>
-		</PortfolioStoreProvider>
-	);
+	return <HomePageClient initialDirective={toStoreDirectiveFromUrlState(validatedState)} />;
 }
