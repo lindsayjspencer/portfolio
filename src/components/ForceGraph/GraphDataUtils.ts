@@ -1,16 +1,19 @@
 import type { ForceDirectedGraphNode, ForceDirectedGraphLink, ForceDirectedGraphData } from './Common';
 
 export class GraphDataUtils {
+	private static getNodeId(nodeOrId: string | ForceDirectedGraphNode): string {
+		return typeof nodeOrId === 'string' ? nodeOrId : nodeOrId.id;
+	}
+
 	/**
 	 * Calculates which links should be involved in highlighting based on selected nodes
 	 */
 	static getLinksInvolvedInHighlight(graphData: ForceDirectedGraphData, selectedNodes: Set<string>): Set<string> {
-		const links: Set<string> = new Set();
+		const links = new Set<string>();
 
 		graphData.links.forEach((link) => {
-			const { source, target } = link;
-			const sourceId = typeof source === 'string' ? source : (source as ForceDirectedGraphNode).id;
-			const targetId = typeof target === 'string' ? target : (target as ForceDirectedGraphNode).id;
+			const sourceId = GraphDataUtils.getNodeId(link.source);
+			const targetId = GraphDataUtils.getNodeId(link.target);
 
 			if (selectedNodes.has(sourceId) || selectedNodes.has(targetId)) {
 				links.add(link.id);
@@ -39,8 +42,8 @@ export class GraphDataUtils {
 	 */
 	static getLinksForNode(graphData: ForceDirectedGraphData, nodeId: string): ForceDirectedGraphLink[] {
 		return graphData.links.filter((link) => {
-			const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-			const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+			const sourceId = GraphDataUtils.getNodeId(link.source);
+			const targetId = GraphDataUtils.getNodeId(link.target);
 			return sourceId === nodeId || targetId === nodeId;
 		});
 	}
@@ -52,8 +55,8 @@ export class GraphDataUtils {
 		const neighborIds = new Set<string>();
 
 		graphData.links.forEach((link) => {
-			const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-			const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+			const sourceId = GraphDataUtils.getNodeId(link.source);
+			const targetId = GraphDataUtils.getNodeId(link.target);
 
 			if (sourceId === nodeId) {
 				neighborIds.add(targetId);
@@ -73,13 +76,13 @@ export class GraphDataUtils {
 		const linksByType = new Map<string, number>();
 
 		graphData.nodes.forEach((node) => {
-			const count = nodesByType.get(node.type) || 0;
+			const count = nodesByType.get(node.type) ?? 0;
 			nodesByType.set(node.type, count + 1);
 		});
 
 		graphData.links.forEach((link) => {
 			const linkType = link.rel;
-			const count = linksByType.get(linkType) || 0;
+			const count = linksByType.get(linkType) ?? 0;
 			linksByType.set(linkType, count + 1);
 		});
 
@@ -126,8 +129,8 @@ export class GraphDataUtils {
 
 		// Check that all link references point to existing nodes
 		graphData.links.forEach((link, index) => {
-			const sourceId = typeof link.source === 'string' ? link.source : (link.source as ForceDirectedGraphNode).id;
-			const targetId = typeof link.target === 'string' ? link.target : (link.target as ForceDirectedGraphNode).id;
+			const sourceId = GraphDataUtils.getNodeId(link.source);
+			const targetId = GraphDataUtils.getNodeId(link.target);
 
 			if (!nodeIds.has(sourceId)) {
 				errors.push(`Link at index ${index} references non-existent source node: ${sourceId}`);

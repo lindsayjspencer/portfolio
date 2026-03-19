@@ -31,7 +31,7 @@ export type StoryEvidence = {
 
 export type ValuesEvidenceCardProps = {
 	id: string;
-	icon: string;
+	icon: MaterialIconName;
 	title: string;
 	tags?: string[];
 	summary: string;
@@ -154,7 +154,7 @@ export default function ValuesEvidenceCard({
 		<section className="values-evidence-card" aria-labelledby={`val-${id}-title`}>
 			<div className="values-evidence-card__header">
 				<div className="values-evidence-card__title">
-					<MaterialIcon name={icon as MaterialIconName} size="md" className="values-evidence-card__icon" />
+					<MaterialIcon name={icon} size="md" className="values-evidence-card__icon" />
 					<h2 id={`val-${id}-title`}>{title}</h2>
 				</div>
 				{tags.length > 0 && (
@@ -230,7 +230,7 @@ export default function ValuesEvidenceCard({
 									<span>Story</span>
 								</div>
 								<StoryTile
-									item={ev as StoryEvidence}
+									item={ev}
 									onOpen={handleOpen(ev.id)}
 									isDim={isDim}
 									isHl={isHl}

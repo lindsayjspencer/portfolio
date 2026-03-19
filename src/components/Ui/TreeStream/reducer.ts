@@ -1,9 +1,9 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
 export interface StreamState {
 	unitIndex: number;
 	waitingNested: boolean;
-	rendered: Map<number, React.ReactNode>;
+	rendered: Map<number, ReactNode>;
 	text: {
 		tokens: string[];
 		index: number;
@@ -20,8 +20,8 @@ export type StreamAction =
 	| { type: 'TEXT_TICK'; nextIndex: number; content: string }
 	| { type: 'END_TEXT' }
 	| { type: 'ADVANCE' }
-	| { type: 'INSTANT_RENDER'; unitIndex: number; node: React.ReactNode }
-	| { type: 'NESTED_START'; unitIndex: number; node: React.ReactNode }
+	| { type: 'INSTANT_RENDER'; unitIndex: number; node: ReactNode }
+	| { type: 'NESTED_START'; unitIndex: number; node: ReactNode }
 	| { type: 'NESTED_DONE' }
 	| { type: 'COMPLETE' };
 

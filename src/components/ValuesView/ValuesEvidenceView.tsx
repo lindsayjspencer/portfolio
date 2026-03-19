@@ -10,6 +10,7 @@ import type {
 	ProjectEvidence as ProjectTileData,
 	StoryEvidence as StoryTileData,
 } from './ValuesEvidenceCard';
+import type { MaterialIconName } from '~/components/Ui';
 import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
 import { createProjectsDirective } from '~/lib/ai/directiveTools';
@@ -57,7 +58,7 @@ export function ValuesEvidenceView({
 		[dataSnapshot.directive.data.highlights],
 	);
 
-	const iconForValue = (label: string): string => {
+	const iconForValue = (label: string): MaterialIconName => {
 		const l = label.toLowerCase();
 		if (l.includes('mentor') || l.includes('community')) return 'diversity_3';
 		if (l.includes('quality') || l.includes('observ')) return 'insights';
@@ -128,7 +129,7 @@ export function ValuesEvidenceView({
 										name: p.label,
 										blurb: p.summary ?? '',
 										tags: p.tags ?? [],
-										linkLabel: p.links && p.links[0] ? p.links[0].title : undefined,
+										linkLabel: p.links?.[0]?.title,
 									}) satisfies ProjectTileData,
 							),
 							...val.stories.map(

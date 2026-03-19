@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useComponentSize, type ComponentSize } from '~/hooks/UseComponentSize';
-import { useComponentColor, type ThemeColor } from '~/hooks/UseComponentColor';
+import { useComponentColor, type ComponentColorValue } from '~/hooks/UseComponentColor';
 import './MaterialIcon.scss';
 
 // Common Material Symbols icon names - can be extended as needed
@@ -101,7 +101,7 @@ export interface MaterialIconProps {
 	/** Size variant or custom size in pixels */
 	size?: IconSize;
 	/** Theme color or CSS color value */
-	color?: ThemeColor | string;
+	color?: ComponentColorValue;
 	/** Icon variant - defaults to outlined */
 	variant?: IconVariant;
 	/** Additional CSS classes */
@@ -165,7 +165,7 @@ export const MaterialIcon: React.FC<MaterialIconProps> = ({
 			onClick={onClick}
 			role={onClick ? 'button' : undefined}
 			tabIndex={onClick ? 0 : undefined}
-			aria-label={ariaLabel || (onClick ? `${name} button` : name)}
+			aria-label={ariaLabel ?? (onClick ? `${name} button` : name)}
 		>
 			{name}
 		</span>

@@ -2,7 +2,7 @@
 
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import type { ForceDirectedGraphNode } from '~/components/ForceGraph/Common';
-import type { Node, Link, Metric } from '~/lib/PortfolioStore';
+import type { Link, Metric } from '~/lib/PortfolioStore';
 import { MaterialIcon } from './MaterialIcon';
 import './SlidingPanel.scss';
 import StreamingText from './StreamingText';
@@ -11,7 +11,7 @@ import { useTheme } from '~/contexts/theme-context';
 import { DrawingUtils } from '~/components/ForceGraph/DrawingUtils';
 
 export const SlidingPanel = () => {
-	const { isPanelOpen, panelContent, closePanel } = usePortfolioStore();
+	const { panelContent, closePanel } = usePortfolioStore();
 
 	if (!panelContent) return null;
 

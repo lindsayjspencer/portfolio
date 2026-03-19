@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import type { TransitionPhase, TransitionCallbacks, DataSnapshot } from '~/lib/ViewTransitions';
 import './ProjectsCaseStudyView.scss';
@@ -34,7 +34,6 @@ export function ProjectsCaseStudyView({
 				setOpacity(0);
 			},
 		});
-		return () => {};
 	}, [onRegisterCallbacks]);
 
 	// Handle initial entering state
@@ -58,61 +57,6 @@ export function ProjectsCaseStudyView({
 	const [heroLoaded, setHeroLoaded] = useState(false);
 	const [sectionImageLoaded, setSectionImageLoaded] = useState<Record<number, boolean>>({});
 	const [galleryImageLoaded, setGalleryImageLoaded] = useState<Record<string, boolean>>({});
-	function ImageWithLoader(props: {
-		src: string;
-		alt: string;
-		width: number;
-		height: number;
-		priority?: boolean;
-		className?: string;
-	}) {
-		const [loaded, setLoaded] = useState(false);
-		const { className, ...rest } = props;
-		return (
-			<div className={`pcs-media ${loaded ? 'is-loaded' : 'is-loading'} ${className ?? ''}`.trim()}>
-				{!loaded && (
-					<div className="pcs-media__loader" aria-hidden>
-						<div className="pcs-spinner" />
-					</div>
-				)}
-				<Image
-					{...rest}
-					onLoad={() => setLoaded(true)}
-					style={{ opacity: loaded ? 1 : 0, transition: 'opacity 300ms ease' }}
-				/>
-			</div>
-		);
-	}
-
-	function VideoWithLoader(props: {
-		src: string;
-		className?: string;
-		autoPlay?: boolean;
-		muted?: boolean;
-		loop?: boolean;
-		playsInline?: boolean;
-		preload?: 'auto' | 'metadata' | 'none';
-		ariaLabel?: string;
-	}) {
-		const [loaded, setLoaded] = useState(false);
-		const { className, ariaLabel, ...rest } = props;
-		return (
-			<div className={`pcs-media ${loaded ? 'is-loaded' : 'is-loading'} ${className ?? ''}`.trim()}>
-				{!loaded && (
-					<div className="pcs-media__loader" aria-hidden>
-						<div className="pcs-spinner" />
-					</div>
-				)}
-				<video
-					{...rest}
-					aria-label={ariaLabel}
-					onLoadedData={() => setLoaded(true)}
-					onCanPlayThrough={() => setLoaded(true)}
-					style={{ opacity: loaded ? 1 : 0, transition: 'opacity 300ms ease' }}
-				/>
-			</div>
-		);
-	}
 
 	return (
 		<div className="projects-case-study" style={{ opacity, transition: `opacity ${duration}ms ease-in-out` }}>

@@ -92,8 +92,6 @@ export default function SkillsMatrixView({
 			// Calculate where the table ends relative to the content container
 			const tableRightEdge = tableRect.right;
 			const contentRightEdge = contentRect.right;
-			const contentLeftEdge = contentRect.left;
-
 			// Available space to the right of the table
 			const emptyWidth = contentRightEdge - tableRightEdge - 20; // 20px padding from right edge
 

@@ -59,7 +59,7 @@ export function LandingView({ transitionPhase, onRegisterCallbacks }: LandingVie
 			resetAlpha: (alpha: number) => void;
 		},
 	) => {
-		fadeControllerRef.current = fadeController || null;
+		fadeControllerRef.current = fadeController ?? null;
 
 		// Set initial alpha based on phase; do NOT start animation here.
 		// The manager will call onTransitionIn with the correct duration.

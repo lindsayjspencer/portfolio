@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, forwardRef } from 'react';
-import Tippy, { type TippyProps } from '@tippyjs/react';
+import Tippy from '@tippyjs/react';
 import type { SkillMatrix } from '~/lib/ViewTransitions';
 import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import type { SkillNode, ProjectNode } from '~/lib/PortfolioStore';
@@ -31,14 +31,13 @@ const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMat
 
 	// Calculate row and column totals
 	const rowTotals = useMemo(() => {
-		return matrix.rows.map((_, ri) => matrix.values[ri]?.reduce((sum, val) => sum + (val > 0 ? 1 : 0), 0) || 0);
+		return matrix.rows.map((_, ri) => matrix.values[ri]?.reduce((sum, val) => sum + (val > 0 ? 1 : 0), 0) ?? 0);
 	}, [matrix]);
 
 	const colTotals = useMemo(() => {
 		return matrix.cols.map((_, ci) =>
 			matrix.rows.reduce((sum, _, ri) => {
-				const rowValues = matrix.values[ri];
-				return sum + (rowValues && rowValues[ci] !== undefined && rowValues[ci] > 0 ? 1 : 0);
+				return sum + ((matrix.values[ri]?.[ci] ?? 0) > 0 ? 1 : 0);
 			}, 0),
 		);
 	}, [matrix]);
@@ -155,7 +154,7 @@ const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMat
 							const c = matrix.cols[ci];
 							if (!c) return null;
 							const isHl = hl.has(c.id);
-							const total = colTotals[ci] || 0;
+							const total = colTotals[ci] ?? 0;
 							return (
 								<th
 									key={c.id}
@@ -174,7 +173,7 @@ const SkillsMatrixTable = forwardRef<HTMLTableElement, Props>(function SkillsMat
 						const r = matrix.rows[ri];
 						if (!r) return null;
 						const rowHl = hl.has(r.id);
-						const total = rowTotals[ri] || 0;
+						const total = rowTotals[ri] ?? 0;
 						return (
 							<tr key={r.id}>
 								<th

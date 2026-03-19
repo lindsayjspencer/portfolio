@@ -87,7 +87,7 @@ export function ForceGraphView({
 	}, []);
 
 	// Animation functions
-	const animateNodesIn = async (duration: number) => {
+	const animateNodesIn = useCallback(async (duration: number) => {
 		animationTimeouts.current.forEach(clearTimeout);
 		animationTimeouts.current = [];
 		setVisibleNodes(new Set());
@@ -114,8 +114,7 @@ export function ForceGraphView({
 				adj.get(s)?.add(t);
 				adj.get(t)?.add(s);
 			});
-			for (let i = 0; i < ids.length; i++) {
-				const v = ids[i];
+			for (const v of ids) {
 				if (!v) continue;
 				const touches = [...(adj.get(v) ?? [])].some((x) => vis.has(x));
 				if (!touches) isComponentStart.add(v);
@@ -146,9 +145,9 @@ export function ForceGraphView({
 			}, delay);
 			animationTimeouts.current.push(t);
 		}
-	};
+	}, [graphData.links, graphData.nodes, nodeOrder.addition, waitForStarfield]);
 
-	const animateNodesOut = async (duration: number) => {
+	const animateNodesOut = useCallback(async (duration: number) => {
 		animationTimeouts.current.forEach(clearTimeout);
 		animationTimeouts.current = [];
 
@@ -172,7 +171,7 @@ export function ForceGraphView({
 			}, i * delayPer);
 			animationTimeouts.current.push(t);
 		});
-	};
+	}, [nodeOrder.removal, waitForStarfield]);
 
 	// Callback to capture starfield fade controller
 	const onStarfieldReady = useCallback(
@@ -207,7 +206,7 @@ export function ForceGraphView({
 				onTransitionOut: animateNodesOut,
 			});
 		}
-	}, [onRegisterCallbacks, nodeOrder, transitionPhase]);
+	}, [animateNodesIn, animateNodesOut, onRegisterCallbacks, transitionPhase]);
 
 	const mutable = useMutableGraphData(graphData);
 

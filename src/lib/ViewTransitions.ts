@@ -458,7 +458,7 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						...baseData,
 						mode: 'projects',
 						variant: 'radial',
-						forceGraphData: portfolioToRadialProjects(graph, directive.data),
+						forceGraphData: portfolioToRadialProjects(graph),
 						projects: allProjects,
 						metrics: undefined,
 						pinnedProjects,

@@ -37,8 +37,6 @@ export class LinkRenderUtils {
 	 * Creates a render function for link directional particles (arrows)
 	 */
 	static getLinkParticleRenderFunction(themeColors: ReturnType<typeof useTheme>['themeColors']) {
-		const linkColors = LinkRenderUtils.getLinkColors(themeColors);
-
 		return (
 			x: number,
 			y: number,

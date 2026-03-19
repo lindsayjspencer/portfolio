@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { TransitionPhase, TransitionCallbacks } from '~/lib/ViewTransitions';
 import './ResumeView.scss';
 import Tag from '~/components/Ui/Tag';
@@ -17,8 +17,21 @@ const CustomComponent = ({ children, ...rest }: React.PropsWithChildren<React.Co
 export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: ResumeViewProps) {
 	const [contentOpacity, setContentOpacity] = useState(transitionPhase === 'stable' ? 1 : 0);
 	const [transitionDuration, setTransitionDuration] = useState(400);
-	const isDesktop = window.innerWidth >= 1024;
+	const [isDesktop, setIsDesktop] = useState(false);
 	const [shouldAnimateAside, setShouldAnimateAside] = useState(false);
+	const asideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		const mediaQuery = window.matchMedia('(min-width: 1024px)');
+		const syncIsDesktop = () => setIsDesktop(mediaQuery.matches);
+
+		syncIsDesktop();
+		mediaQuery.addEventListener('change', syncIsDesktop);
+
+		return () => {
+			mediaQuery.removeEventListener('change', syncIsDesktop);
+		};
+	}, []);
 
 	useEffect(() => {
 		if (onRegisterCallbacks) {
@@ -26,8 +39,17 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 				onTransitionIn: async (duration: number) => {
 					setTransitionDuration(duration);
 					setContentOpacity(1);
-					if (!isDesktop) {
-						setTimeout(() => setShouldAnimateAside(true), 2500);
+
+					if (asideTimerRef.current) {
+						clearTimeout(asideTimerRef.current);
+						asideTimerRef.current = null;
+					}
+
+					if (!window.matchMedia('(min-width: 1024px)').matches) {
+						asideTimerRef.current = setTimeout(() => {
+							setShouldAnimateAside(true);
+							asideTimerRef.current = null;
+						}, 2500);
 					} else {
 						setShouldAnimateAside(true);
 					}
@@ -35,16 +57,29 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 				onTransitionOut: async (duration: number) => {
 					setTransitionDuration(duration);
 					setContentOpacity(0);
+					setShouldAnimateAside(false);
 				},
 			});
 		}
 	}, [onRegisterCallbacks]);
+
+	useEffect(() => {
+		return () => {
+			if (asideTimerRef.current) {
+				clearTimeout(asideTimerRef.current);
+			}
+		};
+	}, []);
 
 	// Handle initial entering state
 	useEffect(() => {
 		if (transitionPhase === 'entering') {
 			setContentOpacity(0);
 			setShouldAnimateAside(false);
+			if (asideTimerRef.current) {
+				clearTimeout(asideTimerRef.current);
+				asideTimerRef.current = null;
+			}
 		}
 	}, [transitionPhase]);
 

@@ -79,7 +79,7 @@ export function useFontLoading(
 			// Wait for any pending font loads to settle
 			if ('fonts' in document && 'ready' in document.fonts) {
 				try {
-					await (document.fonts as FontFaceSet).ready;
+					await document.fonts.ready;
 				} catch {
 					/* ignore */
 				}

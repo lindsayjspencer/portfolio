@@ -44,7 +44,7 @@ GIBBERISH_SETS.mixed = GIBBERISH_SETS.latin + GIBBERISH_SETS.cjk;
 
 const getRandomChar = (charset: keyof typeof GIBBERISH_SETS): string => {
 	const chars = GIBBERISH_SETS[charset];
-	return chars[Math.floor(Math.random() * chars.length)] || '?';
+	return chars[Math.floor(Math.random() * chars.length)] ?? '?';
 };
 
 const preserveSpacing = (char: string): boolean => {
@@ -113,9 +113,9 @@ function isStreamingTextElement(el: React.ReactElement): boolean {
 		displayName?: string;
 	};
 	return Boolean(
-		t?.[STREAMING_MARKER] ||
-			t?.type?.[STREAMING_MARKER] || // React.memo
-			t?.render?.[STREAMING_MARKER] || // forwardRef
+		t?.[STREAMING_MARKER] ??
+			t?.type?.[STREAMING_MARKER] ?? // React.memo
+			t?.render?.[STREAMING_MARKER] ?? // forwardRef
 			t?.displayName === 'StreamingText',
 	);
 }
@@ -223,8 +223,6 @@ export function StreamingText({
 
 	/* ungarbling state */
 	const [isUngarbling, setIsUngarbling] = useState(false);
-	const [ungarbledText, setUngarbledText] = useState<string>('');
-	const [targetText, setTargetText] = useState<string>('');
 
 	/* only patch the active streamed node */
 	const activeTextKeyRef = useRef<string | null>(null);
@@ -341,8 +339,6 @@ export function StreamingText({
 
 		// Reset ungarbling state
 		setIsUngarbling(false);
-		setUngarbledText('');
-		setTargetText('');
 
 		const planLen = planRef.current.length;
 		if (planLen === 0) {
@@ -355,7 +351,6 @@ export function StreamingText({
 			if (canUngarble) {
 				// Start ungarbling immediately
 				const text = (computedPlan[0] as { type: 'text_stream'; content: string }).content;
-				setTargetText(text);
 				setIsUngarbling(true);
 
 				// Create initial gibberish text preserving spaces
@@ -363,8 +358,6 @@ export function StreamingText({
 					.split('')
 					.map((char) => (preserveSpacing(char) ? char : getRandomChar(ungarbleChars)))
 					.join('');
-
-				setUngarbledText(initialGibberish);
 
 				// Add to rendered content immediately (with character spans)
 				const k = textKey(0);
@@ -421,14 +414,12 @@ export function StreamingText({
 						})
 						.join('');
 
-					setUngarbledText(newText);
 					const newSpans = createCharacterSpans(newText, ungarbleCjkScale);
 					setRenderedContent([{ key: k, content: <>{newSpans}</> }]);
 
 					// Complete when done
 					if (currentStep >= totalSteps) {
 						clearInterval(ungarbleTimer);
-						setUngarbledText(text);
 						const finalSpans = createCharacterSpans(text, ungarbleCjkScale);
 						setRenderedContent([{ key: k, content: <>{finalSpans}</> }]);
 						setIsUngarbling(false);
@@ -519,7 +510,7 @@ export function StreamingText({
 
 	// Memoize the element creation to ensure it updates when props change
 	const element = useMemo(() => {
-		const incomingStyle = (elementProps as { style?: React.CSSProperties })?.style || {};
+		const incomingStyle = (elementProps as { style?: React.CSSProperties })?.style ?? {};
 		const monoStyle: React.CSSProperties =
 			isUngarbling && ungarbleMonospace
 				? {

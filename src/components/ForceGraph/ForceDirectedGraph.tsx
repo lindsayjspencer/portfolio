@@ -251,7 +251,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 			},
 		) => {
 			webglRenderRef.current = renderFn;
-			fadeControllerRef.current = fadeController || null;
+			fadeControllerRef.current = fadeController ?? null;
 			if (fadeController && onStarfieldReady) {
 				onStarfieldReady(fadeController);
 			}
@@ -289,7 +289,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 					if (InteractionUtils.shouldRenderNode(providedNode.id, selectedNodes, hoverNodeId)) return;
 					nodeRenderFunction(providedNode, ctx, globalScale);
 				}}
-				onRenderFramePre={(ctx, globalScale) => {
+				onRenderFramePre={(ctx, _globalScale) => {
 					// Sync transform to WebGL
 					const transform = ctx.getTransform();
 					if (webglRenderRef.current) {
@@ -338,7 +338,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 				onNodeRightClick={() => InteractionUtils.handleGenericInteraction(onCanvasInteraction)}
 				onNodeDrag={() => InteractionUtils.handleGenericInteraction(onCanvasInteraction)}
 				onBackgroundRightClick={() => InteractionUtils.handleGenericInteraction(onCanvasInteraction)}
-				onZoom={({ x, y, k }) => {
+				onZoom={({ x, y, k: _k }) => {
 					// ignore our own programmatic centre changes
 					if (programmaticZoomRef.current || !forceGraph.current) return;
 

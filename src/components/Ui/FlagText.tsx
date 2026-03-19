@@ -3,7 +3,7 @@
 // FlagText.tsx — Shader-based ripple effect text display
 // Uses automatic text sizing and Three.js shaders for water ripple animation
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import GUI from 'lil-gui';
 
@@ -239,9 +239,9 @@ const FlagText: React.FC<Props> = ({
 		canvas.height = 400;
 
 		// Use debug values if provided, otherwise use props
-		const currentText = debugText || text;
-		const currentTextColor = debugTextColor || textColor;
-		const currentBgColor = debugBgColor || backgroundColor;
+		const currentText = debugText ?? text;
+		const currentTextColor = debugTextColor ?? textColor;
+		const currentBgColor = debugBgColor ?? backgroundColor;
 
 		// Background
 		context.fillStyle = currentBgColor;
@@ -442,6 +442,7 @@ const FlagText: React.FC<Props> = ({
 		colorOffset,
 		colorMultiplier,
 		textStrength,
+		showDebugControls,
 	]);
 
 	return (

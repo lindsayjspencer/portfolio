@@ -8,7 +8,7 @@ export function CanonicalLink() {
 			try {
 				const { origin, pathname } = window.location;
 				const href = `${origin}${pathname}`; // strip query/hash
-				let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+				let link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
 				if (!link) {
 					link = document.createElement('link');
 					link.setAttribute('rel', 'canonical');

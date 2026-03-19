@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { useComponentSize, type ComponentSize } from '~/hooks/UseComponentSize';
-import { useComponentColor, type ThemeColor } from '~/hooks/UseComponentColor';
+import { useComponentColor, type ComponentColorValue } from '~/hooks/UseComponentColor';
 import './Spinner.scss';
 
 export interface SpinnerProps {
 	/** Size variant or custom size in pixels */
 	size?: ComponentSize;
 	/** Theme color or CSS color value */
-	color?: ThemeColor | string;
+	color?: ComponentColorValue;
 	/** Additional CSS classes */
 	className?: string;
 	/** Custom CSS properties */

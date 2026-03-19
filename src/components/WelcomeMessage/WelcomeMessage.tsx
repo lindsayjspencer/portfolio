@@ -30,7 +30,7 @@ export function WelcomeMessage() {
 				clearTimeout(timer);
 			};
 		}
-	}, [landingMode, shouldRender]);
+	}, [isAnimating, landingMode, shouldRender]);
 
 	if (!shouldRender) {
 		return null;

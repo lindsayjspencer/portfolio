@@ -2,7 +2,6 @@ import '~/styles/main.scss';
 import { type Metadata } from 'next';
 import { headers } from 'next/headers';
 import { IconPreloader } from '~/components/Ui';
-import Script from 'next/script';
 
 const baseMetadata: Metadata = {
 	title: 'Lindsay Spencer - Interactive Portfolio',
@@ -30,10 +29,6 @@ export async function generateMetadata(): Promise<Metadata> {
 		...baseMetadata,
 		alternates: canonical ? { canonical } : undefined,
 	} satisfies Metadata;
-}
-
-interface RootLayoutProps {
-	children: React.ReactNode;
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

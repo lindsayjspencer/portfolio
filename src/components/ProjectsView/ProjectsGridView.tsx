@@ -121,7 +121,7 @@ export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCall
 					containerRef.current.style.transform = 'translateY(20px)';
 
 					// Trigger reflow
-					containerRef.current.offsetHeight;
+					void containerRef.current.offsetHeight;
 
 					containerRef.current.style.transition = `opacity ${duration}ms ease-out, transform ${duration}ms ease-out`;
 					containerRef.current.style.opacity = '1';

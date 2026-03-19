@@ -31,7 +31,7 @@ export class ZoomUtils {
 		width: number,
 		height: number,
 		padding: ZoomPadding,
-		transitionDuration: number = 300,
+		transitionDuration = 300,
 	) {
 		if (!graphData.nodes.length) return;
 
@@ -125,7 +125,7 @@ export class ZoomUtils {
 	/**
 	 * Clamps coordinates within bounds with a margin to prevent edge snapping
 	 */
-	static clampWithMargin(x: number, y: number, bounds: Bounds, margin: number = 2) {
+	static clampWithMargin(x: number, y: number, bounds: Bounds, margin = 2) {
 		return {
 			x: Math.min(Math.max(x, bounds.minX + margin), bounds.maxX - margin),
 			y: Math.min(Math.max(y, bounds.minY + margin), bounds.maxY - margin),
@@ -160,7 +160,7 @@ export class ZoomUtils {
 
 		// Get the canvas element to add its offset to the screen coordinates
 		const graphContainer =
-			document.querySelector('.force-graph-container canvas') || document.querySelector('canvas');
+			document.querySelector('.force-graph-container canvas') ?? document.querySelector('canvas');
 		if (!graphContainer) return screenCoords;
 
 		const canvas = graphContainer as HTMLCanvasElement;

@@ -1,6 +1,5 @@
-import type { Graph, ProjectNode, SkillNode, Metric, Link } from './PortfolioStore';
+import type { Graph, ProjectNode, SkillNode, Link } from './PortfolioStore';
 import type { ForceDirectedGraphData } from '~/components/ForceGraph/Common';
-import type { ProjectsDirective } from './ai/directiveTools';
 import { getCaseStudyByProjectId } from '~/data/case-studies';
 
 // ===== Enhanced Project Types =====
@@ -55,7 +54,7 @@ export function toProjectCard(
 	project: ProjectNode,
 	graph: Graph,
 	highlights: Set<string>,
-	pinnedIds: Set<string> = new Set(),
+	pinnedIds: Set<string> = new Set<string>(),
 ): ProjectCard {
 	// Extract time information
 	const periodStart = project.period?.start;
@@ -87,7 +86,7 @@ export function toProjectCard(
 	// Calculate impact score from metrics
 	const impactScore = project.metrics?.reduce((acc, metric) => {
 		// Try to extract numeric value from metric.value string
-		const numericMatch = metric.value.match(/-?\d+\.?\d*/);
+		const numericMatch = /-?\d+\.?\d*/.exec(metric.value);
 		return acc + (numericMatch ? parseFloat(numericMatch[0]) : 0);
 	}, 0);
 
@@ -151,7 +150,7 @@ export function buildCaseStudyViewModel(project: ProjectNode, graph: Graph): Cas
 			: undefined;
 
 	// Format outcomes from metrics
-	const outcomes = project.metrics?.map((metric) => `${metric.label}: ${metric.value}`) || [];
+	const outcomes = project.metrics?.map((metric) => `${metric.label}: ${metric.value}`) ?? [];
 
 	// Extract tech stack
 	const tech = connectedSkills.map((skill) => skill.label);
@@ -159,11 +158,11 @@ export function buildCaseStudyViewModel(project: ProjectNode, graph: Graph): Cas
 	return {
 		project,
 		period,
-		context: project.summary || project.description,
+		context: project.summary ?? project.description,
 		objectives: [], // TODO: Add to schema if needed
 		contributions: [], // TODO: Add to schema if needed
 		outcomes,
-		links: project.links || [],
+		links: project.links ?? [],
 		tech,
 		screenshots,
 		hero,
@@ -175,7 +174,7 @@ export function buildCaseStudyViewModel(project: ProjectNode, graph: Graph): Cas
  * Creates a clean DAG for radial projects view: person → projects → skills
  * Ensures single root, outward-only edges, and proper layer structure for dagMode="radialout"
  */
-export function portfolioToRadialProjects(graph: Graph, directive: ProjectsDirective): ForceDirectedGraphData {
+export function portfolioToRadialProjects(graph: Graph): ForceDirectedGraphData {
 	// Find the person node (should be exactly one - our single root)
 	const personNode = graph.nodes.find((node) => node.type === 'person');
 	if (!personNode) {
@@ -278,7 +277,7 @@ function validateRadialDAG(data: ForceDirectedGraphData, expectedRootId: string)
 	// Count incoming edges
 	for (const link of data.links) {
 		const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-		inDegree.set(targetId, (inDegree.get(targetId) || 0) + 1);
+		inDegree.set(targetId, (inDegree.get(targetId) ?? 0) + 1);
 	}
 
 	// Find roots (nodes with no incoming edges)
@@ -294,7 +293,7 @@ function validateRadialDAG(data: ForceDirectedGraphData, expectedRootId: string)
 	// Ensure the root is the expected person node
 	if (roots[0]?.id !== expectedRootId) {
 		throw new Error(
-			`Radial DAG validation failed: root should be ${expectedRootId}, but found ${roots[0]?.id || 'undefined'}`,
+			`Radial DAG validation failed: root should be ${expectedRootId}, but found ${roots[0]?.id ?? 'undefined'}`,
 		);
 	}
 
@@ -302,7 +301,7 @@ function validateRadialDAG(data: ForceDirectedGraphData, expectedRootId: string)
 	// by repeatedly removing nodes with indegree 0 (topological sort)
 	const workingInDegree = new Map(inDegree);
 	const processed = new Set<string>();
-	let queue = [expectedRootId];
+	const queue = [expectedRootId];
 
 	while (queue.length > 0) {
 		const current = queue.shift()!;
@@ -315,7 +314,7 @@ function validateRadialDAG(data: ForceDirectedGraphData, expectedRootId: string)
 
 			if (sourceId === current) {
 				// Reduce indegree of target
-				const newIndegree = (workingInDegree.get(targetId) || 0) - 1;
+				const newIndegree = (workingInDegree.get(targetId) ?? 0) - 1;
 				workingInDegree.set(targetId, newIndegree);
 
 				// If target now has indegree 0, it can be processed

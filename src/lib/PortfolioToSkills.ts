@@ -111,7 +111,7 @@ export function clusterByCommunity(graph: Graph, skillGraph: SkillGraph): SkillC
 	const K = Math.min(5, Math.max(2, Math.round(sorted.length / 6)));
 	const centres = new Set(sorted.slice(0, K));
 
-	let assign = new Map<string, string>(); // skill -> centre
+	const assign = new Map<string, string>(); // skill -> centre
 
 	// Iterative assignment (3 iterations)
 	for (let iter = 0; iter < 3; iter++) {

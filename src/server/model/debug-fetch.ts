@@ -7,7 +7,7 @@ export function createDebugFetch() {
 		
 		console.log('🔵 HTTP Request:', {
 			url,
-			method: options?.method || 'GET',
+			method: options?.method ?? 'GET',
 			headers: options?.headers,
 			body: typeof options?.body === 'string' 
 				? (options.body.length > 1000 ? options.body.substring(0, 1000) + '...' : options.body)
