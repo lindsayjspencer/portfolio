@@ -159,7 +159,7 @@ Relevant helpers in `ViewTransitions.ts`:
 If you are changing transition architecture, also read:
 
 - [`docs/views-system.md`](./docs/views-system.md)
-- [`TRANSITION_SYSTEM_REFACTOR_PLAN.md`](./TRANSITION_SYSTEM_REFACTOR_PLAN.md)
+- [`TRANSITION_SYSTEM_REFACTOR_PLAN.md`](./docs/TRANSITION_SYSTEM_REFACTOR_PLAN.md)
 
 ## Graph Data Model
 

@@ -20,8 +20,10 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		messages,
 		directive,
 		isLoading,
+		streamedText,
 		setInput,
 		setLoading,
+		setStreamedText,
 		setDirective,
 		setDirectiveTheme,
 		addMessage,
@@ -33,10 +35,18 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	const landingMode = directive.mode === 'landing' && !hasHadInteraction;
 
 	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-	const [streamedText, setStreamedText] = useState('');
 	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const applyDirective = useApplyDirective();
+	const latestAssistantMessage = useMemo(
+		() =>
+			[...messages]
+				.reverse()
+				.find((message) => message.role === 'assistant')?.content ?? '',
+		[messages],
+	);
+	const visibleAssistantText = streamedText || (!isLoading ? latestAssistantMessage : '');
+
 	const submitChatMessage = useCallback(
 		async (userMessage: string) => {
 			setStreamedText('');
@@ -63,6 +73,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			setDirective,
 			setDirectiveTheme,
 			setLoading,
+			setStreamedText,
 			setPendingClarify,
 		],
 	);
@@ -153,15 +164,15 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 
 	// Transform streamed text (used during loading and for clarify question)
 	const streamingNodes = useMemo(() => {
-		if (!streamedText) return null;
-		const lines = streamedText.split('\n');
+		if (!visibleAssistantText) return null;
+		const lines = visibleAssistantText.split('\n');
 		const out: React.ReactNode[] = [];
 		lines.forEach((line, i) => {
 			out.push(...makeInlineNodes(line, i));
 			if (i < lines.length - 1) out.push(<br key={`sbr-${i}`} />);
 		});
 		return out;
-	}, [streamedText, makeInlineNodes]);
+	}, [visibleAssistantText, makeInlineNodes]);
 
 	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();

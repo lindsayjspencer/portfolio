@@ -68,6 +68,17 @@ function safeEnqueue(controller: ReadableStreamDefaultController<Uint8Array>, ch
 	}
 }
 
+// Rate limiting for this endpoint is intended to happen at the edge via a Vercel Firewall
+// rule, not inside this handler. That keeps abuse protection effective across cold starts
+// and instances, and it blocks expensive model work before the request reaches Next.js.
+//
+// Expected production contract:
+// - Vercel matches the rule on `/api/ask`.
+// - Over-limit requests are rejected with 429 before `POST()` runs.
+// - Requests that arrive here have already passed the coarse edge limiter.
+//
+// Local development will not enforce that rule, so this handler still does its own input
+// validation, but it intentionally does not implement an in-process limiter.
 export async function POST(req: Request) {
 	let body: unknown;
 
@@ -85,6 +96,9 @@ export async function POST(req: Request) {
 	const { messages, currentDirective } = parsedBody.data;
 	const trace = langfuse.trace({ id: randomUUID(), name: 'ask-stream' });
 
+	// This is the main cost boundary for the route. If you change deployment/platform-level
+	// protection later, make sure abusive traffic is still stopped before `streamText(...)`
+	// is reached, because everything below can spend model tokens and hold open an SSE stream.
 	const result = streamText({
 		model: generalModel,
 		system: ASK_SYSTEM_PROMPT,

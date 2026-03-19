@@ -1,5 +1,5 @@
 import { createStore, type StoreApi, useStore } from 'zustand';
-import { useContext, createContext } from 'react';
+import { useContext, createContext, type SetStateAction } from 'react';
 import portfolioData from '~/data/portfolio.json';
 import type { ClarifyPayload } from './ai/clarifyTool';
 import type { ForceDirectedGraphNode } from '~/components/ForceGraph/Common';
@@ -233,6 +233,7 @@ export interface PortfolioState {
 	directive: Directive;
 	messages: ChatMessage[];
 	isLoading: boolean;
+	streamedText: string;
 
 	// Chat-specific state
 	input: string;
@@ -251,6 +252,7 @@ export interface PortfolioState {
 	setDirectiveTheme: (theme: ThemeName) => void;
 	addMessage: (message: Omit<ChatMessage, 'id'>) => void;
 	setLoading: (loading: boolean) => void;
+	setStreamedText: (text: SetStateAction<string>) => void;
 	clearMessages: () => void;
 
 	// Chat actions
@@ -275,6 +277,7 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 		directive: initialDirective,
 		messages: [],
 		isLoading: false,
+		streamedText: '',
 
 		// Chat-specific state
 		input: '',
@@ -306,12 +309,21 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 			})),
 
 		setLoading: (isLoading) => set({ isLoading }),
+		setStreamedText: (streamedText) =>
+			set((state) => ({
+				streamedText: typeof streamedText === 'function' ? streamedText(state.streamedText) : streamedText,
+			})),
 
 		clearMessages: () =>
 			set({
 				messages: [],
 				directive: createDefaultLandingDirective(),
+				isLoading: false,
+				streamedText: '',
+				input: '',
+				responses: [],
 				pendingClarify: undefined,
+				lastDirective: undefined,
 			}),
 
 		// Chat actions

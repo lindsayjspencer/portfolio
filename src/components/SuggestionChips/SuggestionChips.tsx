@@ -35,6 +35,7 @@ export function SuggestionChips() {
 		setDirective,
 		setDirectiveTheme,
 		setLoading,
+		setStreamedText,
 		setPendingClarify,
 		setInput,
 	} = usePortfolioStore();
@@ -99,6 +100,7 @@ export function SuggestionChips() {
 		if (isLoading) return;
 
 		setInput('');
+		setStreamedText('');
 
 		await handleChatSubmit({
 			userMessage: question,
@@ -109,6 +111,7 @@ export function SuggestionChips() {
 			setDirectiveTheme,
 			setLoading,
 			setPendingClarify,
+			onTextDelta: (delta) => setStreamedText((prev) => prev + delta),
 		});
 	};
 
