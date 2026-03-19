@@ -107,6 +107,9 @@ importers:
       react-markdown:
         specifier: ^9.1.0
         version: 9.1.0(@types/react@18.3.28)(react@18.3.1)
+      react-tree-stream:
+        specifier: ^1.1.0
+        version: 1.1.0(react@18.3.1)
       rehype-raw:
         specifier: ^7.0.0
         version: 7.0.0
@@ -3535,6 +3538,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  react-tree-stream@1.1.0:
+    resolution: {integrity: sha512-fOBCDEChJboBs0z2AzD/QmaVFvbhhDhiZqESjnP4qIZrnCHYyt/XHNGpdEnDeyQ/Cqqa6R9n/6Uu5CBPvdqLmg==}
+    peerDependencies:
+      react: '>=18.0.0'
 
   react@18.3.1:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
@@ -8174,6 +8182,10 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       '@types/react': 18.3.28
+
+  react-tree-stream@1.1.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
 
   react@18.3.1:
     dependencies:

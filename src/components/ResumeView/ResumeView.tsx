@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import TreeStream from 'react-tree-stream';
 import type { TransitionPhase, TransitionCallbacks } from '~/lib/ViewTransitions';
 import './ResumeView.scss';
 import Tag from '~/components/Ui/Tag';
 import { MaterialIcon } from '~/components/Ui';
-import TreeStream from '../Ui/TreeStream';
 
 interface ResumeViewProps {
 	transitionPhase?: TransitionPhase;

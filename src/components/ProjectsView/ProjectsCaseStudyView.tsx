@@ -3,7 +3,7 @@ import Image from 'next/image';
 import type { TransitionPhase, TransitionCallbacks, DataSnapshot } from '~/lib/ViewTransitions';
 import './ProjectsCaseStudyView.scss';
 import Tag from '~/components/Ui/Tag';
-import { StreamingText } from '~/components/Ui/StreamingText';
+import TreeStream from 'react-tree-stream';
 
 interface ProjectsCaseStudyViewProps {
 	transitionPhase: TransitionPhase;
@@ -113,15 +113,15 @@ export function ProjectsCaseStudyView({
 				)}
 
 				{caseStudy.sections && caseStudy.sections.length > 0 && (
-					<StreamingText as="section" className="pcs-sections" autoStart speed={6} interval={50}>
+					<TreeStream as="section" className="pcs-sections" autoStart speed={6} interval={50}>
 						{caseStudy.sections.map((s, i) => {
 							if (s.kind === 'intro') {
 								return (
-									<StreamingText key={i} as="article" className="pcs-card pcs-intro">
-										{s.title && <StreamingText as="h2">{s.title}</StreamingText>}
+									<TreeStream key={i} as="article" className="pcs-card pcs-intro">
+										{s.title && <TreeStream as="h2">{s.title}</TreeStream>}
 										{s.body && (
 											<div className={`pcs-summary ${expandedIntro[i] ? 'is-expanded' : ''}`}>
-												<StreamingText as="p">{s.body}</StreamingText>
+												<TreeStream as="p">{s.body}</TreeStream>
 												{(s.body?.length ?? 0) > 220 && (
 													<button
 														className="pcs-read-more"
@@ -133,13 +133,13 @@ export function ProjectsCaseStudyView({
 												)}
 											</div>
 										)}
-									</StreamingText>
+									</TreeStream>
 								);
 							}
 							if (s.kind === 'image') {
 								return (
-									<StreamingText key={i} as="figure" className="pcs-card pcs-image">
-										{s.title && <StreamingText as="figcaption">{s.title}</StreamingText>}
+									<TreeStream key={i} as="figure" className="pcs-card pcs-image">
+										{s.title && <TreeStream as="figcaption">{s.title}</TreeStream>}
 										{!sectionImageLoaded[i] && (
 											<div className="pcs-media__loader" aria-hidden>
 												<div className="pcs-spinner" />
@@ -154,13 +154,13 @@ export function ProjectsCaseStudyView({
 												setSectionImageLoaded((prev) => ({ ...prev, [i]: true }))
 											}
 										/>
-									</StreamingText>
+									</TreeStream>
 								);
 							}
 							if (s.kind === 'gallery') {
 								return (
-									<StreamingText key={i} as="div" className="pcs-card pcs-gallery">
-										{s.title && <StreamingText as="h2">{s.title}</StreamingText>}
+									<TreeStream key={i} as="div" className="pcs-card pcs-gallery">
+										{s.title && <TreeStream as="h2">{s.title}</TreeStream>}
 										<div className="pcs-card__grid">
 											{s.images.map((im, idx) => {
 												const key = `${i}-${idx}`;
@@ -188,57 +188,58 @@ export function ProjectsCaseStudyView({
 												);
 											})}
 										</div>
-									</StreamingText>
+									</TreeStream>
 								);
 							}
 							if (s.kind === 'bullets') {
 								return (
-									<StreamingText key={i} as="article" className="pcs-card pcs-bullets">
-										{s.title && <StreamingText as="h2">{s.title}</StreamingText>}
+									<TreeStream key={i} as="article" className="pcs-card pcs-bullets">
+										{s.title && <TreeStream as="h2">{s.title}</TreeStream>}
 										<div className="pcs-card__grid">
 											{s.items.map((it, j) => (
 												<div key={j} className="pcs-tile pcs-tile--bullet" role="group">
-													<StreamingText as="p" className="pcs-tile-text">
+													<TreeStream as="p" className="pcs-tile-text">
 														{it}
-													</StreamingText>
+													</TreeStream>
 												</div>
 											))}
 										</div>
-									</StreamingText>
+									</TreeStream>
 								);
 							}
 							if (s.kind === 'quote') {
 								return (
-									<StreamingText key={i} as="blockquote" className="pcs-card pcs-quote">
-										<StreamingText as="p">“{s.quote}”</StreamingText>
-										{s.by && <StreamingText as="footer">— {s.by}</StreamingText>}
-									</StreamingText>
+									<TreeStream key={i} as="blockquote" className="pcs-card pcs-quote">
+										<TreeStream as="p">“{s.quote}”</TreeStream>
+										{s.by && <TreeStream as="footer">— {s.by}</TreeStream>}
+									</TreeStream>
 								);
 							}
 							if (s.kind === 'metrics') {
 								return (
-									<StreamingText key={i} as="div" className="pcs-card pcs-metrics">
-										{s.title && <StreamingText as="h2">{s.title}</StreamingText>}
+									<TreeStream key={i} as="div" className="pcs-card pcs-metrics">
+										{s.title && <TreeStream as="h2">{s.title}</TreeStream>}
 										<div className="pcs-card__grid">
 											{s.metrics.map((m, j) => (
 												<div key={j} className="pcs-tile pcs-metric" role="group">
-													<StreamingText as="div" className="pcs-metric-label">
+													<TreeStream as="div" className="pcs-metric-label">
 														{m.label}
-													</StreamingText>
-													<StreamingText as="div" className="pcs-metric-value">
+													</TreeStream>
+													<TreeStream as="div" className="pcs-metric-value">
 														{m.value}
-													</StreamingText>
+													</TreeStream>
 												</div>
 											))}
 										</div>
-									</StreamingText>
+									</TreeStream>
 								);
 							}
 							return null;
 						})}
-					</StreamingText>
+					</TreeStream>
 				)}
 			</div>
 		</div>
 	);
 }
+

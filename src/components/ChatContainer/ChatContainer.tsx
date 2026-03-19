@@ -4,7 +4,7 @@ import './ChatContainer.scss';
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { MaterialIcon, Spinner } from '~/components/Ui';
-import { StreamingText } from '~/components/Ui/StreamingText';
+import TreeStream from 'react-tree-stream';
 import { handleChatSubmit } from '~/lib/chat-actions';
 import { useState } from 'react';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
@@ -101,15 +101,15 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			const content = gBold2 ?? gBold1 ?? gItalic ?? '';
 			if (gItalic) {
 				out.push(
-					<StreamingText as="i" key={`it-${lineIdx}-${idx++}`}>
+					<TreeStream as="i" key={`it-${lineIdx}-${idx++}`}>
 						{content}
-					</StreamingText>,
+					</TreeStream>,
 				);
 			} else {
 				out.push(
-					<StreamingText as="strong" key={`em-${lineIdx}-${idx++}`}>
+					<TreeStream as="strong" key={`em-${lineIdx}-${idx++}`}>
 						{content}
-					</StreamingText>,
+					</TreeStream>,
 				);
 			}
 			lastIndex = end;
@@ -149,7 +149,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 						}}
 						key={`proj-${lineIdx}-${projIdx++}`}
 					>
-						<StreamingText as="span">{processEmphasis(label ?? '', lineIdx)}</StreamingText>
+						<TreeStream as="span">{processEmphasis(label ?? '', lineIdx)}</TreeStream>
 					</a>,
 				);
 				projLast = end;
@@ -298,9 +298,9 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 
 				{/* Clarify options (if any) beneath the streamed text */}
 				{pendingClarify?.kind === 'choice' && pendingClarify.options && (
-					<StreamingText className="clarify-options">
+					<TreeStream className="clarify-options">
 						{pendingClarify.options.map((option) => (
-							<StreamingText
+							<TreeStream
 								as="button"
 								key={option}
 								type="button"
@@ -308,9 +308,9 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 								className={`option-chip ${selectedOptions.includes(option) ? 'selected' : ''}`}
 							>
 								{option}
-							</StreamingText>
+							</TreeStream>
 						))}
-					</StreamingText>
+					</TreeStream>
 				)}
 
 				<div className="input-container">
@@ -351,3 +351,4 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		</div>
 	);
 }
+

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './ValuesEvidenceView.scss';
 import type { TransitionPhase, TransitionCallbacks, ValuesEvidenceSnapshot } from '~/lib/ViewTransitions';
-import { StreamingText } from '../Ui/StreamingText';
+import TreeStream from 'react-tree-stream';
 import ValuesEvidenceCard from './ValuesEvidenceCard';
 import type {
 	RoleEvidence as RoleTileData,
@@ -102,9 +102,9 @@ export function ValuesEvidenceView({
 			<div className="values-evidence-view__container">
 				<header className="values-evidence-view__header">
 					<h1>My Core Values</h1>
-					<StreamingText as="p" className="subtitle">
+					<TreeStream as="p" className="subtitle">
 						The principles that guide my work, supported by concrete evidence from my career.
-					</StreamingText>
+					</TreeStream>
 				</header>
 
 				<main className="values-evidence-view__content">
@@ -169,3 +169,4 @@ export function ValuesEvidenceView({
 		</div>
 	);
 }
+

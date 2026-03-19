@@ -5,7 +5,7 @@ import type { ForceDirectedGraphNode } from '~/components/ForceGraph/Common';
 import type { Link, Metric } from '~/lib/PortfolioStore';
 import { MaterialIcon } from './MaterialIcon';
 import './SlidingPanel.scss';
-import StreamingText from './StreamingText';
+import TreeStream from 'react-tree-stream';
 import Tag from '~/components/Ui/Tag';
 import { useTheme } from '~/contexts/theme-context';
 import { DrawingUtils } from '~/components/ForceGraph/DrawingUtils';
@@ -33,9 +33,9 @@ export const SlidingPanel = () => {
 			<div className="sliding-panel-main">
 				{/* Header */}
 				<div className="sliding-panel-header">
-					<StreamingText as="h2" className="panel-title">
+					<TreeStream as="h2" className="panel-title">
 						{panelContent.title}
-					</StreamingText>
+					</TreeStream>
 					<button onClick={handleClose} className="close-button" aria-label="Close panel">
 						<MaterialIcon name="close" />
 					</button>
@@ -65,99 +65,99 @@ const NodeContent = ({ data }: { data: ForceDirectedGraphNode }) => {
 	};
 
 	return (
-		<StreamingText className="sliding-panel-node-content">
-			<StreamingText as="div" className="node-type-badge" style={badgeStyles}>
+		<TreeStream className="sliding-panel-node-content">
+			<TreeStream as="div" className="node-type-badge" style={badgeStyles}>
 				{data.type.charAt(0).toUpperCase() + data.type.slice(1)}
-			</StreamingText>
+			</TreeStream>
 
 			{data.type === 'role' && (
 				<>
-					<StreamingText className="node-section">
-						<StreamingText as="h3" className="section-title">
+					<TreeStream className="node-section">
+						<TreeStream as="h3" className="section-title">
 							Company
-						</StreamingText>
-						<StreamingText as="p" className="section-text">
+						</TreeStream>
+						<TreeStream as="p" className="section-text">
 							{data.company}
-						</StreamingText>
-					</StreamingText>
-					<StreamingText className="node-section">
-						<StreamingText as="h3" className="section-title">
+						</TreeStream>
+					</TreeStream>
+					<TreeStream className="node-section">
+						<TreeStream as="h3" className="section-title">
 							Position
-						</StreamingText>
-						<StreamingText as="p" className="section-text">
+						</TreeStream>
+						<TreeStream as="p" className="section-text">
 							{data.position}
-						</StreamingText>
-					</StreamingText>
+						</TreeStream>
+					</TreeStream>
 				</>
 			)}
 			{data.summary !== undefined && data.description === undefined ? (
-				<StreamingText className="node-section">
-					<StreamingText as="h3" className="section-title">
+				<TreeStream className="node-section">
+					<TreeStream as="h3" className="section-title">
 						Summary
-					</StreamingText>
-					<StreamingText as="p" className="section-text">
+					</TreeStream>
+					<TreeStream as="p" className="section-text">
 						{data.summary}
-					</StreamingText>
-				</StreamingText>
+					</TreeStream>
+				</TreeStream>
 			) : null}
 
 			{data.description && (
-				<StreamingText className="node-section">
-					<StreamingText as="h3" className="section-title">
+				<TreeStream className="node-section">
+					<TreeStream as="h3" className="section-title">
 						Description
-					</StreamingText>
-					<StreamingText as="p" className="section-text description-text">
+					</TreeStream>
+					<TreeStream as="p" className="section-text description-text">
 						{data.description}
-					</StreamingText>
-				</StreamingText>
+					</TreeStream>
+				</TreeStream>
 			)}
 
 			{data.tags && data.tags.length > 0 && (
-				<StreamingText className="node-section">
-					<StreamingText as="h3" className="section-title">
+				<TreeStream className="node-section">
+					<TreeStream as="h3" className="section-title">
 						Tags
-					</StreamingText>
-					<StreamingText className="node-tags">
+					</TreeStream>
+					<TreeStream className="node-tags">
 						{data.tags.map((tag: string, index: number) => (
 							<Tag key={index} tone="accent" variant="subtle" shape="rounded">
 								{tag}
 							</Tag>
 						))}
-					</StreamingText>
-				</StreamingText>
+					</TreeStream>
+				</TreeStream>
 			)}
 
 			{(data.type === 'role' || data.type === 'project') && data.period && (
-				<StreamingText className="node-section">
-					<StreamingText as="h3" className="section-title">
+				<TreeStream className="node-section">
+					<TreeStream as="h3" className="section-title">
 						Period
-					</StreamingText>
-					<StreamingText as="p" className="section-text">
+					</TreeStream>
+					<TreeStream as="p" className="section-text">
 						{data.period.start} - {data.period.end}
-					</StreamingText>
-				</StreamingText>
+					</TreeStream>
+				</TreeStream>
 			)}
 
 			{(data.type === 'person' || data.type === 'role' || data.type === 'education' || data.type === 'talk') &&
 				data.location && (
-					<StreamingText className="node-section">
-						<StreamingText as="h3" className="section-title">
+					<TreeStream className="node-section">
+						<TreeStream as="h3" className="section-title">
 							Location
-						</StreamingText>
-						<StreamingText as="p" className="section-text">
+						</TreeStream>
+						<TreeStream as="p" className="section-text">
 							{data.location}
-						</StreamingText>
-					</StreamingText>
+						</TreeStream>
+					</TreeStream>
 				)}
 
 			{(data.type === 'person' || data.type === 'project' || data.type === 'talk') &&
 				data.links &&
 				data.links.length > 0 && (
-					<StreamingText className="node-section">
-						<StreamingText as="h3" className="section-title">
+					<TreeStream className="node-section">
+						<TreeStream as="h3" className="section-title">
 							Links
-						</StreamingText>
-						<StreamingText className="node-links">
+						</TreeStream>
+						<TreeStream className="node-links">
 							{data.links.map((link: Link, index: number) => (
 								<a
 									key={index}
@@ -169,40 +169,41 @@ const NodeContent = ({ data }: { data: ForceDirectedGraphNode }) => {
 									{link.title}
 								</a>
 							))}
-						</StreamingText>
-					</StreamingText>
+						</TreeStream>
+					</TreeStream>
 				)}
 
 			{(data.type === 'role' || data.type === 'project') && data.metrics && data.metrics.length > 0 && (
-				<StreamingText className="node-section">
-					<StreamingText as="h3" className="section-title">
+				<TreeStream className="node-section">
+					<TreeStream as="h3" className="section-title">
 						Metrics
-					</StreamingText>
-					<StreamingText className="node-metrics">
+					</TreeStream>
+					<TreeStream className="node-metrics">
 						{data.metrics.map((metric: Metric, index: number) => (
-							<StreamingText key={index} className="metric-item">
-								<StreamingText as="span" className="metric-label">
+							<TreeStream key={index} className="metric-item">
+								<TreeStream as="span" className="metric-label">
 									{metric.label}:
-								</StreamingText>{' '}
-								<StreamingText as="span" className="metric-value">
+								</TreeStream>{' '}
+								<TreeStream as="span" className="metric-value">
 									{metric.value}
-								</StreamingText>
-							</StreamingText>
+								</TreeStream>
+							</TreeStream>
 						))}
-					</StreamingText>
-				</StreamingText>
+					</TreeStream>
+				</TreeStream>
 			)}
 
 			{data.type === 'skill' && data.level && (
-				<StreamingText className="node-section">
-					<StreamingText as="h3" className="section-title">
+				<TreeStream className="node-section">
+					<TreeStream as="h3" className="section-title">
 						Skill Level
-					</StreamingText>
-					<StreamingText as="span" className={`skill-level-badge ${data.level}`}>
+					</TreeStream>
+					<TreeStream as="span" className={`skill-level-badge ${data.level}`}>
 						{data.level}
-					</StreamingText>
-				</StreamingText>
+					</TreeStream>
+				</TreeStream>
 			)}
-		</StreamingText>
+		</TreeStream>
 	);
 };
+
