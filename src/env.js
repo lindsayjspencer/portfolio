@@ -7,7 +7,7 @@ export const env = createEnv({
 	 * isn't built with invalid env vars.
 	 */
 	server: {
-		GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
+		OPENAI_API_KEY: z.string(),
 		NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 		LANGFUSE_SECRET_KEY: z.string(),
 		LANGFUSE_PUBLIC_KEY: z.string(),
@@ -26,7 +26,7 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	runtimeEnv: {
-		GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+		OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 		NODE_ENV: process.env.NODE_ENV,
 		LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
 		LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,

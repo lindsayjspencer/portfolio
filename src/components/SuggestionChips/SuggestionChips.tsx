@@ -3,19 +3,11 @@
 import { useState, useEffect } from 'react';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { handleChatSubmit } from '~/lib/chat-actions';
+import {
+	LANDING_FIXED_SUGGESTION_CHIP_QUESTION,
+	LANDING_ROTATING_SUGGESTION_CHIP_QUESTIONS,
+} from './questions';
 import './SuggestionChips.scss';
-
-const ALL_QUESTIONS = [
-	"What's your experience with modern web frameworks?",
-	'Why should we hire you over an AI?',
-	'Why should we hire you in this economy',
-	'What makes you unique?',
-	'What are you most proud of in your career?',
-	'Do you have experience in Typescript?',
-	'Are you just another programmer?',
-	'How does this portfolio work?',
-	'Show me your React projects',
-];
 
 function shuffleArray<T>(array: T[]): T[] {
 	const shuffled = [...array];
@@ -33,7 +25,6 @@ export function SuggestionChips() {
 		isLoading,
 		addMessage,
 		setDirective,
-		setDirectiveTheme,
 		setLoading,
 		setStreamedText,
 		setPendingClarify,
@@ -54,8 +45,8 @@ export function SuggestionChips() {
 		if (!(landingMode && shouldRender)) return;
 
 		const pick = () => {
-			const questions = shuffleArray([...ALL_QUESTIONS]).slice(0, 2);
-			setRandomQuestions([...questions, 'Just put the resume in the bag']);
+			const questions = shuffleArray([...LANDING_ROTATING_SUGGESTION_CHIP_QUESTIONS]).slice(0, 2);
+			setRandomQuestions([...questions, LANDING_FIXED_SUGGESTION_CHIP_QUESTION]);
 		};
 
 		// initial pick (no fade-out on first render)
@@ -108,7 +99,6 @@ export function SuggestionChips() {
 			directive,
 			addMessage,
 			setDirective,
-			setDirectiveTheme,
 			setLoading,
 			setPendingClarify,
 			onTextDelta: (delta) => setStreamedText((prev) => prev + delta),

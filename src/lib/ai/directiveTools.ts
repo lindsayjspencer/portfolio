@@ -3,6 +3,7 @@ import { tool } from 'ai';
 import { getThemeNames, type ThemeName } from '~/lib/themes';
 
 export const DEFAULT_THEME: ThemeName = 'cold';
+const Theme = z.enum(getThemeNames() as [ThemeName, ...ThemeName[]]);
 
 const variantDirectiveModes = ['timeline', 'projects', 'skills', 'values', 'compare'] as const;
 
@@ -18,6 +19,9 @@ const Base = {
 		})
 		.optional(),
 };
+const ToolTheme = {
+	theme: Theme.optional(),
+};
 
 export const timelineDirectiveSchema = z.object({
 	...Base,
@@ -25,8 +29,8 @@ export const timelineDirectiveSchema = z.object({
 });
 export const timelineDirective = tool({
 	description:
-		'Show a timeline view (career, projects, or skills). User-facing narration must be streamed, not included here.',
-	inputSchema: timelineDirectiveSchema,
+		'Show a timeline view (career, projects, or skills). Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+	inputSchema: timelineDirectiveSchema.extend(ToolTheme),
 });
 
 export const projectsDirectiveSchema = z.object({
@@ -36,8 +40,9 @@ export const projectsDirectiveSchema = z.object({
 	showMetrics: z.boolean().default(true),
 });
 export const projectsDirective = tool({
-	description: 'Show projects view. User-facing narration must be streamed, not included here.',
-	inputSchema: projectsDirectiveSchema,
+	description:
+		'Show projects view. Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+	inputSchema: projectsDirectiveSchema.extend(ToolTheme),
 });
 
 export const skillsDirectiveSchema = z.object({
@@ -48,8 +53,8 @@ export const skillsDirectiveSchema = z.object({
 });
 export const skillsDirective = tool({
 	description:
-		'Show skills view (technical clusters, soft clusters, or matrix). User-facing narration must be streamed, not included here.',
-	inputSchema: skillsDirectiveSchema,
+		'Show skills view (technical clusters, soft clusters, or matrix). Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+	inputSchema: skillsDirectiveSchema.extend(ToolTheme),
 });
 
 export const valuesDirectiveSchema = z.object({
@@ -58,8 +63,9 @@ export const valuesDirectiveSchema = z.object({
 	emphasizeStories: z.boolean().optional(),
 });
 export const valuesDirective = tool({
-	description: 'Show values view. User-facing narration must be streamed, not included here.',
-	inputSchema: valuesDirectiveSchema,
+	description:
+		'Show values view. Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+	inputSchema: valuesDirectiveSchema.extend(ToolTheme),
 });
 
 export const compareDirectiveSchema = z.object({
@@ -70,8 +76,9 @@ export const compareDirectiveSchema = z.object({
 	showOverlap: z.boolean().default(true),
 });
 export const compareDirective = tool({
-	description: 'Show compare view (skills/projects). User-facing narration must be streamed, not included here.',
-	inputSchema: compareDirectiveSchema,
+	description:
+		'Show compare view (skills/projects). Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+	inputSchema: compareDirectiveSchema.extend(ToolTheme),
 });
 
 export const exploreDirectiveSchema = z.object({
@@ -79,8 +86,9 @@ export const exploreDirectiveSchema = z.object({
 	filterTags: z.array(z.string()).optional(),
 });
 export const exploreDirective = tool({
-	description: 'Show explore view. Optionally filter by tags. User-facing narration must be streamed, not included here.',
-	inputSchema: exploreDirectiveSchema,
+	description:
+		'Show explore view. Optionally filter by tags and optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+	inputSchema: exploreDirectiveSchema.extend(ToolTheme),
 });
 
 export const landingDirectiveSchema = z.object({
@@ -91,8 +99,9 @@ export const resumeDirectiveSchema = z.object({
 	...Base,
 });
 export const resumeDirective = tool({
-	description: 'Open resume view. User-facing narration must be streamed, not included here.',
-	inputSchema: resumeDirectiveSchema,
+	description:
+		'Open resume view. Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+	inputSchema: resumeDirectiveSchema.extend(ToolTheme),
 });
 
 export type TimelineDirective = z.infer<typeof timelineDirectiveSchema>;
@@ -248,8 +257,3 @@ export function withDirectiveTheme(directive: Directive, theme: ThemeName): Dire
 		theme,
 	};
 }
-
-export const changeThemeTool = tool({
-	description: 'Change the current directive theme without changing the current view.',
-	inputSchema: z.object({ theme: z.enum(getThemeNames() as [ThemeName, ...ThemeName[]]) }),
-});

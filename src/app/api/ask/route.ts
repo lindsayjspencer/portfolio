@@ -1,55 +1,23 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { smoothStream, streamText } from 'ai';
-import { clarifyTool, type ClarifyPayload } from '~/lib/ai/clarifyTool';
+import type { ClarifyPayload } from '~/lib/ai/clarifyTool';
 import { askRequestBodySchema } from '~/lib/ai/ask-contract';
-import {
-	DEFAULT_THEME,
-	changeThemeTool,
-	compareDirective,
-	exploreDirective,
-	projectsDirective,
-	resumeDirective,
-	skillsDirective,
-	timelineDirective,
-	type Directive,
-	valuesDirective,
-} from '~/lib/ai/directiveTools';
-import { validateUrlDirective } from '~/utils/urlState';
+import { DEFAULT_THEME, type Directive } from '~/lib/ai/directiveTools';
 import { langfuse } from '~/server/langfuse';
-import { generalModel } from '~/server/model';
-import { ASK_SYSTEM_PROMPT, buildAskMessages } from '~/server/ask/prompt';
+import { GENERAL_MODEL_ID, generalModel } from '~/server/model';
+import {
+	buildAskCallOptions,
+	getClarifyFallbackToolCall,
+	isDirectiveToolName,
+	toDirectiveFromToolCall,
+} from '~/server/ask/runtime';
+import { toAskUsageSummary, toLangfuseUsageDetails } from '~/server/ask/usage';
 
 const encoder = new TextEncoder();
 
-const directiveToolNames = [
-	'timelineDirective',
-	'projectsDirective',
-	'skillsDirective',
-	'valuesDirective',
-	'compareDirective',
-	'exploreDirective',
-	'resumeDirective',
-] as const;
-
-type DirectiveToolName = (typeof directiveToolNames)[number];
-
 function sseEvent(type: string, data: unknown): Uint8Array {
 	return encoder.encode(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
-}
-
-function isDirectiveToolName(toolName: string): toolName is DirectiveToolName {
-	return directiveToolNames.includes(toolName as DirectiveToolName);
-}
-
-function toDirective(toolName: DirectiveToolName, input: unknown, theme: Directive['theme']): Directive | null {
-	const candidate = {
-		mode: toolName.replace('Directive', ''),
-		theme,
-		data: input,
-	};
-	const validated = validateUrlDirective(candidate);
-	return validated ? (validated as Directive) : null;
 }
 
 function getErrorMessage(error: unknown): string {
@@ -95,30 +63,22 @@ export async function POST(req: Request) {
 
 	const { messages, currentDirective } = parsedBody.data;
 	const trace = langfuse.trace({ id: randomUUID(), name: 'ask-stream' });
+	const askCallOptions = buildAskCallOptions({
+		model: generalModel,
+		messages,
+		currentDirective,
+	});
+	const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')?.content;
+
+	if (latestUserMessage) {
+		console.log('[ask-debug] user:', latestUserMessage);
+	}
 
 	// This is the main cost boundary for the route. If you change deployment/platform-level
 	// protection later, make sure abusive traffic is still stopped before `streamText(...)`
 	// is reached, because everything below can spend model tokens and hold open an SSE stream.
 	const result = streamText({
-		model: generalModel,
-		system: ASK_SYSTEM_PROMPT,
-		messages: buildAskMessages(messages, currentDirective),
-		tools: {
-			timelineDirective,
-			projectsDirective,
-			skillsDirective,
-			valuesDirective,
-			compareDirective,
-			exploreDirective,
-			resumeDirective,
-			clarify: clarifyTool,
-			changeTheme: changeThemeTool,
-		},
-		toolChoice: 'auto',
-		experimental_telemetry: {
-			isEnabled: true,
-			metadata: { langfuseTraceId: trace.id, langfuseUpdateParent: false },
-		},
+		...askCallOptions,
 		experimental_transform: [
 			smoothStream({
 				delayInMs: 30,
@@ -138,25 +98,23 @@ export async function POST(req: Request) {
 				for await (const part of result.fullStream) {
 					if (part.type === 'text-delta') {
 						streamedText += part.text;
+						console.log('[ask-debug] text:', part.text);
 						safeEnqueue(controller, sseEvent('text', { delta: part.text }));
 						continue;
 					}
 
 					if (part.type === 'tool-call') {
 						toolCalls.push({ name: part.toolName, input: part.input });
+						console.log('[ask-debug] tool-call:', part.toolName, part.input);
 
 						if (isDirectiveToolName(part.toolName)) {
-							const directive = toDirective(part.toolName, part.input, activeTheme);
+							const directive = toDirectiveFromToolCall(part.toolName, part.input, activeTheme);
 							if (directive) {
+								activeTheme = directive.theme;
 								safeEnqueue(controller, sseEvent('directive', directive));
 							}
 						} else if (part.toolName === 'clarify') {
 							safeEnqueue(controller, sseEvent('clarify', part.input as ClarifyPayload));
-						} else if (part.toolName === 'changeTheme') {
-							const nextTheme =
-								(part.input as { theme?: Directive['theme'] } | null | undefined)?.theme ?? activeTheme;
-							activeTheme = nextTheme;
-							safeEnqueue(controller, sseEvent('changeTheme', part.input));
 						}
 
 						continue;
@@ -172,7 +130,35 @@ export async function POST(req: Request) {
 				safeEnqueue(controller, sseEvent('error', { message: streamError }));
 			}
 
+			const fallbackToolCall = getClarifyFallbackToolCall({
+				toolCalls: toolCalls.map((call) => ({ toolName: call.name, input: call.input })),
+				currentDirective,
+			});
+			if (fallbackToolCall) {
+				toolCalls.push({ name: fallbackToolCall.toolName, input: fallbackToolCall.input });
+				const fallbackDirective = toDirectiveFromToolCall(
+					'exploreDirective',
+					fallbackToolCall.input,
+					activeTheme,
+				);
+				if (fallbackDirective) {
+					activeTheme = fallbackDirective.theme;
+					safeEnqueue(controller, sseEvent('directive', fallbackDirective));
+				}
+			}
+
 			safeEnqueue(controller, sseEvent('done', { ok: streamError === null }));
+
+			let usageSummary: ReturnType<typeof toAskUsageSummary> | null = null;
+			let usageDetails: Record<string, number> | undefined;
+
+			try {
+				const totalUsage = await result.totalUsage;
+				usageSummary = toAskUsageSummary(totalUsage);
+				usageDetails = toLangfuseUsageDetails(totalUsage);
+			} catch (usageError) {
+				console.error('Failed to resolve ask-stream usage:', usageError);
+			}
 
 			const inputPayload = {
 				messages,
@@ -182,19 +168,21 @@ export async function POST(req: Request) {
 				toolCalls,
 				streamedText,
 				streamError,
+				usage: usageSummary,
 			};
 
 			try {
 				trace.update({
 					input: inputPayload,
 					output: outputPayload,
-					metadata: { model: 'gemini-2.5-flash' },
+					metadata: { model: GENERAL_MODEL_ID },
 				});
 				trace.generation({
 					name: 'portfolio-ask-stream',
-					model: 'gemini-2.5-flash',
+					model: GENERAL_MODEL_ID,
 					input: inputPayload,
 					output: outputPayload,
+					usageDetails,
 				});
 				await langfuse.flushAsync();
 			} catch (telemetryError) {

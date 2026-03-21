@@ -8,6 +8,8 @@
 		"check": "next lint && tsc --noEmit",
 		"dev": "next dev --turbo",
 		"evals": "evalite watch",
+		"evals:run": "evalite",
+		"evals:serve": "evalite serve",
 		"lint": "next lint",
 		"lint:fix": "next lint --fix",
 		"preview": "next build && next start",
@@ -23,7 +25,7 @@
 		"generate-themes:help": "tsx scripts/generate-themes.ts --help"
 	},
 	"dependencies": {
-		"@ai-sdk/google": "^2.0.62",
+		"@ai-sdk/openai": "^3.0.47",
 		"@opentelemetry/api-logs": "^0.203.0",
 		"@opentelemetry/instrumentation": "^0.203.0",
 		"@opentelemetry/sdk-logs": "^0.203.0",
@@ -31,7 +33,7 @@
 		"@t3-oss/env-nextjs": "^0.10.1",
 		"@tippyjs/react": "^4.2.6",
 		"@vercel/otel": "^1.14.0",
-		"ai": "^5.0.155",
+		"ai": "^6.0.134",
 		"colord": "^2.9.3",
 		"d3-force-3d": "^3.0.6",
 		"langfuse": "^3.38.6",
@@ -43,6 +45,7 @@
 		"react-granular-store": "^0.1.2",
 		"react-tree-stream": "^1.2.0",
 		"sass": "1.77.8",
+		"tippy.js": "^6.3.7",
 		"zod": "^3.25.76",
 		"zustand": "^5.0.12"
 	},
@@ -57,14 +60,14 @@
 		"dotenv": "^16.6.1",
 		"eslint": "^8.57.1",
 		"eslint-config-next": "^14.2.35",
-		"evalite": "^0.11.6",
+		"evalite": "1.0.0-beta.16",
 		"jsdom": "^26.1.0",
 		"lz-string": "^1.5.0",
 		"prettier": "^3.8.1",
 		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
 		"vite-tsconfig-paths": "^5.1.4",
-		"vitest": "^3.2.4"
+		"vitest": "^4.1.0"
 	},
 	"ct3aMetadata": {
 		"initVersion": "7.38.1"

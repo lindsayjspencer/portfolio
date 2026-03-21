@@ -1,15 +1,12 @@
 import { z } from 'zod';
 import type { ClarifyPayload } from './ai/clarifyTool';
 import type { Directive } from './ai/directiveTools';
-import type { ThemeName } from './themes';
-import { getThemeNames } from './themes';
 import { validateUrlDirective } from '~/utils/urlState';
 
 export type AskStreamEvent =
 	| { type: 'text'; delta: string }
 	| { type: 'directive'; directive: Directive }
 	| { type: 'clarify'; payload: ClarifyPayload }
-	| { type: 'changeTheme'; theme: ThemeName }
 	| { type: 'error'; message: string }
 	| { type: 'done'; ok: boolean };
 
@@ -25,9 +22,6 @@ const clarifyEventSchema = z
 		timeoutSec: z.number().optional(),
 	})
 	.strict();
-const changeThemeEventSchema = z.object({
-	theme: z.enum(getThemeNames() as [ThemeName, ...ThemeName[]]),
-});
 const errorEventSchema = z.object({ message: z.string() }).strict();
 const doneEventSchema = z.object({ ok: z.boolean().optional() }).passthrough();
 
@@ -71,10 +65,6 @@ export function parseAskSseBlock(block: string): AskStreamEvent | null {
 		case 'clarify': {
 			const parsed = clarifyEventSchema.safeParse(parseJson());
 			return parsed.success ? { type: 'clarify', payload: parsed.data } : null;
-		}
-		case 'changeTheme': {
-			const parsed = changeThemeEventSchema.safeParse(parseJson());
-			return parsed.success ? { type: 'changeTheme', theme: parsed.data.theme } : null;
 		}
 		case 'error': {
 			const parsed = errorEventSchema.safeParse(parseJson());

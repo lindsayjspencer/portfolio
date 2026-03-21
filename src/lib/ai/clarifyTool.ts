@@ -12,7 +12,7 @@ const clarifySchema = z.object({
 });
 export const clarifyTool = tool({
 	description:
-		'Ask the user a clarifying question and wait for their answer. User-facing question text must be streamed, not included here.',
+		'MANDATORY when the user request is ambiguous or could map to multiple views. Call this tool instead of asking the question only in plain text. User-facing question text must be streamed, not included here. The tool call is what creates the interactive clarify UI.',
 	inputSchema: clarifySchema,
 });
 

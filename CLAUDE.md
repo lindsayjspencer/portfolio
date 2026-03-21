@@ -37,7 +37,7 @@ This is an AI-powered portfolio application built with Next.js App Router. The U
 - page-style views like projects, values evidence, and resume
 - a chat interface that streams narration while the model emits structured UI directives
 
-The current default chat model is Google Gemini 2.5 Flash, configured in [src/server/model/index.ts](./src/server/model/index.ts).
+The current default chat model is OpenAI GPT-4.1 mini, configured in [src/server/model/index.ts](./src/server/model/index.ts).
 
 ## Current Request / Response Flow
 
@@ -243,7 +243,7 @@ Environment validation is in [`src/env.js`](./src/env.js).
 
 Notable server env vars:
 
-- `GOOGLE_GENERATIVE_AI_API_KEY`
+- `OPENAI_API_KEY`
 - `LANGFUSE_SECRET_KEY`
 - `LANGFUSE_PUBLIC_KEY`
 - `LANGFUSE_BASEURL`

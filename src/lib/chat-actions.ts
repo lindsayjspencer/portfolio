@@ -1,6 +1,6 @@
 import type { ClarifyPayload } from './ai/clarifyTool';
 import type { AskRequestBody, AskRequestMessage } from './ai/ask-contract';
-import { withDirectiveTheme, type Directive } from './ai/directiveTools';
+import type { Directive } from './ai/directiveTools';
 import type { ChatMessage } from './PortfolioStore';
 import { parseAskSseBlock } from './askStream';
 
@@ -12,7 +12,6 @@ export interface ChatSubmitParams {
 	// Store actions
 	addMessage: (message: Omit<ChatMessage, 'id'>) => void;
 	setDirective: (directive: Directive) => void;
-	setDirectiveTheme: (theme: Directive['theme']) => void;
 	// setNarrative removed; narration is streamed as assistant messages only
 	setLoading: (loading: boolean) => void;
 	setPendingClarify?: (payload: ClarifyPayload | undefined) => void;
@@ -28,7 +27,6 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 		directive,
 		addMessage,
 		setDirective,
-		setDirectiveTheme,
 		setLoading,
 		setPendingClarify,
 		onTextDelta,
@@ -125,10 +123,6 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 					return;
 				case 'clarify':
 					setPendingClarify?.(event.payload);
-					return;
-				case 'changeTheme':
-					activeDirective = withDirectiveTheme(activeDirective, event.theme);
-					setDirectiveTheme(event.theme);
 					return;
 				case 'error':
 					console.warn('Ask stream error:', event.message);
