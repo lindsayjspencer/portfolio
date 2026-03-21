@@ -1,6 +1,9 @@
 import type { useTheme } from '~/contexts/theme-context';
+import { lato } from '~/lib/fonts';
 import type { ExtendedNodeObject, ForceDirectedGraphNode, AnchorNode } from './Common';
 import { isAnchorNode } from './Common';
+
+const latoFontFamily = `${lato.style.fontFamily}, sans-serif`;
 
 // Type definitions for drawing utilities
 interface GraphNodeThemeSet {
@@ -37,6 +40,27 @@ interface CustomNodeSettings {
 	isSelected: boolean;
 }
 
+type RendererNode<TType extends ForceDirectedGraphNode['type']> = Extract<ForceDirectedGraphNode, { type: TType }> & {
+	x: number;
+	y: number;
+	backgroundDimensions: {
+		width: number;
+		height: number;
+	};
+};
+
+type RoleNodeSettings = Omit<CustomNodeSettings, 'node'> & {
+	node: RendererNode<'role'>;
+};
+
+type SkillNodeSettings = Omit<CustomNodeSettings, 'node'> & {
+	node: RendererNode<'skill'>;
+};
+
+type ProjectNodeSettings = Omit<CustomNodeSettings, 'node'> & {
+	node: RendererNode<'project'>;
+};
+
 // Internal types for shared functionality
 interface NodeDimensions {
 	scale: (value: number) => number;
@@ -58,6 +82,22 @@ interface NodeLayout {
 }
 
 export class DrawingUtils {
+	private static getLatoFont(size: number): string {
+		return `normal ${size}px ${latoFontFamily}`;
+	}
+
+	private static isRoleNodeSettings(settings: CustomNodeSettings): settings is RoleNodeSettings {
+		return settings.node.type === 'role';
+	}
+
+	private static isSkillNodeSettings(settings: CustomNodeSettings): settings is SkillNodeSettings {
+		return settings.node.type === 'skill';
+	}
+
+	private static isProjectNodeSettings(settings: CustomNodeSettings): settings is ProjectNodeSettings {
+		return settings.node.type === 'project';
+	}
+
 	/**
 	 * Calculates common node dimensions based on global scale and selection state
 	 */
@@ -484,7 +524,7 @@ export class DrawingUtils {
 		hasHighlights = false,
 	) => {
 		const { node, themeColors, isSelected } = settings;
-		const { x, y, itemName, type } = node;
+		const { x, y, itemName } = node;
 
 		const calculatedTheme = DrawingUtils.getTheme(node, themeColors, node.isHighlighted, hasHighlights);
 		const currentStyle = isSelected
@@ -510,15 +550,15 @@ export class DrawingUtils {
 			// (default rendering code below handles this)
 		} else {
 			// --- Handle type-specific rendering for highlighted nodes or when no highlights exist ---
-			if (type === 'role') {
+			if (DrawingUtils.isRoleNodeSettings(settings)) {
 				return DrawingUtils.drawRoleNode(ctx, settings, currentStyle, calculatedTheme, dimensions);
 			}
 
-			if (type === 'skill') {
+			if (DrawingUtils.isSkillNodeSettings(settings)) {
 				return DrawingUtils.drawSkillNode(ctx, settings, currentStyle, calculatedTheme, dimensions);
 			}
 
-			if (type === 'project') {
+			if (DrawingUtils.isProjectNodeSettings(settings)) {
 				return DrawingUtils.drawProjectNode(ctx, settings, currentStyle, calculatedTheme, dimensions);
 			}
 		}
@@ -527,7 +567,7 @@ export class DrawingUtils {
 		const height = dimensions.scale(25);
 
 		// Calculate text width
-		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
 		const nameTextWidth = ctx.measureText(itemName).width;
 		const totalWidth =
 			dimensions.padding + dimensions.iconSize + dimensions.padding + nameTextWidth + dimensions.padding;
@@ -552,7 +592,7 @@ export class DrawingUtils {
 		// Draw text
 		DrawingUtils.setupTextRendering(ctx);
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
 		ctx.fillText(itemName, layout.textStartX, y);
 
 		return {
@@ -631,7 +671,7 @@ export class DrawingUtils {
 	 */
 	private static drawRoleNode = (
 		ctx: CanvasRenderingContext2D,
-		settings: CustomNodeSettings,
+		settings: RoleNodeSettings,
 		currentStyle: GraphNodeThemeSet,
 		calculatedTheme: GraphNodeThemeSet,
 		dimensions: NodeDimensions,
@@ -642,10 +682,10 @@ export class DrawingUtils {
 		const height = dimensions.scale(40); // Taller for two lines
 
 		// Text measurements
-		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
 		const titleTextWidth = ctx.measureText(position).width;
 
-		ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
 		const companyTextWidth = ctx.measureText(company).width;
 
 		// Use the wider text to determine node width
@@ -670,14 +710,14 @@ export class DrawingUtils {
 
 		// Role title (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
 		const titleY = y - dimensions.scale(8);
 		ctx.fillText(position, layout.textStartX, titleY);
 
 		// Company name (secondary text)
 		if (company) {
 			ctx.fillStyle = currentStyle.resourceTypeIconColor;
-			ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+			ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
 			const companyY = y + dimensions.scale(8);
 			ctx.fillText(company, layout.textStartX, companyY);
 		}
@@ -708,7 +748,7 @@ export class DrawingUtils {
 	 */
 	private static drawSkillNode = (
 		ctx: CanvasRenderingContext2D,
-		settings: CustomNodeSettings,
+		settings: SkillNodeSettings,
 		currentStyle: GraphNodeThemeSet,
 		calculatedTheme: GraphNodeThemeSet,
 		dimensions: NodeDimensions,
@@ -717,9 +757,9 @@ export class DrawingUtils {
 		const { x, y, itemName } = node;
 
 		// Extract skill-specific properties
-		const level = node.level || 'intermediate';
-		const tags = node.tags || [];
-		const primaryTag = tags[0] || '';
+		const level = node.level ?? 'intermediate';
+		const tags = node.tags ?? [];
+		const primaryTag = tags[0] ?? '';
 
 		const levelDisplay = DrawingUtils.getLevelDisplay(level);
 		const subtitle = primaryTag
@@ -729,10 +769,10 @@ export class DrawingUtils {
 		const height = dimensions.scale(40); // Same as role nodes
 
 		// Text measurements
-		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
 		const skillTextWidth = ctx.measureText(itemName).width;
 
-		ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
 		const subtitleTextWidth = ctx.measureText(subtitle).width;
 
 		// Use the wider text to determine node width
@@ -759,13 +799,13 @@ export class DrawingUtils {
 
 		// Skill name (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
 		const skillY = y - dimensions.scale(8); // Move up for subtitle
 		ctx.fillText(itemName, layout.textStartX, skillY);
 
 		// Level + tag (secondary text)
 		ctx.fillStyle = currentStyle.resourceTypeIconColor;
-		ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
 		const subtitleY = y + dimensions.scale(8);
 		ctx.fillText(subtitle, layout.textStartX, subtitleY);
 
@@ -780,7 +820,7 @@ export class DrawingUtils {
 	 */
 	private static drawProjectNode = (
 		ctx: CanvasRenderingContext2D,
-		settings: CustomNodeSettings,
+		settings: ProjectNodeSettings,
 		currentStyle: GraphNodeThemeSet,
 		calculatedTheme: GraphNodeThemeSet,
 		dimensions: NodeDimensions,
@@ -790,8 +830,8 @@ export class DrawingUtils {
 
 		// Extract project-specific properties
 		const period = node.period;
-		const years = node.years || [];
-		const tags = node.tags || [];
+		const years = node.years;
+		const tags = node.tags ?? [];
 
 		// Format time period
 		const formatTimePeriod = () => {
@@ -800,9 +840,8 @@ export class DrawingUtils {
 				const endYear = period.end === 'present' ? 'Present' : period.end.substring(0, 4);
 				return startYear === endYear ? startYear : `${startYear}-${endYear}`;
 			}
-			if (years.length >= 2) {
+			if (years && years.length >= 2) {
 				const [first, second] = years;
-				// @ts-expect-error
 				return first === second ? first.toString() : `${first}-${second}`;
 			}
 			return '';
@@ -823,10 +862,10 @@ export class DrawingUtils {
 		const height = dimensions.scale(40); // Same as role and skill nodes
 
 		// Text measurements
-		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
 		const projectTextWidth = ctx.measureText(itemName).width;
 
-		ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
 		const subtitleTextWidth = subtitle ? ctx.measureText(subtitle).width : 0;
 
 		// Use the wider text to determine node width
@@ -847,14 +886,14 @@ export class DrawingUtils {
 
 		// Project name (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = `normal ${dimensions.scale(14)}px 'Lato', sans-serif`;
+		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
 		const projectY = subtitle ? y - dimensions.scale(8) : y; // Move up if there's a subtitle
 		ctx.fillText(itemName, layout.textStartX, projectY);
 
 		// Time + tags (secondary text)
 		if (subtitle) {
 			ctx.fillStyle = currentStyle.resourceTypeIconColor;
-			ctx.font = `normal ${dimensions.scale(12)}px 'Lato', sans-serif`;
+			ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
 			const subtitleY = y + dimensions.scale(8);
 			ctx.fillText(subtitle, layout.textStartX, subtitleY);
 		}
@@ -883,7 +922,7 @@ export class DrawingUtils {
 		const radius = dimensions.scale(desired);
 
 		// Choose solid fill colour: prefer explicit tint else themed border colour
-		const fillColor = node.tint || currentStyle.nodeLeftBorder;
+		const fillColor = node.tint ?? currentStyle.nodeLeftBorder;
 
 		ctx.beginPath();
 		ctx.arc(x, y, radius, 0, 2 * Math.PI);

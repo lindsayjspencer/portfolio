@@ -30,6 +30,15 @@ type LinkLocations = {
 	a_alpha: number;
 };
 
+type LinkBuildContext = {
+	canvas: HTMLCanvasElement;
+	gl: GL;
+	positions: Float32Array;
+	velocities: Float32Array;
+	worldX: Float32Array;
+	worldY: Float32Array;
+};
+
 interface Props {
 	bounds: Bounds;
 	starCount?: number;
@@ -195,6 +204,14 @@ function hash01(x: number, y: number) {
 	return n / 0xffffffff;
 }
 
+function readFloat(values: Float32Array, index: number): number {
+	const value = values[index];
+	if (value === undefined) {
+		throw new Error(`Expected Float32Array index ${index} to be defined`);
+	}
+	return value;
+}
+
 const makeParallaxMat3 = (t: DOMMatrix, pt = 0.5, ps = 1.0) => {
 	// Scale: blend toward identity (ps=1 → original scale, ps=0 → no zoom)
 	const a = 1 + (t.a - 1) * ps;
@@ -212,6 +229,7 @@ const makeParallaxMat3 = (t: DOMMatrix, pt = 0.5, ps = 1.0) => {
 
 // Smooth easing function for fade animations
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+const noopRender = (_t?: DOMMatrix) => undefined;
 
 /* =============== Component =============== */
 
@@ -226,6 +244,7 @@ export default function Starfield({
 	startInvisible = false,
 	onReady,
 }: Props) {
+	const { minX: boundsMinX, maxX: boundsMaxX, minY: boundsMinY, maxY: boundsMaxY } = bounds;
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const glRef = useRef<GL | null>(null);
 
@@ -352,7 +371,7 @@ export default function Starfield({
 	}, []);
 
 	/* stable render entry (wrapper & ref) */
-	const renderImplRef = useRef<(t?: DOMMatrix) => void>(() => {});
+	const renderImplRef = useRef<(t?: DOMMatrix) => void>(noopRender);
 	const stableRender = useMemo(() => (t?: DOMMatrix) => renderImplRef.current?.(t), []);
 
 	/* memo bits */
@@ -363,17 +382,17 @@ export default function Starfield({
 
 	const expandedBounds = useMemo(() => {
 		// Expand proportionally so edges fade well off-screen on any viewport
-		const width = bounds.maxX - bounds.minX;
-		const height = bounds.maxY - bounds.minY;
+		const width = boundsMaxX - boundsMinX;
+		const height = boundsMaxY - boundsMinY;
 		const marginX = Math.max(800, width * 0.95);
 		const marginY = Math.max(600, height * 0.95);
 		return {
-			minX: bounds.minX - marginX,
-			maxX: bounds.maxX + marginX,
-			minY: bounds.minY - marginY,
-			maxY: bounds.maxY + marginY,
+			minX: boundsMinX - marginX,
+			maxX: boundsMaxX + marginX,
+			minY: boundsMinY - marginY,
+			maxY: boundsMaxY + marginY,
 		};
-	}, [bounds]);
+	}, [boundsMaxX, boundsMaxY, boundsMinX, boundsMinY]);
 
 	const ensureCanvasSize = useCallback(() => {
 		const canvas = canvasRef.current,
@@ -388,6 +407,32 @@ export default function Starfield({
 			gl.viewport(0, 0, w, h);
 		}
 	}, []);
+
+	const getLinkBuildContext = useCallback((): LinkBuildContext | null => {
+		const canvas = canvasRef.current;
+		const gl = glRef.current;
+		const positions = positionsRef.current;
+		const velocities = velocitiesRef.current;
+
+		if (!canvas || !gl || !positions || !velocities) {
+			return null;
+		}
+
+		if (positions.length !== starCount * 2 || velocities.length !== starCount * 2) {
+			return null;
+		}
+
+		let worldX = worldXRef.current;
+		let worldY = worldYRef.current;
+		if (worldX?.length !== starCount || worldY?.length !== starCount) {
+			worldX = new Float32Array(starCount);
+			worldY = new Float32Array(starCount);
+			worldXRef.current = worldX;
+			worldYRef.current = worldY;
+		}
+
+		return { canvas, gl, positions, velocities, worldX, worldY };
+	}, [starCount]);
 
 	/* ---------- link builder (grid, ~O(n)) ---------- */
 	const buildLinks = useCallback(
@@ -412,26 +457,21 @@ export default function Starfield({
 			const { minX, maxX, minY, maxY } = expandedBounds;
 			const wW = maxX - minX,
 				wH = maxY - minY;
-			const pos = positionsRef.current!,
-				vel = velocitiesRef.current!;
+			const context = getLinkBuildContext();
+			if (!context) return;
+			const { canvas, gl, positions, velocities, worldX, worldY } = context;
 
 			// advance + wrap star positions into expandedBounds (visual torus for points)
-			if (!worldXRef.current || worldXRef.current.length !== starCount) {
-				worldXRef.current = new Float32Array(starCount);
-				worldYRef.current = new Float32Array(starCount);
-			}
-			const wxA = worldXRef.current!,
-				wyA = worldYRef.current!;
 			for (let i = 0; i < starCount; i++) {
-				// @ts-expect-error
-				let x = pos[i * 2] + vel[i * 2] * nowMs * 0.02;
-				// @ts-expect-error
-				let y = pos[i * 2 + 1] + vel[i * 2 + 1] * nowMs * 0.02;
+				const positionIndex = i * 2;
+				let x = readFloat(positions, positionIndex) + readFloat(velocities, positionIndex) * nowMs * 0.02;
+				let y =
+					readFloat(positions, positionIndex + 1) + readFloat(velocities, positionIndex + 1) * nowMs * 0.02;
 				// keep stars inside bounds visually
 				x = minX + ((((x - minX) % wW) + wW) % wW);
 				y = minY + ((((y - minY) % wH) + wH) % wH);
-				wxA[i] = x;
-				wyA[i] = y;
+				worldX[i] = x;
+				worldY[i] = y;
 			}
 
 			// world grid (NO wrap across edges)
@@ -445,13 +485,16 @@ export default function Starfield({
 			const key = (cx: number, cy: number) => cy * nCx + cx;
 			const grid = new Map<number, number[]>();
 			for (let i = 0; i < starCount; i++) {
-				// @ts-expect-error
-				const { cx, cy } = clampIdx(wxA[i], wyA[i]);
+				const { cx, cy } = clampIdx(readFloat(worldX, i), readFloat(worldY, i));
 				const k = key(cx, cy);
-				(grid.get(k) ?? grid.set(k, []).get(k)!)!.push(i);
+				const bucket = grid.get(k);
+				if (bucket) {
+					bucket.push(i);
+				} else {
+					grid.set(k, [i]);
+				}
 			}
 
-			const canvas = canvasRef.current!;
 			const toScreen = (x: number, y: number) => ({
 				x: parallaxTransform.a * x + parallaxTransform.c * y + parallaxTransform.e,
 				y: parallaxTransform.b * x + parallaxTransform.d * y + parallaxTransform.f,
@@ -462,7 +505,7 @@ export default function Starfield({
 			};
 
 			const maxD2 = worldRadius * worldRadius;
-			const offsets = [-1, 0, 1];
+			const offsets = [-1, 0, 1] as const;
 			const verts: number[] = [];
 
 			for (let cy = 0; cy < nCy; cy++) {
@@ -470,15 +513,12 @@ export default function Starfield({
 					const base = grid.get(key(cx, cy));
 					if (!base) continue;
 
-					for (let p = 0; p < base.length; p++) {
-						const i = base[p];
-						// @ts-expect-error
-						const xi = wxA[i],
-							// @ts-expect-error
-							yi = wyA[i];
+					for (const i of base) {
+						const xi = readFloat(worldX, i);
+						const yi = readFloat(worldY, i);
 
-						for (let dy of offsets)
-							for (let dx of offsets) {
+						for (const dy of offsets) {
+							for (const dx of offsets) {
 								const ncx = cx + dx,
 									ncy = cy + dy;
 								// NO wrap across grid edges
@@ -487,16 +527,14 @@ export default function Starfield({
 								const nb = grid.get(key(ncx, ncy));
 								if (!nb) continue;
 
-								for (let q = 0; q < nb.length; q++) {
-									const j = nb[q];
-									// @ts-expect-error
+								for (const j of nb) {
 									if (j <= i) continue;
 
 									// plain world deltas (NO torus)
-									// @ts-expect-error
-									const dxw = wxA[j] - xi;
-									// @ts-expect-error
-									const dyw = wyA[j] - yi;
+									const xj = readFloat(worldX, j);
+									const yj = readFloat(worldY, j);
+									const dxw = xj - xi;
+									const dyw = yj - yi;
 									const d2 = dxw * dxw + dyw * dyw;
 									if (d2 > maxD2) continue;
 
@@ -506,25 +544,26 @@ export default function Starfield({
 									if (a < alphaMin) continue;
 
 									// optional draw-only screen cull
-									// @ts-expect-error
-									if (!onScreen(xi, yi, 0) && !onScreen(wxA[j], wyA[j], 0)) continue;
+									if (!onScreen(xi, yi, 0) && !onScreen(xj, yj, 0)) continue;
 
-									// @ts-expect-error
-									verts.push(xi, yi, a, wxA[j], wyA[j], a);
+									verts.push(xi, yi, a, xj, yj, a);
 								}
 							}
+						}
 					}
 				}
 			}
 
 			// upload (same as your current)
-			const gl = glRef.current!;
-			if (!linkBufRef.current) {
-				linkBufRef.current = gl.createBuffer();
-				gl.bindBuffer(gl.ARRAY_BUFFER, linkBufRef.current);
+			let linkBuffer = linkBufRef.current;
+			if (!linkBuffer) {
+				linkBuffer = gl.createBuffer();
+				if (!linkBuffer) return;
+				linkBufRef.current = linkBuffer;
+				gl.bindBuffer(gl.ARRAY_BUFFER, linkBuffer);
 				gl.bufferData(gl.ARRAY_BUFFER, 4, gl.DYNAMIC_DRAW);
 			} else {
-				gl.bindBuffer(gl.ARRAY_BUFFER, linkBufRef.current);
+				gl.bindBuffer(gl.ARRAY_BUFFER, linkBuffer);
 			}
 			const f32 = new Float32Array(verts);
 			const currentBytes = gl.getBufferParameter(gl.ARRAY_BUFFER, gl.BUFFER_SIZE) as number;
@@ -533,7 +572,7 @@ export default function Starfield({
 			if (f32.byteLength) gl.bufferSubData(gl.ARRAY_BUFFER, 0, f32);
 			linkVertCountRef.current = f32.byteLength ? verts.length / 3 : 0;
 		},
-		[expandedBounds, starCount, linkDistance, parallax],
+		[expandedBounds, getLinkBuildContext, starCount, linkDistance, parallax],
 	);
 
 	/* ---------- renderer (updates via renderImplRef) ---------- */
@@ -548,8 +587,8 @@ export default function Starfield({
 			// If no external transform is provided (e.g., LandingView),
 			// center the world-bounds centre in the canvas and scale by DPR so CSS px map to device px.
 			const dpr = Math.max(1, window.devicePixelRatio || 1);
-			const cx = (bounds.minX + bounds.maxX) * 0.5;
-			const cy = (bounds.minY + bounds.maxY) * 0.5;
+			const cx = (boundsMinX + boundsMaxX) * 0.5;
+			const cy = (boundsMinY + boundsMaxY) * 0.5;
 			const t =
 				transform ??
 				new DOMMatrix()
@@ -618,7 +657,8 @@ export default function Starfield({
 			}
 
 			/* stars */
-			const starLoc = starLocRef.current!;
+			const starLoc = starLocRef.current;
+			if (!starLoc) return;
 			gl.useProgram(starProg);
 			const { minX, minY, maxX, maxY } = expandedBounds; // keep same bounds as links
 			gl.uniformMatrix3fv(starLoc.u_matrix, false, mPar);
@@ -649,7 +689,20 @@ export default function Starfield({
 			gl.drawArrays(gl.POINTS, 0, starCount);
 			if (vaoExt && starVaoRef.current) vaoExt.bindVertexArrayOES(null);
 		},
-		[expandedBounds, linkFps, buildLinks, ensureCanvasSize, starCount, colorVec, parallax, currentAlpha],
+		[
+			boundsMaxX,
+			boundsMaxY,
+			boundsMinX,
+			boundsMinY,
+			expandedBounds,
+			linkFps,
+			buildLinks,
+			ensureCanvasSize,
+			starCount,
+			colorVec,
+			parallax,
+			currentAlpha,
+		],
 	);
 
 	// route latest renderer to the stable wrapper
@@ -668,13 +721,13 @@ export default function Starfield({
 		}
 		glRef.current = gl;
 
-		vaoExtRef.current = gl.getExtension('OES_vertex_array_object') as OES_vertex_array_object | null;
+		vaoExtRef.current = gl.getExtension('OES_vertex_array_object');
 
 		const starProg = createProgram(gl, STAR_VS, STAR_FS);
 		const linkProg = createProgram(gl, LINK_VS, LINK_FS);
 		if (!starProg) return;
 		starProgRef.current = starProg;
-		linkProgRef.current = linkProg || null;
+		linkProgRef.current = linkProg ?? null;
 
 		// locations
 		starLocRef.current = {
@@ -728,7 +781,8 @@ export default function Starfield({
 		velocitiesRef.current = vel;
 
 		// static star buffers
-		const starLoc = starLocRef.current!;
+		const starLoc = starLocRef.current;
+		if (!starLoc) return;
 		gl.useProgram(starProg);
 
 		starPosBuf.current = gl.createBuffer();

@@ -10,10 +10,6 @@ interface ResumeViewProps {
 	onRegisterCallbacks?: (callbacks: TransitionCallbacks) => void;
 }
 
-const CustomComponent = ({ children, ...rest }: React.PropsWithChildren<React.ComponentPropsWithoutRef<'section'>>) => (
-	<section {...rest}>{children}</section>
-);
-
 export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: ResumeViewProps) {
 	const [contentOpacity, setContentOpacity] = useState(transitionPhase === 'stable' ? 1 : 0);
 	const [transitionDuration, setTransitionDuration] = useState(400);
@@ -138,9 +134,7 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 
 						<TreeStream as="div" className="role">
 							<TreeStream as="h3">Quality Lead — Codebots</TreeStream>
-							<TreeStream as={CustomComponent} className="meta" speed={1} streamBy="character">
-								Jan 2025 – Present · Brisbane
-							</TreeStream>
+							<TreeStream className="meta">Jan 2025 – Present · Brisbane</TreeStream>
 							<TreeStream as="ul">
 								<TreeStream as="li">
 									Embedded within squads, enhancing testing, observability, and traceability
@@ -330,82 +324,52 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 				<TreeStream as="aside" className="sidebar" autoStart={isDesktop || shouldAnimateAside}>
 					<TreeStream as="section">
 						<TreeStream as="h2">Skills</TreeStream>
-						<TreeStream as="div" className="skill-tags">
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									React
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									TypeScript
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									CSS
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									Three.js
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									Node.js
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									.NET
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									PHP
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									MySQL
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									Postgres
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									Docker
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									Linux
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									LLM Apps
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									C#
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									Shaders
-								</Tag>
-							</TreeStream>
-							<TreeStream as="span">
-								<Tag tone="primary" variant="subtle" shape="rounded">
-									JavaScript
-								</Tag>
-							</TreeStream>
+						<TreeStream as="div" className="skill-tags" speed={1}>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								React
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								TypeScript
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								CSS
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								Three.js
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								Node.js
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								.NET
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								PHP
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								MySQL
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								Postgres
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								Docker
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								Linux
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								LLM Apps
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								C#
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								Shaders
+							</Tag>
+							<Tag tone="primary" variant="subtle" shape="rounded">
+								JavaScript
+							</Tag>
 						</TreeStream>
 					</TreeStream>
 

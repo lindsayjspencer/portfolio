@@ -108,8 +108,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(@types/react@18.3.28)(react@18.3.1)
       react-tree-stream:
-        specifier: ^1.1.0
-        version: 1.1.0(react@18.3.1)
+        specifier: ^1.2.0
+        version: 1.2.0(react@18.3.1)
       rehype-raw:
         specifier: ^7.0.0
         version: 7.0.0
@@ -3539,8 +3539,8 @@ packages:
       '@types/react':
         optional: true
 
-  react-tree-stream@1.1.0:
-    resolution: {integrity: sha512-fOBCDEChJboBs0z2AzD/QmaVFvbhhDhiZqESjnP4qIZrnCHYyt/XHNGpdEnDeyQ/Cqqa6R9n/6Uu5CBPvdqLmg==}
+  react-tree-stream@1.2.0:
+    resolution: {integrity: sha512-djmTV16mD2zRT2SSqFRguy1oIVX5bDvDk0hl1H10hg44UWBXKhtj7WQyq/JV2IzSMfVjp1N6woQhXv4OHKmeiw==}
     peerDependencies:
       react: '>=18.0.0'
 
@@ -8183,7 +8183,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.28
 
-  react-tree-stream@1.1.0(react@18.3.1):
+  react-tree-stream@1.2.0(react@18.3.1):
     dependencies:
       react: 18.3.1
 
