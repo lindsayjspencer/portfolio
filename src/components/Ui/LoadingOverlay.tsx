@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export interface LoadingOverlayProps {
+interface LoadingOverlayProps {
 	/** Whether the overlay is visible */
 	isVisible: boolean;
 	/** Loading message to display */
@@ -72,5 +72,3 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
 		</div>
 	);
 };
-
-export default LoadingOverlay;

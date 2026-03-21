@@ -6,7 +6,7 @@ import { LoadingOverlay } from './LoadingOverlay';
 
 const MATERIAL_FONT_FAMILIES = ['Material Symbols Outlined', 'Material Symbols Rounded'] as const;
 
-export interface IconPreloaderProps {
+interface IconPreloaderProps {
 	/** Children to render after fonts are loaded */
 	children: React.ReactNode;
 	/** Custom loading message */
@@ -83,5 +83,3 @@ export const IconPreloader: React.FC<IconPreloaderProps> = ({
 		</>
 	);
 };
-
-export default IconPreloader;

@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
 import { createProjectsDirective } from '~/lib/ai/directiveTools';
 
-export interface ChatContainerProps {
+interface ChatContainerProps {
 	onSubmitSuccess?: () => void;
 }
 

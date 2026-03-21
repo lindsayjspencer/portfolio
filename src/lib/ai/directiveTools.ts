@@ -4,11 +4,9 @@ import { getThemeNames, type ThemeName } from '~/lib/themes';
 
 export const DEFAULT_THEME: ThemeName = 'cold';
 
-export const variantDirectiveModes = ['timeline', 'projects', 'skills', 'values', 'compare'] as const;
-export const nonVariantDirectiveModes = ['explore', 'landing', 'resume'] as const;
+const variantDirectiveModes = ['timeline', 'projects', 'skills', 'values', 'compare'] as const;
 
-export type VariantDirectiveMode = (typeof variantDirectiveModes)[number];
-export type NonVariantDirectiveMode = (typeof nonVariantDirectiveModes)[number];
+type VariantDirectiveMode = (typeof variantDirectiveModes)[number];
 
 const Base = {
 	highlights: z.array(z.string()).max(12).default([]),
@@ -193,7 +191,7 @@ export function createExploreDirective(
 	};
 }
 
-export function createLandingDirective(
+function createLandingDirective(
 	theme: ThemeName,
 	data?: z.input<typeof landingDirectiveSchema>,
 ): LandingViewDirective {
@@ -219,11 +217,11 @@ export function createResumeDirective(
 	};
 }
 
-export function isVariantDirective(directive: Directive): directive is VariantDirective {
+function isVariantDirective(directive: Directive): directive is VariantDirective {
 	return directiveModeHasVariant(directive.mode);
 }
 
-export function directiveModeHasVariant(mode: DirectiveMode): mode is VariantDirectiveMode {
+function directiveModeHasVariant(mode: DirectiveMode): mode is VariantDirectiveMode {
 	return (variantDirectiveModes as readonly string[]).includes(mode);
 }
 

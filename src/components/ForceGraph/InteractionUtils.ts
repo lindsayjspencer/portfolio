@@ -23,7 +23,6 @@ export class InteractionUtils {
 	 */
 	static handleNodeClick(
 		node: NodeObject<ForceDirectedGraphNode> | null,
-		event: MouseEvent,
 		selectionState: NodeSelectionState,
 		onCanvasInteraction: () => void,
 	) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
-import { themes, type ThemeName, type SemanticColors, type ColorVariation, type SemanticColor } from '~/lib/themes';
+import { themes, type ThemeName, type SemanticColors } from '~/lib/themes';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 
 interface ThemeContextType {
@@ -54,16 +54,4 @@ export function useTheme() {
 		throw new Error('useTheme must be used within a ThemeProvider');
 	}
 	return context;
-}
-
-// Hook for getting theme colors directly
-export function useThemeColors() {
-	const { themeColors } = useTheme();
-	return themeColors;
-}
-
-// Hook for getting a specific color variation
-export function useThemeColor(role: SemanticColor, shade: ColorVariation = '500') {
-	const { themeColors } = useTheme();
-	return themeColors[role][shade];
 }

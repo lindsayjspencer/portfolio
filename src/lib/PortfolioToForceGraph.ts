@@ -67,8 +67,6 @@ function getAnchorPositions(type: 'venn' | 'sideBySide' | 'spectrum'): {
 	return { left: { fx: -220, fy: 0 }, right: { fx: 220, fy: 0 } };
 }
 
-export type SyntheticNode = TimelineNode | TagNode | AnchorNode;
-
 // Timeline-specific types
 type TimelineNode = Node & {
 	type: 'timeline-month';
@@ -238,11 +236,9 @@ function transformToProjectsTimelineGraph(portfolio: Graph): Graph {
 }
 
 // Transform portfolio data to values mindmap view (person → values → evidence + tags)
-function transformToValuesMindmapGraph(portfolio: Graph, directive: Directive): Graph {
+function transformToValuesMindmapGraph(portfolio: Graph): Graph {
 	const me = portfolio.nodes.find((n) => n.type === 'person')!;
 	const values = portfolio.nodes.filter((n) => n.type === 'value');
-	const stories = portfolio.nodes.filter((n) => n.type === 'story');
-	const projects = portfolio.nodes.filter((n) => n.type === 'project');
 
 	const nodes: Node[] = [me, ...values];
 	const edges: Edge[] = [];
@@ -330,7 +326,7 @@ export function portfolioToForceGraph(portfolio: Graph, directive: Directive): F
 			transformedGraph = transformToProjectsTimelineGraph(portfolio);
 		}
 	} else if (directive.mode === 'values' && directive.data.variant === 'mindmap') {
-		transformedGraph = transformToValuesMindmapGraph(portfolio, directive);
+		transformedGraph = transformToValuesMindmapGraph(portfolio);
 	}
 
 	// Create a map for quick node lookup
@@ -371,42 +367,6 @@ export function portfolioToForceGraph(portfolio: Graph, directive: Directive): F
 		nodes,
 		links,
 	};
-}
-
-// Helper to get filtered data based on directive highlights
-export function getFilteredForceGraphData(
-	portfolio: Graph,
-	highlights: string[],
-	directive: Directive,
-): ForceDirectedGraphData {
-	if (!highlights || highlights.length === 0) {
-		return portfolioToForceGraph(portfolio, directive);
-	}
-
-	// Get highlighted nodes and their connected nodes
-	const highlightedNodeIds = new Set(highlights);
-	const connectedNodeIds = new Set<string>();
-
-	// Find all edges connected to highlighted nodes
-	const relevantEdges = portfolio.edges.filter((edge) => {
-		const isRelevant = highlightedNodeIds.has(edge.source) || highlightedNodeIds.has(edge.target);
-		if (isRelevant) {
-			connectedNodeIds.add(edge.source);
-			connectedNodeIds.add(edge.target);
-		}
-		return isRelevant;
-	});
-
-	// Get all relevant nodes (highlighted + connected)
-	const relevantNodes = portfolio.nodes.filter((node) => connectedNodeIds.has(node.id));
-
-	// Create filtered graph
-	const filteredGraph: Graph = {
-		nodes: relevantNodes,
-		edges: relevantEdges,
-	};
-
-	return portfolioToForceGraph(filteredGraph, directive);
 }
 
 // Compare transform functions

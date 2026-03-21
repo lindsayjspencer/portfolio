@@ -18,7 +18,7 @@ export interface SkillCluster {
 	color?: string; // renderer tint
 }
 
-export interface SkillGraph {
+interface SkillGraph {
 	skills: SkillNode[];
 	links: Record<string, number>; // pair->weight mapping
 }
@@ -29,7 +29,7 @@ export interface SkillGraph {
  * Builds skill-skill co-occurrence graph via projects
  * Each project connects all its skills to each other with weight += 1
  */
-export function buildSkillGraph(graph: Graph, skills: SkillNode[]): SkillGraph {
+function buildSkillGraph(graph: Graph, skills: SkillNode[]): SkillGraph {
 	const ids = new Set(skills.map((s) => s.id));
 	const links: Record<string, number> = {};
 
@@ -60,7 +60,7 @@ const DOMAIN_TAGS = ['frontend', 'backend', 'cloud', 'data-viz', 'testing', 'dev
 /**
  * Clusters skills by domain tags (frontend, backend, etc.)
  */
-export function clusterByDomain(skills: SkillNode[]): SkillCluster[] {
+function clusterByDomain(skills: SkillNode[]): SkillCluster[] {
 	const buckets = new Map<string, string[]>();
 
 	for (const s of skills) {
@@ -86,7 +86,7 @@ export function clusterByDomain(skills: SkillNode[]): SkillCluster[] {
  * Simple heuristic clustering based on skill co-occurrence weights
  * Uses iterative centre-based assignment similar to k-means
  */
-export function clusterByCommunity(graph: Graph, skillGraph: SkillGraph): SkillCluster[] {
+function clusterByCommunity(graph: Graph, skillGraph: SkillGraph): SkillCluster[] {
 	const { skills, links } = skillGraph;
 
 	// Build adjacency map
@@ -275,9 +275,8 @@ function isNeighborOfHighlighted(skillId: string, links: Record<string, number>,
  * Creates a skills × projects matrix showing skill usage across projects
  * Used for skills/matrix variant
  */
-export function createSkillMatrix(graph: Graph, data: SkillsDirective): SkillMatrix {
+export function createSkillMatrix(graph: Graph): SkillMatrix {
 	const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
-	// const skills = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
 	const skills = allSkills;
 
 	const projects = filterNodesByType<ProjectNode>(graph.nodes, 'project').sort(

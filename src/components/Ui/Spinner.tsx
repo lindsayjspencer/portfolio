@@ -5,7 +5,7 @@ import { useComponentSize, type ComponentSize } from '~/hooks/UseComponentSize';
 import { useComponentColor, type ComponentColorValue } from '~/hooks/UseComponentColor';
 import './Spinner.scss';
 
-export interface SpinnerProps {
+interface SpinnerProps {
 	/** Size variant or custom size in pixels */
 	size?: ComponentSize;
 	/** Theme color or CSS color value */
@@ -51,5 +51,3 @@ export const Spinner: React.FC<SpinnerProps> = ({
 		/>
 	);
 };
-
-export default Spinner;

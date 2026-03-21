@@ -8,7 +8,7 @@ import type { ThemeName } from './themes';
 
 // ===== Portfolio Graph Types =====
 
-export type NodeType =
+type NodeType =
 	| 'person'
 	| 'role'
 	| 'project'

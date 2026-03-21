@@ -11,11 +11,6 @@ export type SemanticColors = Record<SemanticColor, ColorVariations>;
 
 export type ThemeName = 'cold' | 'adventurous' | 'exciting' | 'elegant' | 'vibrant';
 
-export type Theme = {
-  name: ThemeName;
-  colors: SemanticColors;
-};
-
 export const themes: Record<ThemeName, SemanticColors> = {
   "cold": {
     "primary": {
@@ -448,10 +443,6 @@ export const themes: Record<ThemeName, SemanticColors> = {
     }
   }
 };
-
-export function getTheme(name: ThemeName): SemanticColors {
-  return themes[name];
-}
 
 export function getThemeNames(): ThemeName[] {
   return Object.keys(themes) as ThemeName[];

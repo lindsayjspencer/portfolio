@@ -25,7 +25,3 @@ export default function useResizeObserver<T extends Element>(element?: T): DOMRe
 
 	return rect;
 }
-
-export function useResizeObserverRef<T extends Element>(ref: React.RefObject<T>): DOMRect | undefined {
-	return useResizeObserver(ref.current ?? undefined);
-}

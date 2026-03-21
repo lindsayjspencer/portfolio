@@ -6,7 +6,7 @@ type Variant = 'subtle' | 'solid' | 'outline';
 type Size = 'sm' | 'md';
 type Shape = 'rounded' | 'pill';
 
-export interface TagProps {
+interface TagProps {
 	children: React.ReactNode;
 	className?: string;
 	tone?: Tone; // color family
@@ -29,7 +29,7 @@ function cx(...classes: Array<string | false | null | undefined>) {
 	return classes.filter(Boolean).join(' ');
 }
 
-export function Tag({
+export default function Tag({
 	children,
 	className,
 	tone = 'accent',
@@ -94,5 +94,3 @@ export function Tag({
 
 	return <span {...commonProps}>{children}</span>;
 }
-
-export default Tag;

@@ -328,9 +328,7 @@ const ForceDirectedGraph = forwardRef<ForceDirectedGraphHandle, ForceDirectedGra
 				onNodeHover={(node) =>
 					InteractionUtils.handleNodeHover(node, setHoverNodeId, setTooltipData, getNodeTooltip, forceGraph)
 				}
-				onNodeClick={(node, event) =>
-					InteractionUtils.handleNodeClick(node, event, selectionState, onCanvasInteraction)
-				}
+				onNodeClick={(node) => InteractionUtils.handleNodeClick(node, selectionState, onCanvasInteraction)}
 				onBackgroundClick={() => InteractionUtils.handleBackgroundClick(selectionState, onCanvasInteraction)}
 				onLinkHover={(link) => InteractionUtils.handleLinkHover(link, setHoverLinkId)}
 				onLinkClick={() => InteractionUtils.handleGenericInteraction(onCanvasInteraction)}

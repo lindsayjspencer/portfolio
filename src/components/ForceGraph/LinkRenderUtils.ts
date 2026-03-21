@@ -5,7 +5,7 @@ import { isExtendedNodeObject } from './Common';
 import { DrawingUtils } from './DrawingUtils';
 import { RENDER_CONFIG } from './constants';
 
-export interface LinkColors {
+interface LinkColors {
 	default: string;
 	skill: string; // for 'used', 'learned'
 	project: string; // for 'built'

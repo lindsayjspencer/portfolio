@@ -23,7 +23,7 @@ export type TransitionPhase = 'entering' | 'stable' | 'exiting';
 
 // ===== Data Processing Utility Types =====
 
-export interface SkillCluster {
+interface SkillCluster {
 	id: string; // stable key, e.g. domain name or "cluster-1"
 	label: string; // display label
 	skillIds: string[]; // member skills
@@ -141,7 +141,7 @@ interface SkillsMatrixSnapshot extends BaseDataSnapshot {
 type SkillsDataSnapshot = SkillsTechnicalSnapshot | SkillsSoftSnapshot | SkillsMatrixSnapshot;
 
 // Values DataSnapshots
-export interface ValuesMindmapSnapshot extends BaseDataSnapshot {
+interface ValuesMindmapSnapshot extends BaseDataSnapshot {
 	mode: 'values';
 	variant: 'mindmap';
 	forceGraphData: ForceDirectedGraphData;
@@ -160,7 +160,7 @@ export interface ValuesEvidenceSnapshot extends BaseDataSnapshot {
 type ValuesDataSnapshot = ValuesMindmapSnapshot | ValuesEvidenceSnapshot;
 
 // Compare DataSnapshots
-export interface CompareSkillsSnapshot extends BaseDataSnapshot {
+interface CompareSkillsSnapshot extends BaseDataSnapshot {
 	mode: 'compare';
 	variant: 'skills';
 	forceGraphData: ForceDirectedGraphData;
@@ -170,7 +170,7 @@ export interface CompareSkillsSnapshot extends BaseDataSnapshot {
 	showOverlap: boolean;
 }
 
-export interface CompareProjectsSnapshot extends BaseDataSnapshot {
+interface CompareProjectsSnapshot extends BaseDataSnapshot {
 	mode: 'compare';
 	variant: 'projects';
 	forceGraphData: ForceDirectedGraphData;
@@ -180,7 +180,7 @@ export interface CompareProjectsSnapshot extends BaseDataSnapshot {
 	showOverlap: boolean;
 }
 
-export interface CompareFrontendVsBackendSnapshot extends BaseDataSnapshot {
+interface CompareFrontendVsBackendSnapshot extends BaseDataSnapshot {
 	mode: 'compare';
 	variant: 'frontend-vs-backend';
 	forceGraphData: ForceDirectedGraphData;
@@ -533,7 +533,7 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						mode: 'skills',
 						variant: 'matrix',
 						skills: filteredSkills,
-						matrix: createSkillMatrix(graph, directive.data),
+						matrix: createSkillMatrix(graph),
 						focusLevel: directive.data.focusLevel,
 						clusterBy: directive.data.clusterBy,
 					};

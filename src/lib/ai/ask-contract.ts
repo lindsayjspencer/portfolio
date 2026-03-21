@@ -2,8 +2,8 @@ import { z } from 'zod';
 import type { Directive } from './directiveTools';
 import { validateUrlDirective } from '~/utils/urlState';
 
-export const ASK_MAX_MESSAGES = 40;
-export const ASK_MESSAGE_MAX_LENGTH = 8_000;
+const ASK_MAX_MESSAGES = 40;
+const ASK_MESSAGE_MAX_LENGTH = 8_000;
 
 export const askRequestMessageSchema = z
 	.object({

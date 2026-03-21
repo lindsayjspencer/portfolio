@@ -541,7 +541,7 @@ export class DrawingUtils {
 
 		// --- Handle anchor nodes with special rendering ---
 		if (isAnchorNode(node)) {
-			return DrawingUtils.drawAnchorNode(ctx, node, isSelected, currentStyle, calculatedTheme, dimensions);
+			return DrawingUtils.drawAnchorNode(ctx, node, currentStyle, dimensions);
 		}
 
 		// --- Handle single-line rendering for non-highlighted nodes when highlights exist OR when singleLine is set ---
@@ -910,9 +910,7 @@ export class DrawingUtils {
 	static drawAnchorNode = (
 		ctx: CanvasRenderingContext2D,
 		node: ExtendedNodeObject & AnchorNode & { radius?: number; tint?: string },
-		isSelected: boolean,
 		currentStyle: GraphNodeThemeSet,
-		calculatedTheme: GraphNodeThemeSet,
 		dimensions: NodeDimensions,
 	) => {
 		const { x, y } = node;

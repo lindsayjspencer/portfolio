@@ -90,12 +90,12 @@ export type MaterialIconName =
 	| 'auto_awesome';
 
 // Size variants (alias for consistency)
-export type IconSize = ComponentSize;
+type IconSize = ComponentSize;
 
 // Icon variant (filled vs outlined)
-export type IconVariant = 'outlined' | 'rounded' | 'sharp';
+type IconVariant = 'outlined' | 'rounded' | 'sharp';
 
-export interface MaterialIconProps {
+interface MaterialIconProps {
 	/** Icon name from Material Symbols */
 	name: MaterialIconName;
 	/** Size variant or custom size in pixels */
@@ -171,5 +171,3 @@ export const MaterialIcon: React.FC<MaterialIconProps> = ({
 		</span>
 	);
 };
-
-export default MaterialIcon;
