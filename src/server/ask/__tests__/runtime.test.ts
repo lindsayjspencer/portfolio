@@ -106,7 +106,7 @@ describe('directive planner runtime', () => {
 		expect(options.system).toContain('The UI has already been updated');
 		expect(options.providerOptions).toEqual({
 			openai: {
-				promptCacheKey: 'portfolio-ask-narrator:v1',
+				promptCacheKey: 'portfolio-ask-narrator:v5',
 				promptCacheRetention: 'in_memory',
 			},
 		});
@@ -140,13 +140,15 @@ describe('directive planner runtime', () => {
 
 		expect(options.providerOptions).toEqual({
 			openai: {
-				promptCacheKey: 'portfolio-ask-purpose:v1',
+				promptCacheKey: 'portfolio-ask-purpose:v5',
 				promptCacheRetention: 'in_memory',
 			},
 		});
 		expect(options.toolChoice).toBe('required');
 		expect(Object.keys(options.tools)).toEqual(['allowAnswer', 'askToRephrase', 'askToClarify']);
 		expect(options.system).toContain('Use the recent conversation');
+		expect(options.system).toContain('must be plain text only');
+		expect(options.system).not.toContain('## User-Facing Copy Formatting');
 		expect(options.messages[0]).toMatchObject({ role: 'system' });
 		expect(options.messages.at(-2)).toMatchObject({ role: 'system' });
 		expect(options.messages.at(-1)).toMatchObject({ role: 'user', content: 'Do you have a github?' });

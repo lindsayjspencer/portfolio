@@ -26,6 +26,7 @@ import {
 	isDirectiveToolName,
 	toDirectiveFromToolCall,
 } from './runtime';
+import { emitSyntheticWordStream } from './streaming';
 import { toAskUsageSummary, toLangfuseUsageDetails } from './usage';
 
 const SHORTEN_REPLY =
@@ -168,7 +169,10 @@ export async function orchestrateAsk({
 	});
 
 	if (sizePolicyOutcome.decision === 'ask_to_shorten') {
-		emit({ type: 'text', delta: SHORTEN_REPLY });
+		await emitSyntheticWordStream({
+			text: SHORTEN_REPLY,
+			emit,
+		});
 		emit({ type: 'done', ok: true });
 
 		return {
@@ -239,7 +243,10 @@ export async function orchestrateAsk({
 	};
 
 	if (securityOutcome.decision === 'reject') {
-		emit({ type: 'text', delta: SECURITY_REJECT_REPLY });
+		await emitSyntheticWordStream({
+			text: SECURITY_REJECT_REPLY,
+			emit,
+		});
 		emit({ type: 'done', ok: true });
 
 		return {
@@ -307,7 +314,10 @@ export async function orchestrateAsk({
 	};
 
 	if (purposeOutcome.decision === 'ask_to_rephrase') {
-		emit({ type: 'text', delta: purposeOutcome.text });
+		await emitSyntheticWordStream({
+			text: purposeOutcome.text,
+			emit,
+		});
 		emit({ type: 'done', ok: true });
 
 		return {
@@ -338,7 +348,10 @@ export async function orchestrateAsk({
 	}
 
 	if (purposeOutcome.decision === 'ask_to_clarify') {
-		emit({ type: 'text', delta: purposeOutcome.question });
+		await emitSyntheticWordStream({
+			text: purposeOutcome.question,
+			emit,
+		});
 
 		if (purposeOutcome.suggestedAnswers?.length) {
 			emit({
@@ -476,7 +489,6 @@ export async function orchestrateAsk({
 		for await (const part of narratorResult.fullStream) {
 			if (part.type === 'text-delta') {
 				streamedText += part.text;
-				console.log('[ask-debug] text:', part.text);
 				emit({ type: 'text', delta: part.text });
 				continue;
 			}
@@ -495,6 +507,10 @@ export async function orchestrateAsk({
 	} catch (error) {
 		streamError = getErrorMessage(error);
 		emit({ type: 'error', message: streamError });
+	}
+
+	if (streamedText) {
+		console.log('[ask-debug] text:', streamedText);
 	}
 
 	emit({ type: 'done', ok: streamError === null });

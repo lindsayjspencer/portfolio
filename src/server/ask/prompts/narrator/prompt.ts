@@ -3,16 +3,20 @@ import type { Directive } from '~/lib/ai/directiveTools';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
 import { buildNarrationViewContext } from '~/server/ask/viewContext';
 import { buildAskPromptContexts } from '../shared/context';
-import { CHARACTER_GUIDELINES_SECTION, PROMPT_IDENTITY_SECTION } from '../shared/sections';
+import {
+	CHARACTER_GUIDELINES_SECTION,
+	PROMPT_IDENTITY_SECTION,
+	USER_FACING_COPY_FORMATTING_SECTION,
+} from '../shared/sections';
 import {
 	buildNarrationContextSection,
-	NARRATION_FORMATTING_RULES_SECTION,
 	NARRATOR_MISSION_SECTION,
+	NARRATION_OUTPUT_RULES_SECTION,
 	NARRATOR_RESPONSE_RULES_SECTION,
 	SPECIAL_RESPONSE_RULES_SECTION,
 } from './sections';
 
-export const ASK_NARRATION_PROMPT_CACHE_KEY = 'portfolio-ask-narrator:v1';
+export const ASK_NARRATION_PROMPT_CACHE_KEY = 'portfolio-ask-narrator:v5';
 
 export function createAskNarrationSystemPrompt() {
 	return [
@@ -20,7 +24,8 @@ export function createAskNarrationSystemPrompt() {
 		NARRATOR_MISSION_SECTION,
 		NARRATOR_RESPONSE_RULES_SECTION,
 		SPECIAL_RESPONSE_RULES_SECTION,
-		NARRATION_FORMATTING_RULES_SECTION,
+		USER_FACING_COPY_FORMATTING_SECTION,
+		NARRATION_OUTPUT_RULES_SECTION,
 		CHARACTER_GUIDELINES_SECTION,
 	].join('\n\n');
 }
@@ -29,12 +34,14 @@ const {
 	lindsayProfileContext,
 	narrationPortfolioContext,
 	narrationCaseStudiesContext,
+	narrationProjectLinkContext,
 } = buildAskPromptContexts();
 
 export const ASK_NARRATION_CONTEXT_PROMPT = buildNarrationContextSection({
 	lindsayProfileContext,
 	portfolioContext: narrationPortfolioContext,
 	caseStudiesContext: narrationCaseStudiesContext,
+	projectLinkContext: narrationProjectLinkContext,
 });
 
 export const ASK_NARRATION_SYSTEM_PROMPT = createAskNarrationSystemPrompt();

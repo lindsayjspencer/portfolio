@@ -15,19 +15,27 @@ export const allowAnswerInputSchema = z.object({
 export const askToRephraseInputSchema = z.object({
 	category: purposeRephraseCategorySchema,
 	reason: purposeReasonSchema,
-	text: z.string().min(1).max(240).describe('Short user-facing redirect text.'),
+	text: z
+		.string()
+		.min(1)
+		.max(240)
+		.describe('Short user-facing redirect text. Plain text only. No formatting markers, project tags, links, or line breaks.'),
 });
 
 export const askToClarifyInputSchema = z.object({
 	category: purposeClarifyCategorySchema,
 	reason: purposeReasonSchema,
-	question: z.string().min(1).max(240).describe('Short user-facing clarifying question.'),
+	question: z
+		.string()
+		.min(1)
+		.max(240)
+		.describe('Short user-facing clarifying question. Plain text only. No formatting markers, project tags, links, or line breaks.'),
 	suggestedAnswers: z
 		.array(z.string().min(1).max(120))
 		.min(1)
 		.max(4)
 		.optional()
-		.describe('Optional exact reply suggestions the user can click.'),
+		.describe('Optional exact reply suggestions the user can click. Plain text only. No formatting markers, project tags, links, or line breaks.'),
 });
 
 export const purposeTools = {
@@ -38,12 +46,12 @@ export const purposeTools = {
 	}),
 	askToRephrase: tool({
 		description:
-			'Use when the latest user message is harmless but outside the purpose of this portfolio chat. Provide a short redirect message.',
+			'Use when the latest user message is harmless but outside the purpose of this portfolio chat. Provide a short redirect message in "text". That field is user-facing and must be plain text only.',
 		inputSchema: askToRephraseInputSchema,
 	}),
 	askToClarify: tool({
 		description:
-			'Use when the latest user message is in purpose but still ambiguous after considering recent conversation and the current visible view. Provide a short question and optional reply suggestions.',
+			'Use when the latest user message is in purpose but still ambiguous after considering recent conversation and the current visible view. Provide a short question in "question" and optional reply suggestions. Both "question" and "suggestedAnswers" must be plain text only.',
 		inputSchema: askToClarifyInputSchema,
 	}),
 } as const;

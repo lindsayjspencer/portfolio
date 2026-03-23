@@ -207,6 +207,12 @@ function buildPublicResourcesContext(graph: PortfolioGraph): string {
 		.join('\n');
 }
 
+function buildProjectLinkReferenceContext(graph: PortfolioGraph): string {
+	return sortNodes(graph.nodes.filter((node) => node.type === 'project'))
+		.map((node) => `- ${node.id} => ${node.label}`)
+		.join('\n');
+}
+
 export function buildAskPromptContexts() {
 	return {
 		lindsayProfileContext: LINDSAY_PROFILE_INDEX,
@@ -231,6 +237,7 @@ export function buildAskPromptContexts() {
 		}),
 		plannerCaseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES, true),
 		narrationCaseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES, false),
+		narrationProjectLinkContext: buildProjectLinkReferenceContext(portfolioGraph),
 		purposeCaseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES, false, 6),
 		publicResourcesContext: buildPublicResourcesContext(portfolioGraph),
 	};

@@ -42,3 +42,9 @@ export const PURPOSE_DECISION_RULES_SECTION = `## Decision Rules
 - The "reason" must stay internal-only, short, and factual.
 - Any user-facing "text" or "question" should sound like Lindsay: concise, pragmatic, and naturally steering back to work.
 - Call exactly one tool. Do not call multiple tools. Do not answer the user's main question here in free text.`;
+
+export const PURPOSE_USER_FACING_COPY_RULES_SECTION = `## User-Facing Tool Copy
+- Any user-facing "text" or "question" you place in a tool input must be plain text only.
+- Do not use formatting markers, project tags, links, or line breaks in purpose-stage user-facing copy.
+- Suggested answers must be plain text only. Do not include formatting markers, project tags, links, or line breaks.
+- Keep user-facing copy brief, natural, and work-relevant.`;

@@ -4,10 +4,10 @@ import './ChatContainer.scss';
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { MaterialIcon, Spinner } from '~/components/Ui';
-import TreeStream from 'react-tree-stream';
 import { handleChatSubmit } from '~/lib/chat-actions';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
 import { createProjectsDirective } from '~/lib/ai/directiveTools';
+import { parseNarration, renderNarration } from './narration';
 
 interface ChatContainerProps {
 	onSubmitSuccess?: () => void;
@@ -76,97 +76,27 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 
 	// narrative now comes from directive data; no component seeding needed
 
-	// Emphasis processor: **bold** or *bold* => <strong>, _italic_ => <i>
-	const processEmphasis = useCallback((segment: string, lineIdx: number) => {
-		const out: React.ReactNode[] = [];
-		const regex = /(\*\*([^*]+?)\*\*|\*([^*]+?)\*|_([^_]+?)_)/g;
-		let lastIndex = 0;
-		let match: RegExpExecArray | null;
-		let idx = 0;
-		while ((match = regex.exec(segment)) !== null) {
-			const [full, , gBold2, gBold1, gItalic] = match as unknown as [
-				string,
-				string,
-				string,
-				string,
-				string,
-			];
-			const start = match.index;
-			const end = start + full.length;
-			if (start > lastIndex) out.push(segment.slice(lastIndex, start));
-			const content = gBold2 ?? gBold1 ?? gItalic ?? '';
-			if (gItalic) {
-				out.push(
-					<TreeStream as="i" key={`it-${lineIdx}-${idx++}`}>
-						{content}
-					</TreeStream>,
-				);
-			} else {
-				out.push(
-					<TreeStream as="strong" key={`em-${lineIdx}-${idx++}`}>
-						{content}
-					</TreeStream>,
-				);
-			}
-			lastIndex = end;
-		}
-		if (lastIndex < segment.length) out.push(segment.slice(lastIndex));
-		return out;
-	}, []);
-
-	// Inline node maker: handles <project:...>Label</project> and emphasis inside
-	const makeInlineNodes = useCallback(
-		(text: string, lineIdx: number) => {
-			const nodes: React.ReactNode[] = [];
-			const projectRe = /<project:([a-zA-Z0-9_\-]+)>([\s\S]*?)<\/project>/g;
-			let projLast = 0;
-			let pm: RegExpExecArray | null;
-			let projIdx = 0;
-			while ((pm = projectRe.exec(text)) !== null) {
-				const [full, projectId, label] = pm;
-				if (!projectId) continue;
-				const start = pm.index;
-				const end = start + full.length;
-				if (start > projLast) nodes.push(...processEmphasis(text.slice(projLast, start), lineIdx));
-				nodes.push(
-					<a
-						href="#"
-						className="project-link"
-						onClick={(e) => {
-							e.preventDefault();
-							applyDirective(
-								createProjectsDirective(directive.theme, {
-									variant: 'case-study',
-									highlights: [projectId],
-								}),
-							);
-						}}
-						key={`proj-${lineIdx}-${projIdx++}`}
-					>
-						<TreeStream as="span">{processEmphasis(label ?? '', lineIdx)}</TreeStream>
-					</a>,
-				);
-				projLast = end;
-			}
-			if (projLast < text.length) nodes.push(...processEmphasis(text.slice(projLast), lineIdx));
-			return nodes;
-		},
-		[applyDirective, directive.theme, processEmphasis],
-	);
-
 	// No directive-based narration; all user-facing text is streamed
+
+	const handleProjectClick = useCallback(
+		(projectId: string) => {
+			applyDirective(
+				createProjectsDirective(directive.theme, {
+					variant: 'case-study',
+					highlights: [projectId],
+				}),
+			);
+		},
+		[applyDirective, directive.theme],
+	);
 
 	// Transform streamed text (used during loading and for suggested-answer questions)
 	const streamingNodes = useMemo(() => {
 		if (!visibleAssistantText) return null;
-		const lines = visibleAssistantText.split('\n');
-		const out: React.ReactNode[] = [];
-		lines.forEach((line, i) => {
-			out.push(...makeInlineNodes(line, i));
-			if (i < lines.length - 1) out.push(<br key={`sbr-${i}`} />);
-		});
-		return out;
-	}, [visibleAssistantText, makeInlineNodes]);
+		const narrationMode = isLoading ? 'streaming' : 'final';
+		const parsedNodes = parseNarration(visibleAssistantText, narrationMode);
+		return parsedNodes.length > 0 ? renderNarration(parsedNodes, handleProjectClick) : null;
+	}, [handleProjectClick, isLoading, visibleAssistantText]);
 
 	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();

@@ -101,7 +101,11 @@ describe('purpose prompt', () => {
 		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Default to "allow"');
 		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Only use "ask_to_clarify"');
 		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('available-view rundown');
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('must be plain text only');
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Do not use formatting markers, project tags, links, or line breaks');
 		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Use exactly one tool call in every turn');
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Suggested answers must be plain text only');
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).not.toContain('## User-Facing Copy Formatting');
 		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Call exactly one tool');
 		expect(ASK_PURPOSE_CONTEXT_PROMPT).toContain('## Public Resources');
 		expect(ASK_PURPOSE_CONTEXT_PROMPT).toContain('GitHub');
@@ -148,8 +152,16 @@ describe('narration prompt', () => {
 		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('Never narrate the act of changing');
 		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('Never mention tool names, tool calls');
 		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('keep the reply to 1-3 short sentences');
+		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('## User-Facing Copy Formatting');
+		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('insert an actual line break');
+		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('Do not write the literal characters "\\n"');
+		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('Do not use single asterisks for emphasis');
+		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('Do not use em dashes');
+		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('PROJECT_ID must be the exact project id from context');
 		expect(ASK_NARRATION_SYSTEM_PROMPT).toContain('Prefer one short paragraph over multiple paragraphs');
 		expect(ASK_NARRATION_CONTEXT_PROMPT).toContain('## Portfolio Reference');
+		expect(ASK_NARRATION_CONTEXT_PROMPT).toContain('## Project Link Reference');
+		expect(ASK_NARRATION_CONTEXT_PROMPT).toContain('proj_codebots_modeler');
 		expect(ASK_NARRATION_CONTEXT_PROMPT).toContain('TypeScript');
 		expect(ASK_NARRATION_CONTEXT_PROMPT).not.toContain('skill_typescript');
 	});

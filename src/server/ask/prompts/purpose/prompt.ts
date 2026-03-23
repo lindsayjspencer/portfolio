@@ -8,10 +8,11 @@ import {
 	PURPOSE_DECISION_RULES_SECTION,
 	PURPOSE_MISSION_SECTION,
 	PURPOSE_SCOPE_SECTION,
+	PURPOSE_USER_FACING_COPY_RULES_SECTION,
 	PURPOSE_VIEW_CATALOG_SECTION,
 } from './sections';
 
-export const ASK_PURPOSE_PROMPT_CACHE_KEY = 'portfolio-ask-purpose:v1';
+export const ASK_PURPOSE_PROMPT_CACHE_KEY = 'portfolio-ask-purpose:v5';
 
 function buildPurposeCurrentViewMessage(currentDirective: Directive | null): ModelMessage {
 	return {
@@ -26,6 +27,7 @@ export function createAskPurposeSystemPrompt() {
 		PURPOSE_MISSION_SECTION,
 		PURPOSE_SCOPE_SECTION,
 		PURPOSE_VIEW_CATALOG_SECTION,
+		PURPOSE_USER_FACING_COPY_RULES_SECTION,
 		PURPOSE_DECISION_RULES_SECTION,
 		CHARACTER_GUIDELINES_SECTION,
 	].join('\n\n');

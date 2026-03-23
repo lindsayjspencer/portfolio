@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { parseAskSseBlock } from '~/lib/askStream';
+import { parseAskSseBlock, type AskStreamEvent } from '~/lib/askStream';
 import type { LanguageModelUsage } from 'ai';
 
 const streamTextMock = vi.fn();
@@ -54,6 +54,20 @@ function createStreamResult(parts: unknown[]) {
 		fullStream: createFullStream(parts),
 		totalUsage: Promise.resolve(createUsage()),
 	};
+}
+
+function parseEvents(body: string): AskStreamEvent[] {
+	return body
+		.trim()
+		.split('\n\n')
+		.map((block) => parseAskSseBlock(block))
+		.filter((event): event is NonNullable<typeof event> => event !== null);
+}
+
+function getTextDeltas(events: AskStreamEvent[]): string[] {
+	return events
+		.filter((event): event is Extract<AskStreamEvent, { type: 'text' }> => event.type === 'text')
+		.map((event) => event.delta);
 }
 
 afterEach(() => {
@@ -135,11 +149,7 @@ describe('POST /api/ask', () => {
 		const body = await response.text();
 		expect(generateObjectMock).toHaveBeenCalledTimes(1);
 		expect(generateTextMock).toHaveBeenCalledTimes(1);
-		const events = body
-			.trim()
-			.split('\n\n')
-			.map((block) => parseAskSseBlock(block))
-			.filter((event): event is NonNullable<typeof event> => event !== null);
+		const events = parseEvents(body);
 
 		expect(events[0]).toMatchObject({
 			type: 'directive',
@@ -252,22 +262,17 @@ describe('POST /api/ask', () => {
 		);
 
 		const body = await response.text();
-		const events = body
-			.trim()
-			.split('\n\n')
-			.map((block) => parseAskSseBlock(block))
-			.filter((event): event is NonNullable<typeof event> => event !== null);
+		const events = parseEvents(body);
+		const textDeltas = getTextDeltas(events);
 
 		expect(generateObjectMock).not.toHaveBeenCalled();
 		expect(generateTextMock).not.toHaveBeenCalled();
 		expect(streamTextMock).not.toHaveBeenCalled();
-		expect(events).toEqual([
-			{
-				type: 'text',
-				delta: "That's too much to parse cleanly in one go. Give me one shorter question or a brief summary and I'll answer it.",
-			},
-			{ type: 'done', ok: true },
-		]);
+		expect(textDeltas.length).toBeGreaterThan(1);
+		expect(textDeltas.join('')).toBe(
+			"That's too much to parse cleanly in one go. Give me one shorter question or a brief summary and I'll answer it.",
+		);
+		expect(events.at(-1)).toEqual({ type: 'done', ok: true });
 	});
 
 	it('short-circuits hostile prompts at the security stage', async () => {
@@ -295,22 +300,17 @@ describe('POST /api/ask', () => {
 		);
 
 		const body = await response.text();
-		const events = body
-			.trim()
-			.split('\n\n')
-			.map((block) => parseAskSseBlock(block))
-			.filter((event): event is NonNullable<typeof event> => event !== null);
+		const events = parseEvents(body);
+		const textDeltas = getTextDeltas(events);
 
 		expect(generateObjectMock).toHaveBeenCalledTimes(1);
 		expect(generateTextMock).not.toHaveBeenCalled();
 		expect(streamTextMock).not.toHaveBeenCalled();
-		expect(events).toEqual([
-			{
-				type: 'text',
-				delta: "Nice try. I'm here to talk about my work, not expose hidden instructions or internal wiring. Ask me about my experience, projects, or skills instead.",
-			},
-			{ type: 'done', ok: true },
-		]);
+		expect(textDeltas.length).toBeGreaterThan(1);
+		expect(textDeltas.join('')).toBe(
+			"Nice try. I'm here to talk about my work, not expose hidden instructions or internal wiring. Ask me about my experience, projects, or skills instead.",
+		);
+		expect(events.at(-1)).toEqual({ type: 'done', ok: true });
 	});
 
 	it('short-circuits out-of-scope prompts with a purpose-stage rephrase response and skips planner/narrator', async () => {
@@ -354,22 +354,17 @@ describe('POST /api/ask', () => {
 		);
 
 		const body = await response.text();
-		const events = body
-			.trim()
-			.split('\n\n')
-			.map((block) => parseAskSseBlock(block))
-			.filter((event): event is NonNullable<typeof event> => event !== null);
+		const events = parseEvents(body);
+		const textDeltas = getTextDeltas(events);
 
 		expect(generateObjectMock).toHaveBeenCalledTimes(1);
 		expect(generateTextMock).toHaveBeenCalledTimes(1);
 		expect(streamTextMock).not.toHaveBeenCalled();
-		expect(events).toEqual([
-			{
-				type: 'text',
-				delta: "I'm here to talk about my work and this portfolio. Ask me about projects, skills, or hiring fit.",
-			},
-			{ type: 'done', ok: true },
-		]);
+		expect(textDeltas.length).toBeGreaterThan(1);
+		expect(textDeltas.join('')).toBe(
+			"I'm here to talk about my work and this portfolio. Ask me about projects, skills, or hiring fit.",
+		);
+		expect(events.at(-1)).toEqual({ type: 'done', ok: true });
 	});
 
 	it('short-circuits ambiguous prompts with a clarifying question and suggested answers', async () => {
@@ -421,27 +416,28 @@ describe('POST /api/ask', () => {
 		);
 
 		const body = await response.text();
-		const events = body
-			.trim()
-			.split('\n\n')
-			.map((block) => parseAskSseBlock(block))
-			.filter((event): event is NonNullable<typeof event> => event !== null);
+		const events = parseEvents(body);
+		const textDeltas = getTextDeltas(events);
+		const suggestAnswersIndex = events.findIndex((event) => event.type === 'suggestAnswers');
+		const doneIndex = events.findIndex((event) => event.type === 'done');
+		const lastTextIndex = events.reduce(
+			(lastIndex, event, index) => (event.type === 'text' ? index : lastIndex),
+			-1,
+		);
 
 		expect(generateObjectMock).toHaveBeenCalledTimes(1);
 		expect(generateTextMock).toHaveBeenCalledTimes(1);
 		expect(streamTextMock).not.toHaveBeenCalled();
-		expect(events).toEqual([
-			{
-				type: 'text',
-				delta: 'Do you mean my GitHub profile or a specific project repo?',
+		expect(textDeltas.length).toBeGreaterThan(1);
+		expect(textDeltas.join('')).toBe('Do you mean my GitHub profile or a specific project repo?');
+		expect(suggestAnswersIndex).toBeGreaterThan(lastTextIndex);
+		expect(events[suggestAnswersIndex]).toEqual({
+			type: 'suggestAnswers',
+			payload: {
+				answers: ['Your GitHub profile', 'A specific project repo'],
 			},
-			{
-				type: 'suggestAnswers',
-				payload: {
-					answers: ['Your GitHub profile', 'A specific project repo'],
-				},
-			},
-			{ type: 'done', ok: true },
-		]);
+		});
+		expect(doneIndex).toBeGreaterThan(suggestAnswersIndex);
+		expect(events.at(-1)).toEqual({ type: 'done', ok: true });
 	});
 });
