@@ -8,16 +8,13 @@ export type ExpectedPrimaryDirective = {
 	variant?: string;
 };
 
-export type ExpectedClarifyCall = {
-	slot: string;
-	kind: 'choice' | 'free';
-	options?: string[];
-	multi?: boolean;
+export type ExpectedSuggestedAnswersCall = {
+	answers: string[];
 };
 
 export type AskBehaviorExpectation = {
-	primaryDirective: ExpectedPrimaryDirective | ExpectedPrimaryDirective[];
-	clarify?: ExpectedClarifyCall;
+	primaryDirective?: ExpectedPrimaryDirective | ExpectedPrimaryDirective[];
+	suggestAnswers?: ExpectedSuggestedAnswersCall;
 };
 
 function sameStringArray(left: string[] | undefined, right: string[] | undefined): boolean {
@@ -34,8 +31,12 @@ function sameStringArray(left: string[] | undefined, right: string[] | undefined
 
 function matchesDirective(
 	actual: NormalizedToolCall | undefined,
-	expected: ExpectedPrimaryDirective | ExpectedPrimaryDirective[],
+	expected: ExpectedPrimaryDirective | ExpectedPrimaryDirective[] | undefined,
 ): boolean {
+	if (!expected) {
+		return actual === undefined;
+	}
+
 	if (!actual) {
 		return false;
 	}
@@ -55,24 +56,19 @@ function matchesDirective(
 	});
 }
 
-function matchesClarify(
+function matchesSuggestedAnswers(
 	actual: NormalizedToolCall | undefined,
-	expected: ExpectedClarifyCall | undefined,
+	expected: ExpectedSuggestedAnswersCall | undefined,
 ): boolean {
 	if (!expected) {
 		return actual === undefined;
 	}
 
-	if (!actual || actual.toolName !== 'clarify' || !actual.input) {
+	if (!actual || actual.toolName !== 'suggestAnswers' || !actual.input) {
 		return false;
 	}
 
-	return (
-		actual.input.slot === expected.slot &&
-		actual.input.kind === expected.kind &&
-		actual.input.multi === expected.multi &&
-		sameStringArray(asStringArray(actual.input.options), expected.options)
-	);
+	return sameStringArray(asStringArray(actual.input.answers), expected.answers);
 }
 
 function asStringArray(value: unknown): string[] | undefined {
@@ -90,8 +86,8 @@ export function getPrimaryDirective(toolCalls: NormalizedToolCall[]): Normalized
 	);
 }
 
-export function getClarifyCall(toolCalls: NormalizedToolCall[]): NormalizedToolCall | undefined {
-	return toolCalls.find((call) => call.toolName === 'clarify');
+export function getSuggestAnswersCall(toolCalls: NormalizedToolCall[]): NormalizedToolCall | undefined {
+	return toolCalls.find((call) => call.toolName === 'suggestAnswers');
 }
 
 export function scoreAskBehavior({
@@ -103,10 +99,10 @@ export function scoreAskBehavior({
 }) {
 	const normalizedToolCalls = normalizeAskToolCalls(output.toolCalls);
 	const primaryDirective = getPrimaryDirective(normalizedToolCalls);
-	const clarifyCall = getClarifyCall(normalizedToolCalls);
+	const suggestAnswersCall = getSuggestAnswersCall(normalizedToolCalls);
 	const score =
 		matchesDirective(primaryDirective, expected.primaryDirective) &&
-		matchesClarify(clarifyCall, expected.clarify)
+		matchesSuggestedAnswers(suggestAnswersCall, expected.suggestAnswers)
 			? 1
 			: 0;
 
@@ -114,7 +110,7 @@ export function scoreAskBehavior({
 		score,
 		metadata: {
 			actualPrimaryDirective: primaryDirective,
-			actualClarifyCall: clarifyCall,
+			actualSuggestAnswersCall: suggestAnswersCall,
 		},
 	};
 }

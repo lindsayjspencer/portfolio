@@ -14,7 +14,6 @@ describe('askRequestBodySchema', () => {
 				data: {
 					variant: 'technical',
 					highlights: ['skill_react'],
-					confidence: 0.8,
 				},
 			},
 		});

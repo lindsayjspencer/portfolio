@@ -39,69 +39,44 @@ export class UrlStateTooLargeError extends Error {
 
 const Theme = z.enum(getThemeNames() as [ThemeName, ...ThemeName[]]);
 
-const BaseUrl = {
+const HighlightsOption = {
 	highlights: z.array(z.string()).default([]),
-	confidence: z.number().min(0).max(1).default(0.7),
-	hints: z
-		.object({
-			limit: z.number().int().positive().optional(),
-			sortBy: z.enum(['recency', 'impact', 'alpha']).optional(),
-		})
-		.optional(),
 };
 
-const timelineData = z
-	.object({
-		...BaseUrl,
-		variant: z.enum(['career', 'projects', 'skills']).default('career'),
-	})
-	.passthrough();
+const timelineData = z.object({
+	...HighlightsOption,
+	variant: z.enum(['career', 'projects', 'skills']).default('career'),
+});
 
-const projectsData = z
-	.object({
-		...BaseUrl,
-		variant: z.enum(['grid', 'radial', 'case-study']).default('grid'),
-		pinned: z.array(z.string()).optional(),
-		showMetrics: z.boolean().optional(),
-	})
-	.passthrough();
+const projectsData = z.object({
+	...HighlightsOption,
+	variant: z.enum(['grid', 'radial', 'case-study']).default('grid'),
+	pinned: z.array(z.string()).optional(),
+});
 
-const skillsData = z
-	.object({
-		...BaseUrl,
-		variant: z.enum(['technical', 'soft', 'matrix']).default('technical'),
-		focusLevel: z.enum(['expert', 'advanced', 'intermediate']).optional(),
-		clusterBy: z.enum(['domain', 'recency', 'usage']).optional(),
-	})
-	.passthrough();
+const skillsData = z.object({
+	...HighlightsOption,
+	variant: z.enum(['technical', 'soft', 'matrix']).default('technical'),
+});
 
-const valuesData = z
-	.object({
-		...BaseUrl,
-		variant: z.enum(['mindmap', 'evidence']).default('mindmap'),
-		emphasizeStories: z.boolean().optional(),
-	})
-	.passthrough();
+const valuesData = z.object({
+	...HighlightsOption,
+	variant: z.enum(['mindmap', 'evidence']).default('mindmap'),
+});
 
-const compareData = z
-	.object({
-		...BaseUrl,
-		variant: z.enum(['skills', 'projects', 'frontend-vs-backend']).default('skills'),
-		leftId: z.string(),
-		rightId: z.string(),
-		showOverlap: z.boolean().optional(),
-	})
-	.passthrough();
+const compareData = z.object({
+	...HighlightsOption,
+	variant: z.enum(['skills', 'projects', 'frontend-vs-backend']).default('skills'),
+	leftId: z.string(),
+	rightId: z.string(),
+});
 
-const exploreData = z
-	.object({
-		...BaseUrl,
-		filterTags: z.array(z.string()).optional(),
-	})
-	.passthrough();
+const exploreData = z.object({
+	...HighlightsOption,
+});
 
-const landingData = z.object({ ...BaseUrl }).passthrough();
-const resumeData = z.object({ ...BaseUrl }).passthrough();
+const landingData = z.object({});
+const resumeData = z.object({});
 
 const urlDirectiveSchema = z.discriminatedUnion('mode', [
 	z.object({ mode: z.literal('timeline'), theme: Theme, data: timelineData }),
@@ -146,11 +121,7 @@ export function decodeUrlState(encoded: string): unknown {
 export function validateUrlDirective(data: unknown): UrlDirective | null {
 	const result = urlDirectiveSchema.safeParse(data);
 	if (!result.success) return null;
-
-	const directive = result.data;
-	directive.data.highlights = directive.data.highlights ?? [];
-	directive.data.confidence = directive.data.confidence ?? 0.7;
-	return directive;
+	return result.data;
 }
 
 export function validateUrlState(data: unknown): ValidUrlState | null {

@@ -1,9 +1,7 @@
 import type { LanguageModel } from 'ai';
-import { clarifyTool } from '~/lib/ai/clarifyTool';
+import { suggestAnswersTool } from '~/lib/ai/suggestAnswersTool';
 import {
 	compareDirective,
-	createExploreDirective,
-	DEFAULT_THEME,
 	exploreDirective,
 	projectsDirective,
 	resumeDirective,
@@ -18,17 +16,25 @@ import { validateUrlDirective } from '~/utils/urlState';
 import { ASK_PROMPT_CACHE_KEY, ASK_SYSTEM_PROMPT, buildAskMessages } from './prompt';
 
 export const askTools = {
-	timelineDirective,
-	projectsDirective,
-	skillsDirective,
-	valuesDirective,
-	compareDirective,
-	exploreDirective,
-	resumeDirective,
-	clarify: clarifyTool,
+	showTimelineView: timelineDirective,
+	showProjectsView: projectsDirective,
+	showSkillsView: skillsDirective,
+	showValuesView: valuesDirective,
+	showCompareView: compareDirective,
+	showExploreView: exploreDirective,
+	showResumeView: resumeDirective,
+	suggestAnswers: suggestAnswersTool,
 } as const;
 
 export const directiveToolNames = [
+	'showTimelineView',
+	'showProjectsView',
+	'showSkillsView',
+	'showValuesView',
+	'showCompareView',
+	'showExploreView',
+	'showResumeView',
+	// Legacy aliases kept temporarily so eval code can migrate in a later pass.
 	'timelineDirective',
 	'projectsDirective',
 	'skillsDirective',
@@ -39,9 +45,22 @@ export const directiveToolNames = [
 ] as const;
 
 export type DirectiveToolName = (typeof directiveToolNames)[number];
-export type AskRuntimeToolCall = {
-	toolName: string;
-	input?: unknown;
+
+const directiveToolModeByName: Record<DirectiveToolName, Directive['mode']> = {
+	showTimelineView: 'timeline',
+	showProjectsView: 'projects',
+	showSkillsView: 'skills',
+	showValuesView: 'values',
+	showCompareView: 'compare',
+	showExploreView: 'explore',
+	showResumeView: 'resume',
+	timelineDirective: 'timeline',
+	projectsDirective: 'projects',
+	skillsDirective: 'skills',
+	valuesDirective: 'values',
+	compareDirective: 'compare',
+	exploreDirective: 'explore',
+	resumeDirective: 'resume',
 };
 
 export function isDirectiveToolName(toolName: string): toolName is DirectiveToolName {
@@ -67,7 +86,8 @@ function stripDirectiveToolTheme(input: unknown): unknown {
 		return input;
 	}
 
-	const { theme: _ignoredTheme, ...data } = input;
+	const data = { ...input };
+	delete data.theme;
 	return data;
 }
 
@@ -77,32 +97,12 @@ export function toDirectiveFromToolCall(
 	fallbackTheme: Directive['theme'],
 ): Directive | null {
 	const candidate = {
-		mode: toolName.replace('Directive', ''),
+		mode: directiveToolModeByName[toolName],
 		theme: extractDirectiveTheme(input, fallbackTheme),
 		data: stripDirectiveToolTheme(input),
 	};
 	const validated = validateUrlDirective(candidate);
 	return validated ? (validated as Directive) : null;
-}
-
-export function getClarifyFallbackToolCall({
-	toolCalls,
-	currentDirective,
-}: {
-	toolCalls: AskRuntimeToolCall[];
-	currentDirective: Directive | null;
-}): AskRuntimeToolCall | null {
-	const hasDirective = toolCalls.some((call) => isDirectiveToolName(call.toolName));
-	const hasClarify = toolCalls.some((call) => call.toolName === 'clarify');
-
-	if (hasDirective || !hasClarify) {
-		return null;
-	}
-
-	return {
-		toolName: 'exploreDirective',
-		input: createExploreDirective(currentDirective?.theme ?? DEFAULT_THEME).data,
-	};
 }
 
 export function buildAskCallOptions({

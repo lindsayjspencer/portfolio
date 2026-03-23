@@ -1,27 +1,17 @@
 import { z } from 'zod';
-import type { ClarifyPayload } from './ai/clarifyTool';
+import type { SuggestedAnswersPayload } from './ai/suggestAnswersTool';
 import type { Directive } from './ai/directiveTools';
 import { validateUrlDirective } from '~/utils/urlState';
 
 export type AskStreamEvent =
 	| { type: 'text'; delta: string }
 	| { type: 'directive'; directive: Directive }
-	| { type: 'clarify'; payload: ClarifyPayload }
+	| { type: 'suggestAnswers'; payload: SuggestedAnswersPayload }
 	| { type: 'error'; message: string }
 	| { type: 'done'; ok: boolean };
 
 const textEventSchema = z.object({ delta: z.string() }).strict();
-const clarifyEventSchema = z
-	.object({
-		slot: z.string(),
-		kind: z.enum(['choice', 'free']),
-		options: z.array(z.string()).optional(),
-		multi: z.boolean().optional(),
-		placeholder: z.string().optional(),
-		exampleAnswer: z.string().optional(),
-		timeoutSec: z.number().optional(),
-	})
-	.strict();
+const suggestAnswersEventSchema = z.object({ answers: z.array(z.string()).min(1) }).strict();
 const errorEventSchema = z.object({ message: z.string() }).strict();
 const doneEventSchema = z.object({ ok: z.boolean().optional() }).passthrough();
 
@@ -62,9 +52,9 @@ export function parseAskSseBlock(block: string): AskStreamEvent | null {
 			const directive = validateUrlDirective(parsed);
 			return directive ? { type: 'directive', directive: directive as Directive } : null;
 		}
-		case 'clarify': {
-			const parsed = clarifyEventSchema.safeParse(parseJson());
-			return parsed.success ? { type: 'clarify', payload: parsed.data } : null;
+		case 'suggestAnswers': {
+			const parsed = suggestAnswersEventSchema.safeParse(parseJson());
+			return parsed.success ? { type: 'suggestAnswers', payload: parsed.data } : null;
 		}
 		case 'error': {
 			const parsed = errorEventSchema.safeParse(parseJson());

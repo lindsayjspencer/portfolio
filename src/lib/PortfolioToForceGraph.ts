@@ -6,7 +6,7 @@ import type {
 } from '~/components/ForceGraph/Common';
 import { makeAnchor, linkToAnchor, connectAnchors } from '~/components/ForceGraph/Common';
 import { type Graph, type Node, type Edge, type SkillNode, type ProjectNode } from '~/lib/PortfolioStore';
-import type { Directive, CompareDirective } from './ai/directiveTools';
+import { getDirectiveHighlights, type Directive, type CompareDirective } from './ai/directiveTools';
 
 // Utility to detect mobile layout and adjust anchor positions
 function isMobileLayout(): boolean {
@@ -332,9 +332,7 @@ export function portfolioToForceGraph(portfolio: Graph, directive: Directive): F
 	// Create a map for quick node lookup
 	const nodeMap = new Map(transformedGraph.nodes.map((node) => [node.id, node]));
 
-	// Get highlights from directive
-	const highlights = directive.data.highlights || [];
-	const highlightSet = new Set(highlights);
+	const highlightSet = new Set(getDirectiveHighlights(directive));
 
 	// Transform nodes
 	const nodes: ForceDirectedGraphNode[] = transformedGraph.nodes.map((node) => ({

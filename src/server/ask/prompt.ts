@@ -1,16 +1,45 @@
 import type { ModelMessage } from 'ai';
-import type { Directive } from '~/lib/ai/directiveTools';
+import {
+	directiveSupportsHighlights,
+	getDirectiveVariant,
+	type Directive,
+} from '~/lib/ai/directiveTools';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
 import { buildAskPromptContexts } from './prompt/context';
 import { createAskContextPrompt, createAskSystemPrompt } from './prompt/system';
 
 // Bump this when you make prompt-structure changes and want a clean cache namespace.
-export const ASK_PROMPT_CACHE_KEY = 'portfolio-ask:v2';
+export const ASK_PROMPT_CACHE_KEY = 'portfolio-ask:v6';
+
+function describeCurrentDirective(currentDirective: Directive): string {
+	const parts = [`The current visual view is the ${currentDirective.mode} view`];
+	const variant = getDirectiveVariant(currentDirective);
+
+	if (variant) {
+		parts.push(`using the "${variant}" variant`);
+	}
+
+	parts.push(`with the "${currentDirective.theme}" theme`);
+
+	if (directiveSupportsHighlights(currentDirective) && currentDirective.data.highlights.length > 0) {
+		parts.push(`and highlighted ids ${currentDirective.data.highlights.join(', ')}`);
+	}
+
+	if (currentDirective.mode === 'projects' && currentDirective.data.pinned?.length) {
+		parts.push(`with pinned project ids ${currentDirective.data.pinned.join(', ')}`);
+	}
+
+	if (currentDirective.mode === 'compare') {
+		parts.push(`comparing ${currentDirective.data.leftId} and ${currentDirective.data.rightId}`);
+	}
+
+	return `${parts.join(' ')}.`;
+}
 
 function buildCurrentDirectiveMessage(currentDirective: Directive | null): ModelMessage {
 	const content = currentDirective
-		? `The current visual directive is ${JSON.stringify(currentDirective)}. Use it as the current UI state when deciding whether to change the view.`
-		: 'The current visual directive is the default landing state. Use that as the current UI state.';
+		? `${describeCurrentDirective(currentDirective)} Maintain the UI by choosing exactly one supporting view tool for this turn. If this current view is still the best support for your answer, re-emit the same view instead of asking permission or skipping the view tool.`
+		: 'The current visual view is the default landing screen. Maintain the UI by choosing exactly one supporting view tool for this turn. Landing is not a callable view tool, so choose the closest supporting view for the answer.';
 
 	return { role: 'system', content };
 }

@@ -15,8 +15,6 @@ describe('buildAskMessages', () => {
 				data: {
 					variant: 'grid',
 					highlights: [],
-					confidence: 0.7,
-					showMetrics: true,
 				},
 			},
 		);
@@ -30,7 +28,9 @@ describe('buildAskMessages', () => {
 
 	it('builds a compact behavior prompt and a separate context prompt', () => {
 		expect(ASK_SYSTEM_PROMPT).toContain('You ARE Lindsay Spencer');
-		expect(ASK_SYSTEM_PROMPT).toContain('Every assistant turn MUST emit exactly one primary visual directive tool call');
+		expect(ASK_SYSTEM_PROMPT).toContain('Every turn must include exactly one supporting view tool call');
+		expect(ASK_SYSTEM_PROMPT).toContain('suggestAnswers');
+		expect(ASK_SYSTEM_PROMPT).toContain('showProjectsView');
 		expect(ASK_CONTEXT_PROMPT).toContain('## Portfolio Index');
 	});
 });

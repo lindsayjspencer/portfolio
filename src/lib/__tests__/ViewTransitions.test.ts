@@ -22,30 +22,27 @@ describe('ViewTransitions', () => {
 		expect('variant' in resumeSnapshot).toBe(false);
 	});
 
-	it('filters explore snapshots by tag without inventing a variant', () => {
-		const snapshot = createDataSnapshot(graph, createExploreDirective('cold', { filterTags: ['frontend'] }));
+	it('keeps the full explore snapshot while highlighting requested nodes', () => {
+		const snapshot = createDataSnapshot(graph, createExploreDirective('cold', { highlights: ['skill_react'] }));
 
 		expect(snapshot.mode).toBe('explore');
 		expect('variant' in snapshot).toBe(false);
 		if (snapshot.mode !== 'explore') {
 			throw new Error('Expected explore snapshot');
 		}
-		expect(snapshot.filterTags).toEqual(['frontend']);
-		expect(snapshot.nodes.length).toBeGreaterThan(0);
-		expect(snapshot.nodes.every((node) => node.tags?.includes('frontend') ?? false)).toBe(true);
+		expect(snapshot.nodes.length).toBe(graph.nodes.length);
+		expect(snapshot.forceGraphData.nodes.find((node) => node.id === 'skill_react')?.isHighlighted).toBe(true);
 	});
 
 	it('ignores theme and cosmetic directive fields when deciding transitions', () => {
 		const base = createProjectsDirective('cold', {
 			variant: 'grid',
 			highlights: ['project-a'],
-			showMetrics: true,
 		});
 		const themeOnly = withDirectiveTheme(base, 'elegant');
 		const cosmeticOnly = createProjectsDirective('cold', {
 			variant: 'grid',
 			highlights: ['project-b'],
-			showMetrics: false,
 		});
 
 		expect(structuralSignature(base)).toBe(structuralSignature(cosmeticOnly));
@@ -54,18 +51,12 @@ describe('ViewTransitions', () => {
 	});
 
 	it('transitions when the directive structure actually changes', () => {
-		const technical = createSkillsDirective('cold', {
-			variant: 'technical',
-			clusterBy: 'domain',
-		});
-		const matrix = createSkillsDirective('cold', {
-			variant: 'matrix',
-			clusterBy: 'domain',
-		});
-		const filteredExplore = createExploreDirective('cold', { filterTags: ['frontend'] });
+		const technical = createSkillsDirective('cold', { variant: 'technical' });
+		const matrix = createSkillsDirective('cold', { variant: 'matrix' });
+		const highlightedExplore = createExploreDirective('cold', { highlights: ['skill_react'] });
 		const unfilteredExplore = createExploreDirective('cold');
 
 		expect(shouldTransition(technical, matrix)).toBe(true);
-		expect(shouldTransition(unfilteredExplore, filteredExplore)).toBe(true);
+		expect(shouldTransition(unfilteredExplore, highlightedExplore)).toBe(false);
 	});
 });

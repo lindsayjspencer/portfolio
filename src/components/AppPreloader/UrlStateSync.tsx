@@ -17,13 +17,7 @@ import {
 } from '~/lib/ai/directiveTools';
 
 function isDefaultLandingDirective(directive: Directive): boolean {
-	return (
-		directive.mode === 'landing' &&
-		directive.theme === DEFAULT_THEME &&
-		Array.isArray((directive.data as { highlights?: string[] }).highlights) &&
-		((directive.data as { highlights?: string[] }).highlights?.length ?? 0) === 0 &&
-		((directive.data as { confidence?: number }).confidence ?? 0.7) === 0.7
-	);
+	return directive.mode === 'landing' && directive.theme === DEFAULT_THEME && Object.keys(directive.data).length === 0;
 }
 
 export function UrlStateSync() {

@@ -60,7 +60,7 @@ const DOMAIN_TAGS = ['frontend', 'backend', 'cloud', 'data-viz', 'testing', 'dev
 /**
  * Clusters skills by domain tags (frontend, backend, etc.)
  */
-function clusterByDomain(skills: SkillNode[]): SkillCluster[] {
+function clusterSkillsByDomain(skills: SkillNode[]): SkillCluster[] {
 	const buckets = new Map<string, string[]>();
 
 	for (const s of skills) {
@@ -80,13 +80,13 @@ function clusterByDomain(skills: SkillNode[]): SkillCluster[] {
 	}));
 }
 
-// ===== Usage/Recency-Based Community Detection =====
+// ===== Community Detection =====
 
 /**
  * Simple heuristic clustering based on skill co-occurrence weights
  * Uses iterative centre-based assignment similar to k-means
  */
-function clusterByCommunity(graph: Graph, skillGraph: SkillGraph): SkillCluster[] {
+function clusterSkillsByCommunity(graph: Graph, skillGraph: SkillGraph): SkillCluster[] {
 	const { skills, links } = skillGraph;
 
 	// Build adjacency map
@@ -170,11 +170,10 @@ function clusterByCommunity(graph: Graph, skillGraph: SkillGraph): SkillCluster[
 // ===== Main Skill Clusters Creation =====
 
 /**
- * Creates skill clusters based on the directive's clusterBy strategy
+ * Creates internal skill clusters for renderer metadata.
  */
 export function createSkillClusters(graph: Graph, data: SkillsDirective): SkillCluster[] {
 	const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
-	// const filtered = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
 	const filtered =
 		data.variant === 'technical'
 			? allSkills.filter((s) => s.skill_type === 'technical')
@@ -184,14 +183,12 @@ export function createSkillClusters(graph: Graph, data: SkillsDirective): SkillC
 		return [];
 	}
 
-	// Domain-based clustering
-	if (data.clusterBy === 'domain') {
-		return clusterByDomain(filtered);
+	if (data.variant === 'technical') {
+		return clusterSkillsByDomain(filtered);
 	}
 
-	// Usage/recency-based clustering (both use same community detection)
 	const skillGraph = buildSkillGraph(graph, filtered);
-	return clusterByCommunity(graph, skillGraph);
+	return clusterSkillsByCommunity(graph, skillGraph);
 }
 
 // ===== Force Graph Transformation for Skills Clusters =====
@@ -202,7 +199,6 @@ export function createSkillClusters(graph: Graph, data: SkillsDirective): SkillC
  */
 export function skillsToForceGraph(graph: Graph, data: SkillsDirective): ForceDirectedGraphData {
 	const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
-	// const filtered = data.focusLevel ? allSkills.filter((s) => s.level === data.focusLevel) : allSkills;
 	const filtered =
 		data.variant === 'technical'
 			? allSkills.filter((s) => s.skill_type === 'technical')

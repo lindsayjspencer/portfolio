@@ -13,7 +13,7 @@ import type {
 import type { MaterialIconName } from '~/components/Ui';
 import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
-import { createProjectsDirective } from '~/lib/ai/directiveTools';
+import { createProjectsDirective, getDirectiveHighlights } from '~/lib/ai/directiveTools';
 
 interface ValuesEvidenceViewProps {
 	dataSnapshot: ValuesEvidenceSnapshot;
@@ -53,10 +53,7 @@ export function ValuesEvidenceView({
 		}
 	}, [transitionPhase]);
 
-	const highlights = useMemo(
-		() => dataSnapshot.directive.data.highlights ?? [],
-		[dataSnapshot.directive.data.highlights],
-	);
+	const highlights = useMemo(() => getDirectiveHighlights(dataSnapshot.directive), [dataSnapshot.directive]);
 
 	const iconForValue = (label: string): MaterialIconName => {
 		const l = label.toLowerCase();
@@ -76,8 +73,6 @@ export function ValuesEvidenceView({
 			const directive = createProjectsDirective(dataSnapshot.directive.theme, {
 				variant: 'case-study',
 				highlights: [node.id],
-				confidence: 0.7,
-				showMetrics: true,
 			});
 			applyDirective(directive);
 			return;
@@ -143,13 +138,6 @@ export function ValuesEvidenceView({
 							),
 						];
 
-						// If the directive emphasizes stories, surface them first
-						const orderedEvidence = dataSnapshot.emphasizeStories
-							? evidence
-									.slice()
-									.sort((a, b) => (a.type === 'story' ? -1 : 0) - (b.type === 'story' ? -1 : 0))
-							: evidence;
-
 						return (
 							<ValuesEvidenceCard
 								key={val.valueId}
@@ -158,7 +146,7 @@ export function ValuesEvidenceView({
 								title={val.valueLabel}
 								tags={valueNode?.tags ?? []}
 								summary={val.valueSummary ?? ''}
-								evidence={orderedEvidence}
+								evidence={evidence}
 								highlightIds={highlights}
 								onOpen={onOpen}
 							/>

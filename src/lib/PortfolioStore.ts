@@ -1,7 +1,7 @@
 import { createStore, type StoreApi, useStore } from 'zustand';
 import { useContext, createContext, type SetStateAction } from 'react';
 import portfolioData from '~/data/portfolio.json';
-import type { ClarifyPayload } from './ai/clarifyTool';
+import type { SuggestedAnswersPayload } from './ai/suggestAnswersTool';
 import type { ForceDirectedGraphNode } from '~/components/ForceGraph/Common';
 import { createDefaultLandingDirective, type Directive } from './ai/directiveTools';
 import type { ThemeName } from './themes';
@@ -205,7 +205,9 @@ export type Graph = {
 export const graph: Graph = portfolioData as Graph;
 
 // Response types for multi-modal AI responses
-export type Response = { kind: 'directive'; data: Directive } | { kind: 'clarify'; data: ClarifyPayload };
+export type Response =
+	| { kind: 'directive'; data: Directive }
+	| { kind: 'suggestAnswers'; data: SuggestedAnswersPayload };
 
 export type ChatMessage = {
 	id: string;
@@ -244,7 +246,7 @@ export interface PortfolioState {
 
 	// New: Response tracking
 	responses: Response[];
-	pendingClarify?: ClarifyPayload;
+	pendingSuggestedAnswers?: SuggestedAnswersPayload;
 	lastDirective?: Directive;
 
 	// Actions
@@ -260,7 +262,7 @@ export interface PortfolioState {
 
 	// New: Response actions
 	pushResponse: (response: Response) => void;
-	setPendingClarify: (payload: ClarifyPayload | undefined) => void;
+	setPendingSuggestedAnswers: (payload: SuggestedAnswersPayload | undefined) => void;
 	setLastDirective: (directive: Directive) => void;
 	clearResponses: () => void;
 
@@ -288,7 +290,7 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 
 		// New: Response tracking
 		responses: [],
-		pendingClarify: undefined,
+		pendingSuggestedAnswers: undefined,
 		lastDirective: undefined,
 
 		setDirective: (directive) => set({ directive }),
@@ -322,7 +324,7 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 				streamedText: '',
 				input: '',
 				responses: [],
-				pendingClarify: undefined,
+				pendingSuggestedAnswers: undefined,
 				lastDirective: undefined,
 			}),
 
@@ -336,11 +338,11 @@ export function createPortfolioStore(initialDirective: Directive): PortfolioStor
 				responses: [...state.responses, response],
 			})),
 
-		setPendingClarify: (payload) => set({ pendingClarify: payload }),
+		setPendingSuggestedAnswers: (payload) => set({ pendingSuggestedAnswers: payload }),
 
 		setLastDirective: (directive) => set({ lastDirective: directive }),
 
-		clearResponses: () => set({ responses: [], pendingClarify: undefined }),
+		clearResponses: () => set({ responses: [], pendingSuggestedAnswers: undefined }),
 
 		// Panel actions
 		openPanel: (content) => set({ isPanelOpen: true, panelContent: content }),

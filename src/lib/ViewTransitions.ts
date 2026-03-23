@@ -115,8 +115,6 @@ interface SkillsTechnicalSnapshot extends BaseDataSnapshot {
 	forceGraphData: ForceDirectedGraphData;
 	skills: SkillNode[];
 	clusters: SkillCluster[];
-	focusLevel?: 'expert' | 'advanced' | 'intermediate';
-	clusterBy: 'domain' | 'recency' | 'usage';
 }
 
 interface SkillsSoftSnapshot extends BaseDataSnapshot {
@@ -125,8 +123,6 @@ interface SkillsSoftSnapshot extends BaseDataSnapshot {
 	forceGraphData: ForceDirectedGraphData;
 	skills: SkillNode[];
 	clusters: SkillCluster[];
-	focusLevel?: 'expert' | 'advanced' | 'intermediate';
-	clusterBy: 'domain' | 'recency' | 'usage';
 }
 
 interface SkillsMatrixSnapshot extends BaseDataSnapshot {
@@ -134,8 +130,6 @@ interface SkillsMatrixSnapshot extends BaseDataSnapshot {
 	variant: 'matrix';
 	skills: SkillNode[];
 	matrix: SkillMatrix;
-	focusLevel?: 'expert' | 'advanced' | 'intermediate';
-	clusterBy: 'domain' | 'recency' | 'usage';
 }
 
 type SkillsDataSnapshot = SkillsTechnicalSnapshot | SkillsSoftSnapshot | SkillsMatrixSnapshot;
@@ -146,7 +140,6 @@ interface ValuesMindmapSnapshot extends BaseDataSnapshot {
 	variant: 'mindmap';
 	forceGraphData: ForceDirectedGraphData;
 	values: ValueNode[];
-	emphasizeStories?: boolean;
 }
 
 export interface ValuesEvidenceSnapshot extends BaseDataSnapshot {
@@ -154,7 +147,6 @@ export interface ValuesEvidenceSnapshot extends BaseDataSnapshot {
 	variant: 'evidence';
 	values: ValueNode[];
 	evidence: ValueEvidence[];
-	emphasizeStories?: boolean;
 }
 
 type ValuesDataSnapshot = ValuesMindmapSnapshot | ValuesEvidenceSnapshot;
@@ -167,7 +159,6 @@ interface CompareSkillsSnapshot extends BaseDataSnapshot {
 	leftSkill: SkillNode | null;
 	rightSkill: SkillNode | null;
 	overlap: SkillNode[];
-	showOverlap: boolean;
 }
 
 interface CompareProjectsSnapshot extends BaseDataSnapshot {
@@ -177,7 +168,6 @@ interface CompareProjectsSnapshot extends BaseDataSnapshot {
 	leftProject: ProjectNode | null;
 	rightProject: ProjectNode | null;
 	overlap: ProjectNode[];
-	showOverlap: boolean;
 }
 
 interface CompareFrontendVsBackendSnapshot extends BaseDataSnapshot {
@@ -187,7 +177,6 @@ interface CompareFrontendVsBackendSnapshot extends BaseDataSnapshot {
 	frontendSkills: SkillNode[];
 	backendSkills: SkillNode[];
 	fullStackSkills: SkillNode[];
-	showOverlap: boolean;
 }
 
 type CompareDataSnapshot = CompareSkillsSnapshot | CompareProjectsSnapshot | CompareFrontendVsBackendSnapshot;
@@ -197,7 +186,6 @@ export interface ExploreSnapshot extends BaseDataSnapshot {
 	mode: 'explore';
 	forceGraphData: ForceDirectedGraphData;
 	nodes: Node[];
-	filterTags?: string[];
 }
 
 // Landing DataSnapshot (no variants)
@@ -262,14 +250,7 @@ export const COMPONENT_TRANSITION_TIMINGS = {
 	resume: { in: 400, out: 300 },
 } as const;
 
-const ANY_VARIANT_KEY = '__any__';
-
-const PRESENTATIONAL_IGNORE_FIELDS: ReadonlySet<string> = new Set(['highlights', 'confidence', 'hints']);
-
-const PRESENTATIONAL_IGNORE_BY_MODE: Partial<Record<Directive['mode'], Partial<Record<string, readonly string[]>>>> = {
-	projects: { [ANY_VARIANT_KEY]: ['showMetrics'] },
-	compare: { [ANY_VARIANT_KEY]: ['showOverlap'] },
-};
+const PRESENTATIONAL_IGNORE_FIELDS: ReadonlySet<string> = new Set(['highlights']);
 
 // ===== Data Processing Utility Functions =====
 
@@ -361,29 +342,6 @@ function findNodeById<T extends Node>(graph: Graph, id: string, type: T['type'])
 }
 
 // Note: filterNodesByType moved to PortfolioToProject.ts
-
-function filterNodesByTags(nodes: Node[], tags?: string[]): Node[] {
-	if (!tags || tags.length === 0) return nodes;
-	return nodes.filter((node) => node.tags?.some((tag) => tags.includes(tag)));
-}
-
-function filterGraphByTags(graph: Graph, tags?: string[]): Graph {
-	if (!tags || tags.length === 0) {
-		return graph;
-	}
-
-	const filteredNodes = filterNodesByTags(graph.nodes, tags);
-	const filteredNodeIds = new Set(filteredNodes.map((node) => node.id));
-	const filteredEdges = graph.edges.filter(
-		(edge) => filteredNodeIds.has(edge.source) && filteredNodeIds.has(edge.target),
-	);
-
-	return {
-		nodes: filteredNodes,
-		edges: filteredEdges,
-		meta: graph.meta,
-	};
-}
 
 // ===== Main createDataSnapshot Function =====
 
@@ -496,9 +454,6 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 
 		case 'skills': {
 			const allSkills = filterNodesByType<SkillNode>(graph.nodes, 'skill');
-			const filteredSkills = directive.data.focusLevel
-				? allSkills.filter((s) => s.level === directive.data.focusLevel)
-				: allSkills;
 
 			switch (directive.data.variant) {
 				case 'technical': {
@@ -508,10 +463,8 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						mode: 'skills',
 						variant: 'technical',
 						forceGraphData: skillsToForceGraph(graph, dataWithType),
-						skills: filteredSkills.filter((s) => s.skill_type !== 'soft'),
+						skills: allSkills.filter((s) => s.skill_type !== 'soft'),
 						clusters: createSkillClusters(graph, dataWithType),
-						focusLevel: directive.data.focusLevel,
-						clusterBy: directive.data.clusterBy,
 					};
 				}
 				case 'soft': {
@@ -521,10 +474,8 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						mode: 'skills',
 						variant: 'soft',
 						forceGraphData: skillsToForceGraph(graph, dataWithType),
-						skills: filteredSkills.filter((s) => s.skill_type === 'soft'),
+						skills: allSkills.filter((s) => s.skill_type === 'soft'),
 						clusters: createSkillClusters(graph, dataWithType),
-						focusLevel: directive.data.focusLevel,
-						clusterBy: directive.data.clusterBy,
 					};
 				}
 				case 'matrix':
@@ -532,10 +483,8 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						...baseData,
 						mode: 'skills',
 						variant: 'matrix',
-						skills: filteredSkills,
+						skills: allSkills,
 						matrix: createSkillMatrix(graph),
-						focusLevel: directive.data.focusLevel,
-						clusterBy: directive.data.clusterBy,
 					};
 			}
 		}
@@ -551,7 +500,6 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						variant: 'mindmap',
 						forceGraphData: portfolioToForceGraph(graph, directive),
 						values: allValues,
-						emphasizeStories: directive.data.emphasizeStories,
 					};
 				case 'evidence':
 					return {
@@ -560,7 +508,6 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						variant: 'evidence',
 						values: allValues,
 						evidence: createValueEvidence(graph),
-						emphasizeStories: directive.data.emphasizeStories,
 					};
 			}
 		}
@@ -597,7 +544,6 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						leftSkill,
 						rightSkill,
 						overlap,
-						showOverlap: directive.data.showOverlap,
 					};
 				}
 				case 'projects': {
@@ -628,7 +574,6 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						leftProject,
 						rightProject,
 						overlap,
-						showOverlap: directive.data.showOverlap,
 					};
 				}
 				case 'frontend-vs-backend': {
@@ -645,21 +590,17 @@ export function createDataSnapshot(graph: Graph, directive: Directive): DataSnap
 						fullStackSkills: allSkills.filter(
 							(s) => s.tags?.includes('frontend') && s.tags?.includes('backend'),
 						),
-						showOverlap: directive.data.showOverlap,
 					};
 				}
 			}
 		}
 
 		case 'explore': {
-			const filterTags = directive.data.filterTags;
-			const filteredGraph = filterGraphByTags(graph, filterTags);
 			return {
 				...baseData,
 				mode: 'explore',
-				forceGraphData: portfolioToForceGraph(filteredGraph, directive),
-				nodes: filteredGraph.nodes,
-				filterTags: filterTags && filterTags.length > 0 ? filterTags : undefined,
+				forceGraphData: portfolioToForceGraph(graph, directive),
+				nodes: graph.nodes,
 			};
 		}
 
@@ -709,18 +650,12 @@ function sanitizeDirectiveData<T extends Directive['data']>(data: T, ignore: Rea
 
 /**
  * Returns a stable, structural signature of a directive for transition equality checks.
- * By default, ignores purely presentational fields: highlights, confidence, hints.
- * Per-mode/variant exceptions can omit additional fields considered non-structural (e.g., projects.showMetrics, compare.showOverlap).
+ * By default, ignores purely presentational fields like highlights.
  */
 export function structuralSignature(directive: Directive): string {
-	const variantKey = getDirectiveVariant(directive) ?? ANY_VARIANT_KEY;
-	const modeSpecificIgnores = PRESENTATIONAL_IGNORE_BY_MODE[directive.mode];
-	const additionalIgnores = modeSpecificIgnores?.[variantKey] ?? modeSpecificIgnores?.[ANY_VARIANT_KEY] ?? [];
-	const ignore = new Set<string>([...PRESENTATIONAL_IGNORE_FIELDS, ...additionalIgnores]);
-
 	const structural = {
 		mode: directive.mode,
-		data: sanitizeDirectiveData(directive.data, ignore),
+		data: sanitizeDirectiveData(directive.data, PRESENTATIONAL_IGNORE_FIELDS),
 	} as const;
 
 	return stableStringify(structural);

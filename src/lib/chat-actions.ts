@@ -1,4 +1,4 @@
-import type { ClarifyPayload } from './ai/clarifyTool';
+import type { SuggestedAnswersPayload } from './ai/suggestAnswersTool';
 import type { AskRequestBody, AskRequestMessage } from './ai/ask-contract';
 import type { Directive } from './ai/directiveTools';
 import type { ChatMessage } from './PortfolioStore';
@@ -14,7 +14,7 @@ export interface ChatSubmitParams {
 	setDirective: (directive: Directive) => void;
 	// setNarrative removed; narration is streamed as assistant messages only
 	setLoading: (loading: boolean) => void;
-	setPendingClarify?: (payload: ClarifyPayload | undefined) => void;
+	setPendingSuggestedAnswers?: (payload: SuggestedAnswersPayload | undefined) => void;
 
 	// Streaming UI callback
 	onTextDelta?: (delta: string) => void;
@@ -28,12 +28,13 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 		addMessage,
 		setDirective,
 		setLoading,
-		setPendingClarify,
+		setPendingSuggestedAnswers,
 		onTextDelta,
 	} = params;
 
 	// Begin request
 	setLoading(true);
+	setPendingSuggestedAnswers?.(undefined);
 
 	// Add user message
 	addMessage({ role: 'user', content: userMessage });
@@ -97,12 +98,6 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 				});
 			}
 
-			const shouldClearClarify =
-				userMessage.startsWith('[clarify:') &&
-				(reason === 'done' || accText.length > 0 || activeDirective !== directive);
-			if (shouldClearClarify) {
-				setPendingClarify?.(undefined);
-			}
 		};
 
 		const emitBlock = (block: string) => {
@@ -121,8 +116,8 @@ export async function handleChatSubmit(params: ChatSubmitParams): Promise<void> 
 					activeDirective = event.directive;
 					setDirective(event.directive);
 					return;
-				case 'clarify':
-					setPendingClarify?.(event.payload);
+				case 'suggestAnswers':
+					setPendingSuggestedAnswers?.(event.payload);
 					return;
 				case 'error':
 					console.warn('Ask stream error:', event.message);

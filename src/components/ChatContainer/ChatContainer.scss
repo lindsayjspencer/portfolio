@@ -36,7 +36,7 @@
 			color: var(--color-neutral-600);
 		}
 
-		.clarify-options {
+		.suggested-answers {
 			display: flex;
 			flex-wrap: wrap;
 			gap: 0.25rem;
@@ -57,11 +57,6 @@
 
 				&:hover {
 					background-color: var(--color-accent-200, #bae6fd);
-				}
-
-				&.selected {
-					background-color: var(--color-primary-100, #dbeafe);
-					color: var(--color-primary-700, #1d4ed8);
 				}
 			}
 		}

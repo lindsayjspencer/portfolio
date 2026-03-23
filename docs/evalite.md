@@ -31,26 +31,32 @@ It exercises the real ask prompt stack:
 
 - uses the production prompt from `src/server/ask/prompt.ts`
 - uses the production OpenAI model from `src/server/model/index.ts`
-- uses the same directive and clarify tools as `/api/ask`
+- uses the same view tools and `suggestAnswers` tool as `/api/ask`
 - wraps the model with `wrapAISDKModel(...)` so Evalite can cache and trace calls
 
 The helper lives in [`evals/helpers/runAskEval.ts`](../evals/helpers/runAskEval.ts).
 
+Note:
+
+- this file describes the original Evalite setup
+- the current prompt/tool direction has moved on
+- forward-looking guidance for the next eval rewrite lives in [`docs/ask-evals-guidance.md`](./ask-evals-guidance.md)
+
 ## What The First Eval Checks
 
-The current routing eval checks high-signal prompt behavior:
+Historically, the routing eval checked high-signal prompt behavior such as:
 
-- resume requests route to `resumeDirective`
-- broad project requests route to `projectsDirective` with `variant: "grid"`
-- ambiguous experience requests trigger the clarify tool
-- "how does this portfolio work?" triggers the special clarify flow
+- resume requests route to a resume view tool
+- broad project requests route to a projects view tool
+- ambiguous prompts trigger clarifying behavior
+- portfolio-mechanics questions use the special product-specific handling flow
 
 It intentionally normalizes tool calls before scoring:
 
 - ignores `changeTheme`
-- compares only stable routing fields such as `toolName`, `variant`, `slot`, `kind`, and `options`
+- compares only stable routing fields such as `toolName` and `variant`
 
-That keeps the eval focused on routing behavior instead of incidental prompt details like confidence values or highlight lists.
+That keeps the eval focused on routing behavior instead of incidental prompt details like highlight lists.
 
 ## Suggested Next Evals
 

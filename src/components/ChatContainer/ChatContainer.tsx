@@ -6,7 +6,6 @@ import { usePortfolioStore } from '~/lib/PortfolioStore';
 import { MaterialIcon, Spinner } from '~/components/Ui';
 import TreeStream from 'react-tree-stream';
 import { handleChatSubmit } from '~/lib/chat-actions';
-import { useState } from 'react';
 import { useApplyDirective } from '~/hooks/useApplyDirective';
 import { createProjectsDirective } from '~/lib/ai/directiveTools';
 
@@ -26,14 +25,13 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		setStreamedText,
 		setDirective,
 		addMessage,
-		pendingClarify,
-		setPendingClarify,
+		pendingSuggestedAnswers,
+		setPendingSuggestedAnswers,
 	} = usePortfolioStore();
 
 	const hasHadInteraction = messages.length > 0;
 	const landingMode = directive.mode === 'landing' && !hasHadInteraction;
 
-	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const applyDirective = useApplyDirective();
@@ -57,7 +55,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 				addMessage,
 				setDirective,
 				setLoading,
-				setPendingClarify,
+				setPendingSuggestedAnswers,
 				onTextDelta: (delta) => setStreamedText((prev) => prev + delta),
 			});
 
@@ -71,7 +69,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 			setDirective,
 			setLoading,
 			setStreamedText,
-			setPendingClarify,
+			setPendingSuggestedAnswers,
 		],
 	);
 
@@ -139,8 +137,6 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 								createProjectsDirective(directive.theme, {
 									variant: 'case-study',
 									highlights: [projectId],
-									confidence: 1,
-									showMetrics: true,
 								}),
 							);
 						}}
@@ -159,7 +155,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 
 	// No directive-based narration; all user-facing text is streamed
 
-	// Transform streamed text (used during loading and for clarify question)
+	// Transform streamed text (used during loading and for suggested-answer questions)
 	const streamingNodes = useMemo(() => {
 		if (!visibleAssistantText) return null;
 		const lines = visibleAssistantText.split('\n');
@@ -174,27 +170,8 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (isLoading) return;
-
-		let userMessage: string;
-
-		if (pendingClarify) {
-			// Handle clarify response
-			if (pendingClarify.kind === 'choice' && selectedOptions.length > 0) {
-				const answer = pendingClarify.multi ? selectedOptions.join(', ') : selectedOptions[0];
-				userMessage = `[clarify:${pendingClarify.slot}] ${answer}`;
-			} else if (pendingClarify.kind === 'free' && input.trim()) {
-				userMessage = `[clarify:${pendingClarify.slot}] ${input.trim()}`;
-			} else {
-				return; // Invalid state, don't submit
-			}
-
-			// Do not clear pendingClarify here; keep it until the assistant processes the reply and sends the next 'done'
-			setSelectedOptions([]);
-		} else {
-			// Regular chat submission
-			if (!input.trim()) return;
-			userMessage = input.trim();
-		}
+		if (!input.trim()) return;
+		const userMessage = input.trim();
 
 		setInput('');
 
@@ -222,31 +199,10 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	};
 
 	const handleOptionClick = (option: string) => {
-		if (pendingClarify?.kind !== 'choice') return;
-
-		if (pendingClarify.multi) {
-			setSelectedOptions((prev) =>
-				prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option],
-			);
-		} else {
-			// Single choice - auto submit
-			setSelectedOptions([option]);
-			setTimeout(() => {
-				void (async () => {
-					const userMessage = `[clarify:${pendingClarify.slot}] ${option}`;
-					setSelectedOptions([]);
-					await submitChatMessage(userMessage);
-				})();
-			}, 100);
-		}
+		if (isLoading) return;
+		setInput('');
+		void submitChatMessage(option);
 	};
-
-	// Clear selected options when clarify changes
-	useEffect(() => {
-		if (!pendingClarify) {
-			setSelectedOptions([]);
-		}
-	}, [pendingClarify]);
 
 	// Keep streamed text after completion so the final answer remains visible.
 
@@ -277,13 +233,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	}, []);
 
 	const hasTypedInput = input.trim().length > 0;
-	const isMultiChoiceClarify = pendingClarify?.kind === 'choice' && (pendingClarify.multi ?? false);
-	const isSubmitDisabled =
-		isLoading ||
-		(pendingClarify?.kind === 'choice' && !pendingClarify.multi && selectedOptions.length === 0) ||
-		(isMultiChoiceClarify && selectedOptions.length === 0 && !hasTypedInput) ||
-		(pendingClarify?.kind === 'free' && !hasTypedInput) ||
-		(!pendingClarify && !hasTypedInput);
+	const isSubmitDisabled = isLoading || !hasTypedInput;
 
 	return (
 		<div ref={containerRef} className={`chat-container ${landingMode ? 'landing-mode' : ''}`}>
@@ -293,16 +243,17 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 				{/* Single streaming area for all user-facing text */}
 				{streamingNodes && <div className="streaming-text">{streamingNodes}</div>}
 
-				{/* Clarify options (if any) beneath the streamed text */}
-				{pendingClarify?.kind === 'choice' && pendingClarify.options && (
-					<TreeStream className="clarify-options">
-						{pendingClarify.options.map((option) => (
+				{/* Suggested answers (if any) beneath the streamed text */}
+				{pendingSuggestedAnswers?.answers && (
+					<TreeStream className="suggested-answers">
+						{pendingSuggestedAnswers.answers.map((option) => (
 							<TreeStream
 								as="button"
 								key={option}
 								type="button"
 								onClick={() => handleOptionClick(option)}
-								className={`option-chip ${selectedOptions.includes(option) ? 'selected' : ''}`}
+								disabled={isLoading}
+								className="option-chip"
 							>
 								{option}
 							</TreeStream>
@@ -316,14 +267,8 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={handleKeyDown}
-						placeholder={
-							pendingClarify?.kind === 'free'
-								? (pendingClarify.placeholder ?? 'Type your answer...')
-								: pendingClarify?.kind === 'choice' && pendingClarify.multi
-									? 'Click options above or type a custom answer...'
-									: 'Ask me anything'
-						}
-						disabled={isLoading || (pendingClarify?.kind === 'choice' && !pendingClarify.multi)}
+						placeholder="Ask me anything"
+						disabled={isLoading}
 						className="chat-input"
 						rows={1}
 						onInput={(e) => {

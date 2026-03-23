@@ -144,8 +144,6 @@ export function ProjectsGridView({ dataSnapshot, transitionPhase, onRegisterCall
 		const directive = createProjectsDirective(dataSnapshot.directive.theme, {
 			variant: 'case-study',
 			highlights: [project.id],
-			confidence: 0.7,
-			showMetrics: true,
 		});
 		applyDirective(directive);
 	};

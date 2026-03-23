@@ -27,7 +27,7 @@ export function SuggestionChips() {
 		setDirective,
 		setLoading,
 		setStreamedText,
-		setPendingClarify,
+		setPendingSuggestedAnswers,
 		setInput,
 	} = usePortfolioStore();
 
@@ -100,7 +100,7 @@ export function SuggestionChips() {
 			addMessage,
 			setDirective,
 			setLoading,
-			setPendingClarify,
+			setPendingSuggestedAnswers,
 			onTextDelta: (delta) => setStreamedText((prev) => prev + delta),
 		});
 	};

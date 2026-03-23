@@ -8,7 +8,7 @@ import {
 	toStoreDirectiveFromUrlState,
 	validateUrlState,
 } from '../urlState';
-import type { Directive } from '~/lib/ai/directiveTools';
+import { getDirectiveHighlights, type Directive } from '~/lib/ai/directiveTools';
 
 describe('urlState utils', () => {
 	const base: Directive = {
@@ -17,7 +17,6 @@ describe('urlState utils', () => {
 		data: {
 			variant: 'career',
 			highlights: [],
-			confidence: 0.7,
 		},
 	};
 
@@ -50,7 +49,7 @@ describe('urlState utils', () => {
 		const raw = decodeUrlState(encoded);
 		const validated = validateUrlState(raw);
 		expect(validated).not.toBeNull();
-		expect(validated?.data.highlights).toHaveLength(1);
+		expect(validated ? getDirectiveHighlights(validated) : []).toHaveLength(1);
 	});
 
 	it('throws UrlStateTooLargeError when compressed directive state exceeds the hard cap', () => {
@@ -85,5 +84,23 @@ describe('urlState utils', () => {
 		const invalid = { mode: 'projects', theme: 'cold', data: { variant: 'oops' } };
 		const validated = validateUrlState(invalid);
 		expect(validated).toBeNull();
+	});
+
+	it('strips removed directive fields from URL state', () => {
+		const validated = validateUrlState({
+			mode: 'explore',
+			theme: 'cold',
+			data: {
+				highlights: ['skill_react'],
+				filterTags: ['frontend'],
+				hints: { limit: 2 },
+			},
+		});
+
+		expect(validated).not.toBeNull();
+		expect(validated ? getDirectiveHighlights(validated) : []).toEqual(['skill_react']);
+		expect('filterTags' in (validated?.data ?? {})).toBe(false);
+		expect('hints' in (validated?.data ?? {})).toBe(false);
+		expect('confidence' in (validated?.data ?? {})).toBe(false);
 	});
 });

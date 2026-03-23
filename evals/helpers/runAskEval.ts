@@ -4,7 +4,7 @@ import { wrapAISDKModel } from 'evalite/ai-sdk';
 import type { Directive } from '~/lib/ai/directiveTools';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
 import { generalModel } from '~/server/model';
-import { buildAskCallOptions, getClarifyFallbackToolCall, isDirectiveToolName } from '~/server/ask/runtime';
+import { buildAskCallOptions, isDirectiveToolName } from '~/server/ask/runtime';
 
 const model = wrapAISDKModel(generalModel) as AppLanguageModel;
 
@@ -41,14 +41,10 @@ export async function runAskEvalTurn({
 		toolName: call.toolName,
 		input: call.input,
 	}));
-	const fallbackToolCall = getClarifyFallbackToolCall({
-		toolCalls,
-		currentDirective,
-	});
 
 	return {
 		text: result.text,
-		toolCalls: fallbackToolCall ? [...toolCalls, fallbackToolCall] : toolCalls,
+		toolCalls,
 	};
 }
 
@@ -65,10 +61,10 @@ export function normalizeAskToolCalls(toolCalls: RawToolCall[]): NormalizedToolC
 					: { toolName: call.toolName };
 			}
 
-			if (call.toolName === 'clarify') {
+			if (call.toolName === 'suggestAnswers') {
 				return {
 					toolName: call.toolName,
-					input: pickClarifyFields(call.input),
+					input: pickFields(call.input, ['answers']),
 				};
 			}
 
@@ -100,19 +96,6 @@ function pickFields(value: unknown, keys: string[]): Record<string, unknown> | u
 	}
 
 	return Object.keys(out).length > 0 ? out : undefined;
-}
-
-function pickClarifyFields(value: unknown): Record<string, unknown> | undefined {
-	const picked = pickFields(value, ['slot', 'kind', 'options']);
-	if (!isRecord(value) || !picked) {
-		return picked;
-	}
-
-	if (value.multi === true) {
-		picked.multi = true;
-	}
-
-	return picked;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

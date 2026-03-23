@@ -20,7 +20,7 @@ import { usePortfolioStore, graph } from '~/lib/PortfolioStore';
 import './ViewTransitionManager.scss';
 import './CompareLegends.scss';
 import { FORCE_CONFIG } from '../ForceGraph/constants';
-import { getDirectiveViewKey, type Directive } from '~/lib/ai/directiveTools';
+import { getDirectiveHighlights, getDirectiveViewKey, type Directive } from '~/lib/ai/directiveTools';
 
 function CompareSkillsLegend() {
 	return (
@@ -575,7 +575,7 @@ export function ViewTransitionManager() {
 							<SkillsMatrixView
 								key={instance.key}
 								matrix={dataSnapshot.matrix}
-								highlights={dataSnapshot.directive.data.highlights}
+								highlights={getDirectiveHighlights(dataSnapshot.directive)}
 								background="gradient-neutral"
 								{...commonProps}
 							/>

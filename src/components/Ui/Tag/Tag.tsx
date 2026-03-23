@@ -13,7 +13,7 @@ interface TagProps {
 	variant?: Variant; // visual style
 	size?: Size; // compact vs regular
 	shape?: Shape; // rounded corner vs pill
-	selected?: boolean; // toggle/selected state (e.g., clarify chips)
+	selected?: boolean; // toggle/selected state (e.g., suggested-answer chips)
 	disabled?: boolean;
 	bordered?: boolean; // optional border accent on non-outline variants
 	darker?: boolean; // opt into darker subtle palette (200/300 instead of 100/200)

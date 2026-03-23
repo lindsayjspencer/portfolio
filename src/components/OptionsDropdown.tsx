@@ -149,7 +149,6 @@ export function OptionsDropdown() {
 				const resolvedVariant = isVariantForMode(variant, SKILL_VARIANTS) ? variant : 'technical';
 				return createSkillsDirective(theme, {
 					variant: resolvedVariant,
-					clusterBy: 'domain',
 				});
 			}
 			case 'values': {
@@ -176,7 +175,6 @@ export function OptionsDropdown() {
 				return createCompareDirective(theme, {
 					leftId,
 					rightId,
-					showOverlap: true,
 					variant: finalVariant,
 				});
 			}

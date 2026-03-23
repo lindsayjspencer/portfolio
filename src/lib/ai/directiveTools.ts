@@ -9,98 +9,81 @@ const variantDirectiveModes = ['timeline', 'projects', 'skills', 'values', 'comp
 
 type VariantDirectiveMode = (typeof variantDirectiveModes)[number];
 
-const Base = {
+const HighlightsOption = {
 	highlights: z.array(z.string()).max(12).default([]),
-	confidence: z.number().min(0).max(1).default(0.7),
-	hints: z
-		.object({
-			limit: z.number().int().positive().optional(),
-			sortBy: z.enum(['recency', 'impact', 'alpha']).optional(),
-		})
-		.optional(),
 };
 const ToolTheme = {
 	theme: Theme.optional(),
 };
 
 export const timelineDirectiveSchema = z.object({
-	...Base,
+	...HighlightsOption,
 	variant: z.enum(['career', 'projects', 'skills']).default('career'),
 });
 export const timelineDirective = tool({
 	description:
-		'Show a timeline view (career, projects, or skills). Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+		'Display a time-based view. Use variant "career" for roles/jobs over time, "projects" for projects over time, or "skills" for when skills first appeared in Lindsay\'s journey. "highlights" can emphasize specific role, project, or skill ids on the timeline. Optional "theme" sets the visual tone. User-facing narration must be streamed, not included here.',
 	inputSchema: timelineDirectiveSchema.extend(ToolTheme),
 });
 
 export const projectsDirectiveSchema = z.object({
-	...Base,
+	...HighlightsOption,
 	variant: z.enum(['grid', 'radial', 'case-study']).default('grid'),
 	pinned: z.array(z.string()).optional(),
-	showMetrics: z.boolean().default(true),
 });
 export const projectsDirective = tool({
 	description:
-		'Show projects view. Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+		'Display a project-focused view. Use variant "grid" for a scannable multi-project overview, "radial" for a graph of Lindsay -> projects -> skills, or "case-study" for a single-project deep dive. "highlights" can focus important projects and related skills. "pinned" can pin key projects in overview layouts and help indicate the preferred case-study focus when no highlight is given. Optional "theme" sets the visual tone. User-facing narration must be streamed, not included here.',
 	inputSchema: projectsDirectiveSchema.extend(ToolTheme),
 });
 
 export const skillsDirectiveSchema = z.object({
-	...Base,
+	...HighlightsOption,
 	variant: z.enum(['technical', 'soft', 'matrix']).default('technical'),
-	focusLevel: z.enum(['expert', 'advanced', 'intermediate']).optional(),
-	clusterBy: z.enum(['domain', 'recency', 'usage']).default('domain'),
 });
 export const skillsDirective = tool({
 	description:
-		'Show skills view (technical clusters, soft clusters, or matrix). Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+		'Display a capability view. Use variant "technical" or "soft" for clustered skill maps that show related skills together, or "matrix" for a skills x projects view that shows where specific skills were used. "highlights" can focus skill ids, and in "matrix" they can also focus project ids. Optional "theme" sets the visual tone. User-facing narration must be streamed, not included here.',
 	inputSchema: skillsDirectiveSchema.extend(ToolTheme),
 });
 
 export const valuesDirectiveSchema = z.object({
-	...Base,
+	...HighlightsOption,
 	variant: z.enum(['mindmap', 'evidence']).default('mindmap'),
-	emphasizeStories: z.boolean().optional(),
 });
 export const valuesDirective = tool({
 	description:
-		'Show values view. Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+		'Display a principles view. Use variant "mindmap" for Lindsay -> values -> supporting tags/evidence, or "evidence" for concrete examples drawn from roles, projects, and stories. "highlights" can focus values and supporting evidence ids. Optional "theme" sets the visual tone. User-facing narration must be streamed, not included here.',
 	inputSchema: valuesDirectiveSchema.extend(ToolTheme),
 });
 
 export const compareDirectiveSchema = z.object({
-	...Base,
+	...HighlightsOption,
 	variant: z.enum(['skills', 'projects', 'frontend-vs-backend']).default('skills'),
 	leftId: z.string(),
 	rightId: z.string(),
-	showOverlap: z.boolean().default(true),
 });
 export const compareDirective = tool({
 	description:
-		'Show compare view (skills/projects). Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+		'Display a direct comparison view. Use variant "skills" to compare two skills, "projects" to compare two projects, or "frontend-vs-backend" for a broader frontend/backend contrast. For concrete comparisons, "leftId" and "rightId" must be valid ids from the portfolio context. "highlights" can emphasize the most relevant comparison nodes. Optional "theme" sets the visual tone. User-facing narration must be streamed, not included here.',
 	inputSchema: compareDirectiveSchema.extend(ToolTheme),
 });
 
 export const exploreDirectiveSchema = z.object({
-	...Base,
-	filterTags: z.array(z.string()).optional(),
+	...HighlightsOption,
 });
 export const exploreDirective = tool({
 	description:
-		'Show explore view. Optionally filter by tags and optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+		'Display the broad exploratory graph view. Use "highlights" to emphasize specific nodes while keeping the wider graph visible. This is useful when wide context helps or when a neutral supporting view is needed during clarification. Optional "theme" sets the visual tone. User-facing narration must be streamed, not included here.',
 	inputSchema: exploreDirectiveSchema.extend(ToolTheme),
 });
 
-export const landingDirectiveSchema = z.object({
-	...Base,
-});
+export const landingDirectiveSchema = z.object({});
 
-export const resumeDirectiveSchema = z.object({
-	...Base,
-});
+export const resumeDirectiveSchema = z.object({});
 export const resumeDirective = tool({
 	description:
-		'Open resume view. Optional theme sets the visual theme for this directive. User-facing narration must be streamed, not included here.',
+		'Display the resume/CV view. Optional "theme" sets the visual tone. User-facing narration must be streamed, not included here.',
 	inputSchema: resumeDirectiveSchema.extend(ToolTheme),
 });
 
@@ -121,6 +104,13 @@ export type CompareViewDirective = { mode: 'compare'; theme: ThemeName; data: Co
 export type ExploreViewDirective = { mode: 'explore'; theme: ThemeName; data: ExploreDirective };
 export type LandingViewDirective = { mode: 'landing'; theme: ThemeName; data: LandingDirective };
 export type ResumeViewDirective = { mode: 'resume'; theme: ThemeName; data: ResumeDirective };
+export type HighlightCapableDirective =
+	| TimelineViewDirective
+	| ProjectsViewDirective
+	| SkillsViewDirective
+	| ValuesViewDirective
+	| CompareViewDirective
+	| ExploreViewDirective;
 
 export type VariantDirective =
 	| TimelineViewDirective
@@ -232,6 +222,14 @@ function isVariantDirective(directive: Directive): directive is VariantDirective
 
 function directiveModeHasVariant(mode: DirectiveMode): mode is VariantDirectiveMode {
 	return (variantDirectiveModes as readonly string[]).includes(mode);
+}
+
+export function directiveSupportsHighlights(directive: Directive): directive is HighlightCapableDirective {
+	return directive.mode !== 'landing' && directive.mode !== 'resume';
+}
+
+export function getDirectiveHighlights(directive: Directive): string[] {
+	return directiveSupportsHighlights(directive) ? directive.data.highlights : [];
 }
 
 export function getDirectiveVariant(directive: Directive): string | null {

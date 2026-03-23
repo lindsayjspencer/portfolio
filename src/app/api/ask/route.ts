@@ -1,17 +1,12 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { smoothStream, streamText } from 'ai';
-import type { ClarifyPayload } from '~/lib/ai/clarifyTool';
+import type { SuggestedAnswersPayload } from '~/lib/ai/suggestAnswersTool';
 import { askRequestBodySchema } from '~/lib/ai/ask-contract';
 import { DEFAULT_THEME, type Directive } from '~/lib/ai/directiveTools';
 import { langfuse } from '~/server/langfuse';
 import { GENERAL_MODEL_ID, generalModel } from '~/server/model';
-import {
-	buildAskCallOptions,
-	getClarifyFallbackToolCall,
-	isDirectiveToolName,
-	toDirectiveFromToolCall,
-} from '~/server/ask/runtime';
+import { buildAskCallOptions, isDirectiveToolName, toDirectiveFromToolCall } from '~/server/ask/runtime';
 import { toAskUsageSummary, toLangfuseUsageDetails } from '~/server/ask/usage';
 
 const encoder = new TextEncoder();
@@ -79,12 +74,12 @@ export async function POST(req: Request) {
 	// is reached, because everything below can spend model tokens and hold open an SSE stream.
 	const result = streamText({
 		...askCallOptions,
-		experimental_transform: [
-			smoothStream({
-				delayInMs: 30,
-				chunking: 'word',
-			}),
-		],
+		// experimental_transform: [
+		// 	smoothStream({
+		// 		delayInMs: 30,
+		// 		chunking: 'word',
+		// 	}),
+		// ],
 	});
 
 	const stream = new ReadableStream<Uint8Array>({
@@ -113,8 +108,8 @@ export async function POST(req: Request) {
 								activeTheme = directive.theme;
 								safeEnqueue(controller, sseEvent('directive', directive));
 							}
-						} else if (part.toolName === 'clarify') {
-							safeEnqueue(controller, sseEvent('clarify', part.input as ClarifyPayload));
+						} else if (part.toolName === 'suggestAnswers') {
+							safeEnqueue(controller, sseEvent('suggestAnswers', part.input as SuggestedAnswersPayload));
 						}
 
 						continue;
@@ -128,23 +123,6 @@ export async function POST(req: Request) {
 			} catch (error) {
 				streamError = getErrorMessage(error);
 				safeEnqueue(controller, sseEvent('error', { message: streamError }));
-			}
-
-			const fallbackToolCall = getClarifyFallbackToolCall({
-				toolCalls: toolCalls.map((call) => ({ toolName: call.name, input: call.input })),
-				currentDirective,
-			});
-			if (fallbackToolCall) {
-				toolCalls.push({ name: fallbackToolCall.toolName, input: fallbackToolCall.input });
-				const fallbackDirective = toDirectiveFromToolCall(
-					'exploreDirective',
-					fallbackToolCall.input,
-					activeTheme,
-				);
-				if (fallbackDirective) {
-					activeTheme = fallbackDirective.theme;
-					safeEnqueue(controller, sseEvent('directive', fallbackDirective));
-				}
 			}
 
 			safeEnqueue(controller, sseEvent('done', { ok: streamError === null }));

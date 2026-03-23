@@ -14,6 +14,15 @@ describe('parseAskSseBlock', () => {
 		expect(parsed).toEqual({ type: 'done', ok: false });
 	});
 
+	it('parses suggestAnswers events', () => {
+		const parsed = parseAskSseBlock('event: suggestAnswers\ndata: {"answers":["Career Timeline","Project Work"]}');
+
+		expect(parsed).toEqual({
+			type: 'suggestAnswers',
+			payload: { answers: ['Career Timeline', 'Project Work'] },
+		});
+	});
+
 	it('rejects invalid directive payloads', () => {
 		const parsed = parseAskSseBlock(
 			'event: directive\ndata: {"mode":"projects","theme":"cold","data":{"variant":"broken"}}',

@@ -8,7 +8,6 @@ import { normalizeAskToolCalls, runAskEvalTurn, type AskEvalOutput } from './hel
 import {
 	scoreAskBehavior,
 	scoreNarrationPresent,
-	scorePrimaryDirectivePresent,
 	type AskBehaviorExpectation,
 } from './helpers/askEvalScorers';
 
@@ -57,12 +56,6 @@ const EXPECTED_BY_CHIP: Record<LandingSuggestionChipQuestion, LandingSuggestionC
 		],
 	},
 	'How does this portfolio work?': {
-		primaryDirective: { toolName: 'exploreDirective' },
-		clarify: {
-			slot: 'next_answer',
-			kind: 'choice',
-			options: ['Show me the projects', 'Just put the resume in the bag'],
-		},
 	},
 	'Show me your React projects': {
 		primaryDirective: { toolName: 'projectsDirective', variant: 'grid' },
@@ -93,10 +86,6 @@ defineLandingSuggestionChipEval<LandingSuggestionChipInput, AskEvalOutput, Landi
 			{
 				name: 'Expected Landing Behavior',
 				scorer: async ({ output, expected }) => scoreAskBehavior({ output, expected }),
-			},
-			{
-				name: 'Primary Directive Present',
-				scorer: async ({ output }) => scorePrimaryDirectivePresent({ output }),
 			},
 			{
 				name: 'Narration Present',

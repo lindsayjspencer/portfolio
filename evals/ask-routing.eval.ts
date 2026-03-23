@@ -49,46 +49,29 @@ defineAskRoutingEval<AskRoutingInput, AskEvalOutput, AskRoutingExpected>('Ask Pr
 		},
 		{
 			input: {
-				caseName: 'Ambiguous experience request triggers clarify',
+				caseName: 'Ambiguous experience request offers suggested answers',
 				userMessage: 'Show me your experience',
 				currentDirective: createDefaultLandingDirective(),
 			},
 			expected: {
 				toolCalls: [
 					{
-						toolName: 'clarify',
+						toolName: 'suggestAnswers',
 						input: {
-							slot: 'experience_type',
-							kind: 'choice',
-							options: ['Career Timeline', 'Technical Skills', 'Project Work'],
+							answers: ['Career Timeline', 'Technical Skills', 'Project Work'],
 						},
-					},
-					{
-						toolName: 'exploreDirective',
 					},
 				],
 			},
 		},
 		{
 			input: {
-				caseName: 'Portfolio mechanics question uses the special clarify flow',
+				caseName: 'Portfolio mechanics question may answer directly without tool calls',
 				userMessage: 'How does this portfolio app work?',
 				currentDirective: createDefaultLandingDirective(),
 			},
 			expected: {
-				toolCalls: [
-					{
-						toolName: 'clarify',
-						input: {
-							slot: 'next_answer',
-							kind: 'choice',
-							options: ['Show me the projects', 'Just put the resume in the bag'],
-						},
-					},
-					{
-						toolName: 'exploreDirective',
-					},
-				],
+				toolCalls: [],
 			},
 		},
 	],
@@ -106,22 +89,6 @@ defineAskRoutingEval<AskRoutingInput, AskEvalOutput, AskRoutingExpected>('Ask Pr
 					expectedCalls: expected.toolCalls,
 					mode: 'flexible',
 				}),
-		},
-		{
-			name: 'Primary Directive Present',
-			scorer: async ({ output }) => {
-				const normalizedToolCalls = normalizeAskToolCalls(output.toolCalls);
-				const hasPrimaryDirective = normalizedToolCalls.some((call) =>
-					PRIMARY_DIRECTIVE_TOOL_NAMES.has(call.toolName),
-				);
-
-				return {
-					score: hasPrimaryDirective ? 1 : 0,
-					metadata: {
-						actualToolCalls: normalizedToolCalls,
-					},
-				};
-			},
 		},
 		{
 			name: 'Narration Present',
