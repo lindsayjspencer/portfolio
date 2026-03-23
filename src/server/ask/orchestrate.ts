@@ -136,6 +136,7 @@ export async function orchestrateAsk({
 				model: guardModel,
 				messages,
 			});
+			console.log('Guard outcome:', result.outcome);
 			guardOutcome = result.outcome;
 			guardUsage = {
 				summary: result.usage.summary ? toAskUsageSummary(result.usage.summary) : null,
