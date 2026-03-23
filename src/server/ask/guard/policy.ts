@@ -1,11 +1,15 @@
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
-import type { AskGuardOutcome } from './types';
 
 const MAX_LATEST_MESSAGE_CHARS = 2_500;
 const MAX_LATEST_MESSAGE_LINES = 60;
-const MAX_TOTAL_MESSAGE_CHARS = 18_000;
-const MAX_TOTAL_MESSAGE_LINES = 220;
 const MAX_STRUCTURED_BLOB_LINES = 30;
+
+export type AskSizePolicyOutcome = {
+	decision: 'allow' | 'ask_to_shorten';
+	category: 'safe' | 'too_long';
+	reason: string;
+	source: 'policy';
+};
 
 function getLatestUserMessage(messages: AskRequestMessage[]): string | null {
 	return [...messages].reverse().find((message) => message.role === 'user')?.content ?? null;
@@ -33,10 +37,10 @@ function looksLikeStructuredBlob(text: string): boolean {
 }
 
 function createOutcome(
-	decision: AskGuardOutcome['decision'],
-	category: AskGuardOutcome['category'],
+	decision: AskSizePolicyOutcome['decision'],
+	category: AskSizePolicyOutcome['category'],
 	reason: string,
-): AskGuardOutcome {
+): AskSizePolicyOutcome {
 	return {
 		decision,
 		category,
@@ -45,7 +49,7 @@ function createOutcome(
 	};
 }
 
-export function runAskGuardPolicy(messages: AskRequestMessage[]): AskGuardOutcome | null {
+export function runAskSizePolicy(messages: AskRequestMessage[]): AskSizePolicyOutcome {
 	const latestUserMessage = getLatestUserMessage(messages)?.trim();
 
 	if (!latestUserMessage) {
@@ -77,23 +81,5 @@ export function runAskGuardPolicy(messages: AskRequestMessage[]): AskGuardOutcom
 		);
 	}
 
-	const totalMessageChars = messages.reduce((total, message) => total + message.content.length, 0);
-	if (totalMessageChars > MAX_TOTAL_MESSAGE_CHARS) {
-		return createOutcome(
-			'ask_to_shorten',
-			'too_long',
-			`The conversation payload is ${totalMessageChars} characters long and should be shortened.`,
-		);
-	}
-
-	const totalMessageLines = messages.reduce((total, message) => total + countNonEmptyLines(message.content), 0);
-	if (totalMessageLines > MAX_TOTAL_MESSAGE_LINES) {
-		return createOutcome(
-			'ask_to_shorten',
-			'too_long',
-			`The conversation spans ${totalMessageLines} non-empty lines and should be shortened.`,
-		);
-	}
-
-	return null;
+	return createOutcome('allow', 'safe', 'The latest user message is concise enough to continue.');
 }

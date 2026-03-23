@@ -42,6 +42,8 @@
 			gap: 0.25rem;
 			width: 100%;
 			margin-top: 0.5rem;
+			position: relative;
+			z-index: 1;
 
 			.option-chip {
 				display: inline-block;

@@ -8,6 +8,10 @@ type PortfolioNode = {
 	label: string;
 	summary?: string;
 	tags?: string[];
+	links?: Array<{
+		title: string;
+		href: string;
+	}>;
 	years?: [number, number];
 	level?: string;
 	period?: {
@@ -43,6 +47,12 @@ const LINDSAY_PROFILE_INDEX = `- Voice anchors: concise, analytical, pragmatic, 
 - Personal facts if directly relevant: endurance runner, dog named Cauliflower, likes movies, podcasts, and Italian food.
 - Values to reflect in tone: honesty, discipline, efficiency, consistency, balance.`;
 
+type PortfolioIndexOptions = {
+	includeIds: boolean;
+	includeLinks?: boolean;
+	limitByType?: Partial<Record<(typeof TYPE_ORDER)[number], number>>;
+};
+
 function truncate(text: string | undefined, maxLength = 140): string | undefined {
 	if (!text) {
 		return undefined;
@@ -72,10 +82,19 @@ function formatNodeYears(node: PortfolioNode): string | null {
 	return String(start ?? end);
 }
 
-function formatNodeIndexLine(node: PortfolioNode, includeIds: boolean): string {
-	const parts = [includeIds ? `- ${node.id}` : `- ${node.label}`];
+function formatNodeLinks(node: PortfolioNode): string | null {
+	if (!node.links?.length) {
+		return null;
+	}
 
-	if (includeIds) {
+	const links = node.links.slice(0, 4).map((link) => `${link.title}: ${link.href}`);
+	return links.length > 0 ? `links: ${links.join(' | ')}` : null;
+}
+
+function formatNodeIndexLine(node: PortfolioNode, options: PortfolioIndexOptions): string {
+	const parts = [options.includeIds ? `- ${node.id}` : `- ${node.label}`];
+
+	if (options.includeIds) {
 		parts.push(node.label);
 	}
 
@@ -97,6 +116,13 @@ function formatNodeIndexLine(node: PortfolioNode, includeIds: boolean): string {
 		parts.push(`level: ${node.level}`);
 	}
 
+	if (options.includeLinks) {
+		const links = formatNodeLinks(node);
+		if (links) {
+			parts.push(links);
+		}
+	}
+
 	return parts.join(' | ');
 }
 
@@ -112,7 +138,7 @@ function sortNodes(nodes: PortfolioNode[]): PortfolioNode[] {
 	});
 }
 
-function formatPortfolioAsIndex(graph: PortfolioGraph, includeIds: boolean): string {
+function formatPortfolioAsIndex(graph: PortfolioGraph, options: PortfolioIndexOptions): string {
 	const nodesByType = graph.nodes.reduce<Record<string, PortfolioNode[]>>((acc, node) => {
 		const bucket = acc[node.type] ?? [];
 		bucket.push(node);
@@ -122,19 +148,27 @@ function formatPortfolioAsIndex(graph: PortfolioGraph, includeIds: boolean): str
 
 	return TYPE_ORDER.map((type) => {
 		const typeNodes = sortNodes(nodesByType[type] ?? []);
-		if (typeNodes.length === 0) {
+		const limit = options.limitByType?.[type];
+		const visibleNodes = typeof limit === 'number' ? typeNodes.slice(0, limit) : typeNodes;
+		if (visibleNodes.length === 0) {
 			return null;
 		}
 
-		const lines = typeNodes.map((node) => formatNodeIndexLine(node, includeIds));
+		const lines = visibleNodes.map((node) => formatNodeIndexLine(node, options));
 		return `${TYPE_LABELS[type]}:\n${lines.join('\n')}`;
 	})
 		.filter((section): section is string => section !== null)
 		.join('\n\n');
 }
 
-function formatCaseStudiesAsIndex(caseStudies: Record<string, CaseStudy>, includeIds: boolean): string {
-	return Object.values(caseStudies)
+function formatCaseStudiesAsIndex(
+	caseStudies: Record<string, CaseStudy>,
+	includeIds: boolean,
+	limit?: number,
+): string {
+	const visibleCaseStudies = typeof limit === 'number' ? Object.values(caseStudies).slice(0, limit) : Object.values(caseStudies);
+
+	return visibleCaseStudies
 		.map((caseStudy) => {
 			const parts = [includeIds ? `- ${caseStudy.projectId}` : `- ${caseStudy.title ?? caseStudy.id}`];
 
@@ -160,12 +194,44 @@ function formatCaseStudiesAsIndex(caseStudies: Record<string, CaseStudy>, includ
 		.join('\n');
 }
 
+function buildPublicResourcesContext(graph: PortfolioGraph): string {
+	const personNode = graph.nodes.find((node) => node.type === 'person');
+
+	if (!personNode?.links?.length) {
+		return '- No public profile or contact resources are listed.';
+	}
+
+	return personNode.links
+		.slice(0, 6)
+		.map((link) => `- ${link.title}: ${link.href}`)
+		.join('\n');
+}
+
 export function buildAskPromptContexts() {
 	return {
 		lindsayProfileContext: LINDSAY_PROFILE_INDEX,
-		plannerPortfolioContext: formatPortfolioAsIndex(portfolioGraph, true),
-		narrationPortfolioContext: formatPortfolioAsIndex(portfolioGraph, false),
+		plannerPortfolioContext: formatPortfolioAsIndex(portfolioGraph, {
+			includeIds: true,
+		}),
+		narrationPortfolioContext: formatPortfolioAsIndex(portfolioGraph, {
+			includeIds: false,
+			includeLinks: true,
+		}),
+		purposePortfolioContext: formatPortfolioAsIndex(portfolioGraph, {
+			includeIds: false,
+			includeLinks: true,
+			limitByType: {
+				person: 1,
+				role: 4,
+				project: 6,
+				skill: 8,
+				value: 4,
+				story: 3,
+			},
+		}),
 		plannerCaseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES, true),
 		narrationCaseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES, false),
+		purposeCaseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES, false, 6),
+		publicResourcesContext: buildPublicResourcesContext(portfolioGraph),
 	};
 }

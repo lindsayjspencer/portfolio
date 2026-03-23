@@ -1,29 +1,45 @@
 import { wrapAISDKModel } from 'evalite/ai-sdk';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
 import type { AppLanguageModel } from '~/server/model';
-import { guardModel } from '~/server/model';
-import { runAskGuardPolicy } from '~/server/ask/guard/policy';
-import { runAskGuard } from '~/server/ask/guard/runtime';
-import type { AskGuardOutcome } from '~/server/ask/guard/types';
+import { purposeModel, securityModel } from '~/server/model';
+import type { AskSizePolicyOutcome } from '~/server/ask/guard/policy';
+import { runAskSizePolicy } from '~/server/ask/guard/policy';
+import { runAskSecurity } from '~/server/ask/guard/runtime';
+import type { AskSecurityOutcome } from '~/server/ask/guard/types';
+import { trimAskHistory } from '~/server/ask/history';
+import { runAskPurpose } from '~/server/ask/purpose/runtime';
+import type { AskPurposeOutcome } from '~/server/ask/purpose/types';
 
-const guardEvalModel = wrapAISDKModel(guardModel) as AppLanguageModel;
+const securityEvalModel = wrapAISDKModel(securityModel) as AppLanguageModel;
+const purposeEvalModel = wrapAISDKModel(purposeModel) as AppLanguageModel;
 
-export type AskGuardEvalOutput = Pick<AskGuardOutcome, 'decision' | 'category' | 'reason' | 'source'>;
+export type AskGuardEvalOutput = AskSizePolicyOutcome | AskSecurityOutcome | AskPurposeOutcome;
 
 export async function runAskGuardEval({
 	messages,
 }: {
 	messages: AskRequestMessage[];
 }): Promise<AskGuardEvalOutput> {
-	const policyOutcome = runAskGuardPolicy(messages);
-	if (policyOutcome) {
-		return policyOutcome;
+	const sizePolicyOutcome = runAskSizePolicy(messages);
+	if (sizePolicyOutcome.decision !== 'allow') {
+		return sizePolicyOutcome;
 	}
 
-	const result = await runAskGuard({
-		model: guardEvalModel,
-		messages,
+	const trimmedMessages = trimAskHistory(messages);
+	const securityResult = await runAskSecurity({
+		model: securityEvalModel,
+		messages: trimmedMessages,
 	});
 
-	return result.outcome;
+	if (securityResult.outcome.decision !== 'allow') {
+		return securityResult.outcome;
+	}
+
+	const purposeResult = await runAskPurpose({
+		model: purposeEvalModel,
+		messages: trimmedMessages,
+		currentDirective: null,
+	});
+
+	return purposeResult.outcome;
 }

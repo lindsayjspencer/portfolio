@@ -43,6 +43,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 		[messages],
 	);
 	const visibleAssistantText = streamedText || (!isLoading ? latestAssistantMessage : '');
+	const showLoadingResponse = isLoading && streamedText.length === 0;
 
 	const submitChatMessage = useCallback(
 		async (userMessage: string) => {
@@ -201,6 +202,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	const handleOptionClick = (option: string) => {
 		if (isLoading) return;
 		setInput('');
+		setPendingSuggestedAnswers(undefined);
 		void submitChatMessage(option);
 	};
 
@@ -238,17 +240,16 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	return (
 		<div ref={containerRef} className={`chat-container ${landingMode ? 'landing-mode' : ''}`}>
 			<form onSubmit={onSubmit} className="chat-form">
-				{isLoading && <div className="loading-response" />}
+				{showLoadingResponse && <div className="loading-response" />}
 
 				{/* Single streaming area for all user-facing text */}
 				{streamingNodes && <div className="streaming-text">{streamingNodes}</div>}
 
 				{/* Suggested answers (if any) beneath the streamed text */}
 				{pendingSuggestedAnswers?.answers && (
-					<TreeStream className="suggested-answers">
+					<div className="suggested-answers">
 						{pendingSuggestedAnswers.answers.map((option) => (
-							<TreeStream
-								as="button"
+							<button
 								key={option}
 								type="button"
 								onClick={() => handleOptionClick(option)}
@@ -256,9 +257,9 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 								className="option-chip"
 							>
 								{option}
-							</TreeStream>
+							</button>
 						))}
-					</TreeStream>
+					</div>
 				)}
 
 				<div className="input-container">

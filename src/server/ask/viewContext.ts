@@ -392,3 +392,12 @@ export function buildNarrationViewContext(directive: Directive, plannerReason: s
 		plannerReason: sanitizePlannerReason(plannerReason, directive),
 	};
 }
+
+export function buildCurrentViewSummary(directive: Directive | null): string {
+	if (!directive) {
+		return 'The user is on the landing view.';
+	}
+
+	const viewContext = buildNarrationViewContext(directive, null);
+	return `${viewContext.viewSummary} ${viewContext.detailedViewContext}`.replace(/\s+/g, ' ').trim();
+}

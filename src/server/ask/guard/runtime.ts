@@ -2,24 +2,24 @@ import { generateObject } from 'ai';
 import type { LanguageModel, LanguageModelUsage } from 'ai';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
 import { buildOpenAIPromptCacheOptions } from '~/server/model/promptCache';
-import { askGuardDecisionSchema, type AskGuardOutcome } from './types';
+import { askSecurityDecisionSchema, type AskSecurityOutcome } from './types';
 import {
-	ASK_GUARD_PROMPT_CACHE_KEY,
-	ASK_GUARD_SYSTEM_PROMPT,
-	buildGuardMessages,
+	ASK_SECURITY_PROMPT_CACHE_KEY,
+	ASK_SECURITY_SYSTEM_PROMPT,
+	buildSecurityMessages,
 } from '../prompts/guard/prompt';
 
-type GuardUsageResult = {
+type SecurityUsageResult = {
 	summary: LanguageModelUsage | null;
 	details: LanguageModelUsage | undefined;
 };
 
-export type AskGuardRunResult = {
-	outcome: AskGuardOutcome;
-	usage: GuardUsageResult;
+export type AskSecurityRunResult = {
+	outcome: AskSecurityOutcome;
+	usage: SecurityUsageResult;
 };
 
-export function buildGuardCallOptions({
+export function buildSecurityCallOptions({
 	model,
 	messages,
 }: {
@@ -28,22 +28,22 @@ export function buildGuardCallOptions({
 }) {
 	return {
 		model,
-		system: ASK_GUARD_SYSTEM_PROMPT,
-		messages: buildGuardMessages(messages),
-		schema: askGuardDecisionSchema,
-		providerOptions: buildOpenAIPromptCacheOptions(ASK_GUARD_PROMPT_CACHE_KEY),
+		system: ASK_SECURITY_SYSTEM_PROMPT,
+		messages: buildSecurityMessages(messages),
+		schema: askSecurityDecisionSchema,
+		providerOptions: buildOpenAIPromptCacheOptions(ASK_SECURITY_PROMPT_CACHE_KEY),
 	};
 }
 
-export async function runAskGuard({
+export async function runAskSecurity({
 	model,
 	messages,
 }: {
 	model: LanguageModel;
 	messages: AskRequestMessage[];
-}): Promise<AskGuardRunResult> {
+}): Promise<AskSecurityRunResult> {
 	const result = await generateObject(
-		buildGuardCallOptions({
+		buildSecurityCallOptions({
 			model,
 			messages,
 		}),

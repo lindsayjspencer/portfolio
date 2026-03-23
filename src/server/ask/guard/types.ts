@@ -1,11 +1,9 @@
 import { z } from 'zod';
 
-export const askGuardDecisionSchema = z.object({
-	decision: z.enum(['allow', 'reject', 'ask_to_shorten', 'ask_to_rephrase']),
+export const askSecurityDecisionSchema = z.object({
+	decision: z.enum(['allow', 'reject']),
 	category: z.enum([
 		'safe',
-		'too_long',
-		'out_of_scope',
 		'prompt_injection',
 		'internal_manipulation',
 		'internal_exfiltration',
@@ -15,10 +13,10 @@ export const askGuardDecisionSchema = z.object({
 	reason: z.string().min(1).max(200),
 });
 
-export type AskGuardDecision = z.infer<typeof askGuardDecisionSchema>;
+export type AskSecurityDecision = z.infer<typeof askSecurityDecisionSchema>;
 
-export type AskGuardSource = 'policy' | 'model' | 'fallback';
+export type AskSecuritySource = 'model' | 'fallback';
 
-export type AskGuardOutcome = AskGuardDecision & {
-	source: AskGuardSource;
+export type AskSecurityOutcome = AskSecurityDecision & {
+	source: AskSecuritySource;
 };

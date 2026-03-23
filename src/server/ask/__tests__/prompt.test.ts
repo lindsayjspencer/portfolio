@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ASK_GUARD_SYSTEM_PROMPT, buildGuardMessages } from '../prompts/guard/prompt';
+import { ASK_SECURITY_SYSTEM_PROMPT, buildSecurityMessages } from '../prompts/guard/prompt';
 import {
 	ASK_NARRATION_CONTEXT_PROMPT,
 	ASK_NARRATION_SYSTEM_PROMPT,
@@ -10,6 +10,11 @@ import {
 	ASK_PLANNER_SYSTEM_PROMPT,
 	buildPlannerMessages,
 } from '../prompts/planner/prompt';
+import {
+	ASK_PURPOSE_CONTEXT_PROMPT,
+	ASK_PURPOSE_SYSTEM_PROMPT,
+	buildPurposeMessages,
+} from '../prompts/purpose/prompt';
 
 describe('planner prompt', () => {
 	it('prepends static context and inserts planning state immediately before the latest user message', () => {
@@ -45,9 +50,9 @@ describe('planner prompt', () => {
 	});
 });
 
-describe('guard prompt', () => {
-	it('uses a narrow safety gate prompt and only recent conversation messages', () => {
-		const messages = buildGuardMessages([
+describe('security prompt', () => {
+	it('uses a narrow security gate prompt and preserves the supplied conversation window', () => {
+		const messages = buildSecurityMessages([
 			{ role: 'user', content: 'first' },
 			{ role: 'assistant', content: 'second' },
 			{ role: 'user', content: 'third' },
@@ -57,14 +62,50 @@ describe('guard prompt', () => {
 			{ role: 'user', content: 'seventh' },
 		]);
 
-		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('narrow safety and input-quality gate');
-		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('Default to "allow"');
-		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('interactive portfolio for Lindsay Spencer');
-		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('"ask_to_rephrase"');
-		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('Return structured output only');
-		expect(messages).toHaveLength(6);
-		expect(messages[0]).toMatchObject({ content: 'second' });
+		expect(ASK_SECURITY_SYSTEM_PROMPT).toContain('narrow security and abuse gate');
+		expect(ASK_SECURITY_SYSTEM_PROMPT).toContain('Default to "allow"');
+		expect(ASK_SECURITY_SYSTEM_PROMPT).toContain('Do not judge portfolio relevance');
+		expect(ASK_SECURITY_SYSTEM_PROMPT).toContain('Return structured output only');
+		expect(messages).toHaveLength(7);
+		expect(messages[0]).toMatchObject({ content: 'first' });
 		expect(messages.at(-1)).toMatchObject({ content: 'seventh' });
+	});
+});
+
+describe('purpose prompt', () => {
+	it('injects current visible view context immediately before the latest user message', () => {
+		const messages = buildPurposeMessages({
+			messages: [
+				{ role: 'user', content: 'Show me that project again' },
+				{ role: 'assistant', content: 'Sure, I can talk through it.' },
+				{ role: 'user', content: 'What stack did it use?' },
+			],
+			currentDirective: {
+				mode: 'projects',
+				theme: 'cold',
+				data: {
+					variant: 'case-study',
+					highlights: ['proj_codebots_modeler'],
+				},
+			},
+		});
+
+		expect(messages[0]).toMatchObject({ role: 'system' });
+		expect(messages[3]).toMatchObject({ role: 'system' });
+		expect(messages[3]?.content).toContain('Current visible view summary');
+		expect(messages[3]?.content).toContain('project case study');
+		expect(messages[4]).toMatchObject({ role: 'user', content: 'What stack did it use?' });
+	});
+
+	it('builds a purpose prompt with compact portfolio scope and clarification rules', () => {
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Default to "allow"');
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Only use "ask_to_clarify"');
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('available-view rundown');
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Use exactly one tool call in every turn');
+		expect(ASK_PURPOSE_SYSTEM_PROMPT).toContain('Call exactly one tool');
+		expect(ASK_PURPOSE_CONTEXT_PROMPT).toContain('## Public Resources');
+		expect(ASK_PURPOSE_CONTEXT_PROMPT).toContain('GitHub');
+		expect(ASK_PURPOSE_CONTEXT_PROMPT).toContain('## Case Study Snapshot');
 	});
 });
 

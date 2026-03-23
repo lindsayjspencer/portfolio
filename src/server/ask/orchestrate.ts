@@ -1,17 +1,23 @@
 import { streamText } from 'ai';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
+import type { SuggestedAnswersPayload } from '~/lib/ai/suggestAnswersTool';
 import type { Directive } from '~/lib/ai/directiveTools';
 import {
 	GENERAL_MODEL_ID,
 	generalModel,
-	GUARD_MODEL_ID,
-	guardModel,
 	PLANNER_MODEL_ID,
 	plannerModel,
+	PURPOSE_MODEL_ID,
+	purposeModel,
+	SECURITY_MODEL_ID,
+	securityModel,
 } from '~/server/model';
-import { runAskGuardPolicy } from './guard/policy';
-import { runAskGuard } from './guard/runtime';
-import type { AskGuardOutcome } from './guard/types';
+import { runAskSizePolicy, type AskSizePolicyOutcome } from './guard/policy';
+import { runAskSecurity } from './guard/runtime';
+import type { AskSecurityOutcome } from './guard/types';
+import { trimAskHistory, ASK_HISTORY_MESSAGE_LIMIT } from './history';
+import { runAskPurpose } from './purpose/runtime';
+import type { AskPurposeOutcome } from './purpose/types';
 import {
 	buildNarrationCallOptions,
 	buildPlannerCallOptions,
@@ -22,9 +28,18 @@ import {
 } from './runtime';
 import { toAskUsageSummary, toLangfuseUsageDetails } from './usage';
 
+const SHORTEN_REPLY =
+	"That's too much to parse cleanly in one go. Give me one shorter question or a brief summary and I'll answer it.";
+const SECURITY_REJECT_REPLY =
+	"Nice try. I'm here to talk about my work, not expose hidden instructions or internal wiring. Ask me about my experience, projects, or skills instead.";
+
+type AskUsageSummary = ReturnType<typeof toAskUsageSummary>;
+type AskUsageDetails = ReturnType<typeof toLangfuseUsageDetails>;
+
 export type AskStreamEvent =
 	| { type: 'directive'; directive: Directive }
 	| { type: 'text'; delta: string }
+	| { type: 'suggestAnswers'; payload: SuggestedAnswersPayload }
 	| { type: 'error'; message: string }
 	| { type: 'done'; ok: boolean };
 
@@ -33,31 +48,45 @@ type AskGenerationPayload = {
 	model: string;
 	input: unknown;
 	output: unknown;
-	usageDetails?: ReturnType<typeof toLangfuseUsageDetails>;
+	usageDetails?: AskUsageDetails;
+};
+
+type AskUsageBlock = {
+	summary: AskUsageSummary | null;
+	details: AskUsageDetails | undefined;
 };
 
 export type AskOrchestrationTelemetry = {
 	inputPayload: {
 		messages: AskRequestMessage[];
+		trimmedMessages: AskRequestMessage[];
 		currentDirective: Directive | null;
 	};
 	outputPayload: {
-		guard: {
-			outcome: AskGuardOutcome;
-			usage: ReturnType<typeof toAskUsageSummary> | null;
+		sizePolicy: {
+			outcome: AskSizePolicyOutcome;
+			usage: null;
 		};
+		security: {
+			outcome: AskSecurityOutcome;
+			usage: AskUsageSummary | null;
+		} | null;
+		purpose: {
+			outcome: AskPurposeOutcome;
+			usage: AskUsageSummary | null;
+		} | null;
 		planner: {
 			toolCalls: Array<{ name: string; input: unknown }>;
 			selectedDirective: Directive | null;
 			reason: string | null;
 			streamError: string | null;
-			usage: ReturnType<typeof toAskUsageSummary> | null;
+			usage: AskUsageSummary | null;
 		} | null;
 		narration: {
 			toolCalls: Array<{ name: string; input: unknown }>;
 			streamedText: string;
 			streamError: string | null;
-			usage: ReturnType<typeof toAskUsageSummary> | null;
+			usage: AskUsageSummary | null;
 		} | null;
 	};
 	metadata: Record<string, string>;
@@ -75,7 +104,7 @@ function getErrorMessage(error: unknown): string {
 async function resolveUsage(
 	result: { totalUsage: PromiseLike<Parameters<typeof toAskUsageSummary>[0]> } | null,
 	label: string,
-) {
+): Promise<AskUsageBlock> {
 	if (!result) {
 		return { summary: null, details: undefined };
 	}
@@ -92,16 +121,21 @@ async function resolveUsage(
 	}
 }
 
-function buildGuardReply(outcome: AskGuardOutcome): string {
-	if (outcome.decision === 'ask_to_shorten') {
-		return "That's too much to parse cleanly in one go. Give me one shorter question or a brief summary and I'll answer it.";
-	}
-
-	if (outcome.decision === 'ask_to_rephrase') {
-		return "I'm here to answer questions about my work, projects, skills, values, hiring fit, or this portfolio. Can you rephrase that in that direction?";
-	}
-
-	return "Nice try. I'm here to talk about my work, not expose hidden instructions or internal wiring. Ask me about my experience, projects, or skills instead.";
+function createDeterministicGeneration({
+	name,
+	input,
+	output,
+}: {
+	name: string;
+	input: unknown;
+	output: unknown;
+}): AskGenerationPayload {
+	return {
+		name,
+		model: 'deterministic-policy',
+		input,
+		output,
+	};
 }
 
 export async function orchestrateAsk({
@@ -113,82 +147,234 @@ export async function orchestrateAsk({
 	currentDirective: Directive | null;
 	emit: (event: AskStreamEvent) => void;
 }): Promise<AskOrchestrationTelemetry> {
+	const trimmedMessages = trimAskHistory(messages);
 	const inputPayload = {
 		messages,
+		trimmedMessages,
 		currentDirective,
 	};
-
-	const policyGuardOutcome = runAskGuardPolicy(messages);
-	let guardOutcome: AskGuardOutcome;
-	let guardUsage: {
-		summary: ReturnType<typeof toAskUsageSummary> | null;
-		details: ReturnType<typeof toLangfuseUsageDetails> | undefined;
+	const baseMetadata = {
+		historyMessageLimit: String(ASK_HISTORY_MESSAGE_LIMIT),
 	};
-	let guardGenerationModel = GUARD_MODEL_ID;
+	const sizePolicyOutcome = runAskSizePolicy(messages);
+	const sizePolicyGeneration = createDeterministicGeneration({
+		name: 'portfolio-ask-size-policy',
+		input: {
+			messages,
+		},
+		output: {
+			outcome: sizePolicyOutcome,
+		},
+	});
 
-	if (policyGuardOutcome) {
-		guardOutcome = policyGuardOutcome;
-		guardUsage = { summary: null, details: undefined };
-		guardGenerationModel = 'deterministic-policy';
-	} else {
-		try {
-			const result = await runAskGuard({
-				model: guardModel,
-				messages,
-			});
-			guardOutcome = result.outcome;
-			guardUsage = {
-				summary: result.usage.summary ? toAskUsageSummary(result.usage.summary) : null,
-				details: result.usage.details ? toLangfuseUsageDetails(result.usage.details) : undefined,
-			};
-		} catch (error) {
-			console.error('Guard check failed, continuing without guard block:', error);
-			guardOutcome = {
-				decision: 'allow',
-				category: 'other',
-				reason: 'Guard model failed, so the request was allowed by fallback.',
-				source: 'fallback',
-			};
-			guardUsage = { summary: null, details: undefined };
-			guardGenerationModel = `${GUARD_MODEL_ID}:fallback-open`;
-		}
-	}
-
-	const baseTelemetry: Omit<AskOrchestrationTelemetry, 'outputPayload' | 'metadata' | 'generations'> = {
-		inputPayload,
-	};
-
-	if (guardOutcome.decision !== 'allow') {
-		const reply = buildGuardReply(guardOutcome);
-		emit({ type: 'text', delta: reply });
+	if (sizePolicyOutcome.decision === 'ask_to_shorten') {
+		emit({ type: 'text', delta: SHORTEN_REPLY });
 		emit({ type: 'done', ok: true });
 
 		return {
-			...baseTelemetry,
+			inputPayload,
 			outputPayload: {
-				guard: {
-					outcome: guardOutcome,
-					usage: guardUsage.summary,
+				sizePolicy: {
+					outcome: sizePolicyOutcome,
+					usage: null,
+				},
+				security: null,
+				purpose: null,
+				planner: null,
+				narration: null,
+			},
+			metadata: baseMetadata,
+			generations: [
+				sizePolicyGeneration,
+				createDeterministicGeneration({
+					name: 'portfolio-ask-size-policy-response',
+					input: {
+						outcome: sizePolicyOutcome,
+					},
+					output: {
+						reply: SHORTEN_REPLY,
+					},
+				}),
+			],
+		};
+	}
+
+	let securityOutcome: AskSecurityOutcome;
+	let securityUsage: AskUsageBlock = { summary: null, details: undefined };
+	let securityGenerationModel = SECURITY_MODEL_ID;
+
+	try {
+		const result = await runAskSecurity({
+			model: securityModel,
+			messages: trimmedMessages,
+		});
+		console.log('Security outcome:', result.outcome);
+		securityOutcome = result.outcome;
+		securityUsage = {
+			summary: result.usage.summary ? toAskUsageSummary(result.usage.summary) : null,
+			details: result.usage.details ? toLangfuseUsageDetails(result.usage.details) : undefined,
+		};
+	} catch (error) {
+		console.error('Security check failed, continuing without a block:', error);
+		securityOutcome = {
+			decision: 'allow',
+			category: 'other',
+			reason: 'Security model failed, so the request was allowed by fallback.',
+			source: 'fallback',
+		};
+		securityGenerationModel = `${SECURITY_MODEL_ID}:fallback-open`;
+	}
+
+	const securityGeneration: AskGenerationPayload = {
+		name: 'portfolio-ask-security',
+		model: securityGenerationModel,
+		input: {
+			trimmedMessages,
+		},
+		output: {
+			outcome: securityOutcome,
+			usage: securityUsage.summary,
+		},
+		usageDetails: securityUsage.details,
+	};
+
+	if (securityOutcome.decision === 'reject') {
+		emit({ type: 'text', delta: SECURITY_REJECT_REPLY });
+		emit({ type: 'done', ok: true });
+
+		return {
+			inputPayload,
+			outputPayload: {
+				sizePolicy: {
+					outcome: sizePolicyOutcome,
+					usage: null,
+				},
+				security: {
+					outcome: securityOutcome,
+					usage: securityUsage.summary,
+				},
+				purpose: null,
+				planner: null,
+				narration: null,
+			},
+			metadata: {
+				...baseMetadata,
+				securityModel: securityGenerationModel,
+			},
+			generations: [sizePolicyGeneration, securityGeneration],
+		};
+	}
+
+	let purposeOutcome: AskPurposeOutcome;
+	let purposeUsage: AskUsageBlock = { summary: null, details: undefined };
+	let purposeGenerationModel = PURPOSE_MODEL_ID;
+
+	try {
+		const result = await runAskPurpose({
+			model: purposeModel,
+			messages: trimmedMessages,
+			currentDirective,
+		});
+		console.log('Purpose outcome:', result.outcome);
+		purposeOutcome = result.outcome;
+		purposeUsage = {
+			summary: result.usage.summary ? toAskUsageSummary(result.usage.summary) : null,
+			details: result.usage.details ? toLangfuseUsageDetails(result.usage.details) : undefined,
+		};
+	} catch (error) {
+		console.error('Purpose check failed, continuing without a block:', error);
+		purposeOutcome = {
+			decision: 'allow',
+			category: 'other',
+			reason: 'Purpose model failed, so the request was allowed by fallback.',
+			source: 'fallback',
+		};
+		purposeGenerationModel = `${PURPOSE_MODEL_ID}:fallback-open`;
+	}
+
+	const purposeGeneration: AskGenerationPayload = {
+		name: 'portfolio-ask-purpose',
+		model: purposeGenerationModel,
+		input: {
+			trimmedMessages,
+			currentDirective,
+		},
+		output: {
+			outcome: purposeOutcome,
+			usage: purposeUsage.summary,
+		},
+		usageDetails: purposeUsage.details,
+	};
+
+	if (purposeOutcome.decision === 'ask_to_rephrase') {
+		emit({ type: 'text', delta: purposeOutcome.text });
+		emit({ type: 'done', ok: true });
+
+		return {
+			inputPayload,
+			outputPayload: {
+				sizePolicy: {
+					outcome: sizePolicyOutcome,
+					usage: null,
+				},
+				security: {
+					outcome: securityOutcome,
+					usage: securityUsage.summary,
+				},
+				purpose: {
+					outcome: purposeOutcome,
+					usage: purposeUsage.summary,
 				},
 				planner: null,
 				narration: null,
 			},
 			metadata: {
-				guardModel: guardGenerationModel,
+				...baseMetadata,
+				securityModel: securityGenerationModel,
+				purposeModel: purposeGenerationModel,
 			},
-			generations: [
-				{
-					name: 'portfolio-ask-guard',
-					model: guardGenerationModel,
-					input: inputPayload,
-					output: {
-						outcome: guardOutcome,
-						reply,
-						usage: guardUsage.summary,
-					},
-					usageDetails: guardUsage.details,
+			generations: [sizePolicyGeneration, securityGeneration, purposeGeneration],
+		};
+	}
+
+	if (purposeOutcome.decision === 'ask_to_clarify') {
+		emit({ type: 'text', delta: purposeOutcome.question });
+
+		if (purposeOutcome.suggestedAnswers?.length) {
+			emit({
+				type: 'suggestAnswers',
+				payload: {
+					answers: purposeOutcome.suggestedAnswers,
 				},
-			],
+			});
+		}
+
+		emit({ type: 'done', ok: true });
+
+		return {
+			inputPayload,
+			outputPayload: {
+				sizePolicy: {
+					outcome: sizePolicyOutcome,
+					usage: null,
+				},
+				security: {
+					outcome: securityOutcome,
+					usage: securityUsage.summary,
+				},
+				purpose: {
+					outcome: purposeOutcome,
+					usage: purposeUsage.summary,
+				},
+				planner: null,
+				narration: null,
+			},
+			metadata: {
+				...baseMetadata,
+				securityModel: securityGenerationModel,
+				purposeModel: purposeGenerationModel,
+			},
+			generations: [sizePolicyGeneration, securityGeneration, purposeGeneration],
 		};
 	}
 
@@ -204,7 +390,7 @@ export async function orchestrateAsk({
 	const plannerResult = streamText(
 		buildPlannerCallOptions({
 			model: plannerModel,
-			messages,
+			messages: trimmedMessages,
 			currentDirective,
 		}),
 	);
@@ -281,7 +467,7 @@ export async function orchestrateAsk({
 		narratorResult = streamText(
 			buildNarrationCallOptions({
 				model: generalModel,
-				messages,
+				messages: trimmedMessages,
 				directive: plannerSelection,
 				plannerReason,
 			}),
@@ -319,11 +505,19 @@ export async function orchestrateAsk({
 	]);
 
 	return {
-		...baseTelemetry,
+		inputPayload,
 		outputPayload: {
-			guard: {
-				outcome: guardOutcome,
-				usage: guardUsage.summary,
+			sizePolicy: {
+				outcome: sizePolicyOutcome,
+				usage: null,
+			},
+			security: {
+				outcome: securityOutcome,
+				usage: securityUsage.summary,
+			},
+			purpose: {
+				outcome: purposeOutcome,
+				usage: purposeUsage.summary,
 			},
 			planner: {
 				toolCalls: plannerToolCalls,
@@ -340,25 +534,23 @@ export async function orchestrateAsk({
 			},
 		},
 		metadata: {
-			guardModel: guardGenerationModel,
+			...baseMetadata,
+			securityModel: securityGenerationModel,
+			purposeModel: purposeGenerationModel,
 			plannerModel: PLANNER_MODEL_ID,
 			narrationModel: GENERAL_MODEL_ID,
 		},
 		generations: [
-			{
-				name: 'portfolio-ask-guard',
-				model: guardGenerationModel,
-				input: inputPayload,
-				output: {
-					outcome: guardOutcome,
-					usage: guardUsage.summary,
-				},
-				usageDetails: guardUsage.details,
-			},
+			sizePolicyGeneration,
+			securityGeneration,
+			purposeGeneration,
 			{
 				name: 'portfolio-ask-planner',
 				model: PLANNER_MODEL_ID,
-				input: inputPayload,
+				input: {
+					trimmedMessages,
+					currentDirective,
+				},
 				output: {
 					toolCalls: plannerToolCalls,
 					selectedDirective: plannerSelection,
@@ -372,7 +564,7 @@ export async function orchestrateAsk({
 				name: 'portfolio-ask-narration',
 				model: GENERAL_MODEL_ID,
 				input: {
-					...inputPayload,
+					trimmedMessages,
 					selectedDirective: plannerSelection,
 				},
 				output: {

@@ -1,21 +1,17 @@
 import type { ModelMessage } from 'ai';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
-import { GUARD_APP_SCOPE_SECTION, GUARD_DECISION_RULES_SECTION, GUARD_MISSION_SECTION } from './sections';
+import { SECURITY_DECISION_RULES_SECTION, SECURITY_EXAMPLES_SECTION, SECURITY_MISSION_SECTION } from './sections';
 
-const MAX_GUARD_MESSAGES = 6;
+export const ASK_SECURITY_PROMPT_CACHE_KEY = 'portfolio-ask-security:v1';
 
-export const ASK_GUARD_PROMPT_CACHE_KEY = 'portfolio-ask-guard:v1';
-
-export function createAskGuardSystemPrompt() {
-	return [GUARD_MISSION_SECTION, GUARD_APP_SCOPE_SECTION, GUARD_DECISION_RULES_SECTION].join('\n\n');
+export function createAskSecuritySystemPrompt() {
+	return [SECURITY_MISSION_SECTION, SECURITY_DECISION_RULES_SECTION, SECURITY_EXAMPLES_SECTION].join('\n\n');
 }
 
-export const ASK_GUARD_SYSTEM_PROMPT = createAskGuardSystemPrompt();
+export const ASK_SECURITY_SYSTEM_PROMPT = createAskSecuritySystemPrompt();
 
-export function buildGuardMessages(messages: AskRequestMessage[]): ModelMessage[] {
-	const recentMessages = messages.slice(-MAX_GUARD_MESSAGES).map((message) => ({ ...message }));
-
-	if (recentMessages.length === 0) {
+export function buildSecurityMessages(messages: AskRequestMessage[]): ModelMessage[] {
+	if (messages.length === 0) {
 		return [
 			{
 				role: 'user',
@@ -24,5 +20,5 @@ export function buildGuardMessages(messages: AskRequestMessage[]): ModelMessage[
 		];
 	}
 
-	return recentMessages;
+	return messages.map((message) => ({ ...message }));
 }

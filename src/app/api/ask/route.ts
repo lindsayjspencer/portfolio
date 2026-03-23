@@ -61,6 +61,9 @@ export async function POST(req: Request) {
 					case 'text':
 						safeEnqueue(controller, sseEvent('text', { delta: event.delta }));
 						return;
+					case 'suggestAnswers':
+						safeEnqueue(controller, sseEvent('suggestAnswers', event.payload));
+						return;
 					case 'error':
 						safeEnqueue(controller, sseEvent('error', { message: event.message }));
 						return;
