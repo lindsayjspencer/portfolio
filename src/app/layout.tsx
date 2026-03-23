@@ -9,7 +9,7 @@ const baseMetadata: Metadata = {
 	description:
 		'An interactive portfolio showcasing my software development experience through an AI-powered conversational interface and dynamic visualizations.',
 	keywords:
-		'portfolio, software engineer, full-stack developer, React, TypeScript, .NET, Azure, interactive resume, data visualization',
+		'portfolio, software engineer, frontend engineer, React, TypeScript, .NET, Azure, interactive resume, data visualization',
 	authors: [{ name: 'Lindsay Spencer' }],
 	icons: {
 		other: [

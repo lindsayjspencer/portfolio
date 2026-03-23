@@ -4,8 +4,8 @@
 			"id": "person_lindsay",
 			"type": "person",
 			"label": "Lindsay Spencer",
-			"summary": "Senior Full Stack Developer specialising in frontend. Deep CSS, canvas/WebGL, advanced TypeScript, and performance-focused UI/UX.",
-			"description": "Highly experienced across React/TypeScript with a strong eye for design polish and performance. Leads quality initiatives and builds tooling (CLIs) alongside product work. Self-taught with targeted advanced courses (Total TypeScript, Three.js Journey).",
+			"summary": "Senior Frontend Engineer specialising in React/TypeScript, deep CSS, canvas/WebGL, and performance-focused UI/UX.",
+			"description": "Senior Frontend Engineer at Canva in the Print Browse team. Highly experienced across React/TypeScript with a strong eye for design polish and performance. Builds tooling (CLIs) alongside product work. Self-taught with targeted advanced courses (Total TypeScript, Three.js Journey).",
 			"location": "Brisbane, Australia",
 			"links": [
 				{
@@ -17,14 +17,7 @@
 					"href": "https://github.com/lindsayjspencer"
 				}
 			],
-			"tags": [
-				"frontend",
-				"full-stack",
-				"ui-ux",
-				"performance",
-				"typescript",
-				"canvas"
-			]
+			"tags": ["frontend", "full-stack", "ui-ux", "performance", "typescript", "canvas"]
 		},
 		{
 			"id": "role_codebots_fsd",
@@ -38,20 +31,9 @@
 				"start": "2020-05",
 				"end": "2022-05"
 			},
-			"years": [
-				2020,
-				2022
-			],
+			"years": [2020, 2022],
 			"location": "Milton, Brisbane",
-			"tags": [
-				"frontend",
-				"full-stack",
-				"react",
-				"typescript",
-				"dotnet",
-				"csharp",
-				"codegen"
-			]
+			"tags": ["frontend", "full-stack", "react", "typescript", "dotnet", "csharp", "codegen"]
 		},
 		{
 			"id": "role_codebots_sfsd",
@@ -65,10 +47,7 @@
 				"start": "2022-05",
 				"end": "2025-01"
 			},
-			"years": [
-				2022,
-				2025
-			],
+			"years": [2022, 2025],
 			"location": "Milton, Brisbane",
 			"tags": [
 				"frontend",
@@ -92,15 +71,12 @@
 			"company": "Codebots",
 			"position": "Quality Lead",
 			"summary": "Quality lead embedded across squads focusing on observability and testing excellence.",
-			"description": "Leading quality uplift program embedded in squads focusing on traceability/observability, E2E system testing, and automated documentation pipelines, in parallel with feature delivery. Continue running company frontend focus group.",
+			"description": "Led a quality uplift program embedded across squads, focusing on traceability and observability, E2E system testing, and automated documentation pipelines in parallel with feature delivery. Continued running the company frontend focus group.",
 			"period": {
 				"start": "2025-01",
-				"end": "present"
+				"end": "2025-11"
 			},
-			"years": [
-				2025,
-				2025
-			],
+			"years": [2025, 2025],
 			"location": "Milton, Brisbane",
 			"tags": [
 				"leadership",
@@ -116,6 +92,22 @@
 			]
 		},
 		{
+			"id": "role_canva_sfe",
+			"type": "role",
+			"label": "Senior Frontend Engineer — Canva",
+			"company": "Canva",
+			"position": "Senior Frontend Engineer",
+			"summary": "Senior frontend engineer in Canva's Print Browse team.",
+			"description": "Working in Canva's Print Browse team as a Senior Frontend Engineer, focused on frontend product development and user experience.",
+			"period": {
+				"start": "2025-12",
+				"end": "present"
+			},
+			"years": [2025, 2026],
+			"location": "Brisbane, Australia",
+			"tags": ["frontend", "react", "typescript", "ui-ux", "performance", "canva", "print"]
+		},
+		{
 			"id": "role_goodwill_ops",
 			"type": "role",
 			"label": "Operations Manager — Goodwill Projects",
@@ -127,16 +119,9 @@
 				"start": "2014-01",
 				"end": "2014-06"
 			},
-			"years": [
-				2014,
-				2014
-			],
+			"years": [2014, 2014],
 			"location": "Fortitude Valley, Brisbane",
-			"tags": [
-				"operations",
-				"management",
-				"scaling"
-			]
+			"tags": ["operations", "management", "scaling"]
 		},
 		{
 			"id": "role_goodwill_fs",
@@ -150,10 +135,7 @@
 				"start": "2014-06",
 				"end": "2020-03"
 			},
-			"years": [
-				2014,
-				2020
-			],
+			"years": [2014, 2020],
 			"location": "Fortitude Valley, Brisbane",
 			"tags": [
 				"full-stack",
@@ -189,20 +171,10 @@
 			"description": "Codebots lets teams design metamodels, visuals, and application models using a proprietary diagramming SDK, then generate production code via pipelines (EGL/EGX and related Epsilon tools). I led the platform, focusing on SDK integration, concurrency, pipeline UX, and frontend migrations.",
 			"period": {
 				"start": "2020-05",
-				"end": "present"
+				"end": "2025-11"
 			},
-			"years": [
-				2020,
-				2025
-			],
-			"tags": [
-				"react",
-				"typescript",
-				"codegen",
-				"devtools",
-				"diagramming",
-				"pipelines"
-			]
+			"years": [2020, 2025],
+			"tags": ["react", "typescript", "codegen", "devtools", "diagramming", "pipelines"]
 		},
 		{
 			"id": "proj_dep_graph_versions",
@@ -214,18 +186,8 @@
 				"start": "2025-04",
 				"end": "2025-07"
 			},
-			"years": [
-				2025,
-				2025
-			],
-			"tags": [
-				"data-viz",
-				"force-graph",
-				"react",
-				"threejs",
-				"typescript",
-				"automation"
-			],
+			"years": [2025, 2025],
+			"tags": ["data-viz", "force-graph", "react", "threejs", "typescript", "automation"],
 			"metrics": [
 				{
 					"label": "Efficiency gain",
@@ -241,19 +203,10 @@
 			"description": "Visitors arrived via SEO but struggled to grasp Codebots quickly. We simplified the homepage to a single LLM chat grounded by RAG over documentation and curated blogs. A tuned system prompt sets tone and structure, and answers stream with correct markdown rendering.",
 			"period": {
 				"start": "2025-01",
-				"end": "present"
+				"end": "2025-09"
 			},
-			"years": [
-				2025,
-				2025
-			],
-			"tags": [
-				"llm",
-				"rag",
-				"nextjs",
-				"vercel-ai-sdk",
-				"chat-ux"
-			],
+			"years": [2025, 2025],
+			"tags": ["llm", "rag", "nextjs", "vercel-ai-sdk", "chat-ux"],
 			"links": [
 				{
 					"title": "Demo",
@@ -271,16 +224,8 @@
 				"start": "2023-12",
 				"end": "present"
 			},
-			"years": [
-				2023,
-				2025
-			],
-			"tags": [
-				"react",
-				"typescript",
-				"oss",
-				"state-management"
-			],
+			"years": [2023, 2026],
+			"tags": ["react", "typescript", "oss", "state-management"],
 			"links": [
 				{
 					"title": "npm",
@@ -298,33 +243,16 @@
 				"start": "2014-06",
 				"end": "2020-03"
 			},
-			"years": [
-				2014,
-				2020
-			],
-			"tags": [
-				"product",
-				"ops",
-				"payments",
-				"integrations",
-				"react",
-				"typescript",
-				"jquery",
-				"lamp"
-			]
+			"years": [2014, 2020],
+			"tags": ["product", "ops", "payments", "integrations", "react", "typescript", "jquery", "lamp"]
 		},
 		{
 			"id": "skill_react",
 			"type": "skill",
 			"label": "React",
 			"description": "Learning React really took my frontend skills to new heights. I learnt both class-based and functional components, and I excel in the React ecosystem. I like to follow best practices and design patterns, and I enjoy learning about new features and improvements in the library. I am particularly good at optimising render performance and managing state.",
-			"years": [
-				2017,
-				2025
-			],
-			"tags": [
-				"frontend"
-			],
+			"years": [2017, 2025],
+			"tags": ["frontend"],
 			"level": "expert",
 			"skill_type": "technical"
 		},
@@ -333,14 +261,8 @@
 			"type": "skill",
 			"label": "TypeScript",
 			"description": "Learning Typescript is an ongoing journey for me. I have taken industry leading courses (Matt Pocock's Total Typescript) and I consider myself one of the best. I'm not just the architect of every typescript architecture decision, I am the person that get's called in when no one else can solve their typescript problems. I push for very strict typing rules and creating great developer experiences for anyone who works on my codebases.",
-			"years": [
-				2018,
-				2025
-			],
-			"tags": [
-				"frontend",
-				"backend"
-			],
+			"years": [2018, 2025],
+			"tags": ["frontend", "backend"],
 			"level": "expert",
 			"skill_type": "technical"
 		},
@@ -349,14 +271,8 @@
 			"type": "skill",
 			"label": "CSS",
 			"description": "Learning CSS is an often overlooked aspect of web development. It can be very easy to get basic CSS working, but it's when it comes to overflow scrolling, complex layouts, and responsive design that things get tricky. And that's where my skills shine the most. I don't just use it, I've worked on projects that tried to replicate the CSS spec in javascript. I enjoy pushing the boundaries of what's possible and regularly participate in challenges to create complex pictures using only CSS rules.",
-			"years": [
-				2012,
-				2025
-			],
-			"tags": [
-				"frontend",
-				"ui-ux"
-			],
+			"years": [2012, 2025],
+			"tags": ["frontend", "ui-ux"],
 			"level": "advanced",
 			"skill_type": "technical"
 		},
@@ -365,14 +281,8 @@
 			"type": "skill",
 			"label": "Canvas/WebGL/Three.js",
 			"description": "My basic canvas skills are complemented by a strong understanding of WebGL, D3, and Three.js for 3D graphics. I am particularly interested in exploring the intersection of art and technology through generative design and data visualization. When it comes to basic canvas drawing, I have a solid grasp of the fundamentals and can create engaging visual experiences.",
-			"years": [
-				2021,
-				2025
-			],
-			"tags": [
-				"frontend",
-				"data-viz"
-			],
+			"years": [2021, 2025],
+			"tags": ["frontend", "data-viz"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -381,13 +291,8 @@
 			"type": "skill",
 			"label": "Next.js",
 			"description": "I have mixed feelings about Next.js. While I can appreciate its powerful features and flexibility, I have never built truly large applications with it on any project. I don't appreciate the vendor lock-in, and sometimes the errors and documentation can be cryptic.",
-			"years": [
-				2021,
-				2025
-			],
-			"tags": [
-				"frontend"
-			],
+			"years": [2021, 2025],
+			"tags": ["frontend"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -396,14 +301,8 @@
 			"type": "skill",
 			"label": "Node.js & CLI tooling",
 			"description": "Learning Node.js really broadened my horizons many years ago. I have built countless CLI tools and scripts on many projects I've worked on. While I don't consider myself a Node.js expert, I am comfortable working with it and using it to solve problems.",
-			"years": [
-				2016,
-				2025
-			],
-			"tags": [
-				"backend",
-				"tooling"
-			],
+			"years": [2016, 2025],
+			"tags": ["backend", "tooling"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -412,13 +311,8 @@
 			"type": "skill",
 			"label": ".NET / C#",
 			"description": "I found C# and .NET very easy to pickup. The syntax is clean and the framework provides a lot of built-in functionality that speeds up development. I appreciate the strong typing and the rich ecosystem of libraries and tools. I am not as passionate about the backend as I am about the frontend. When I first learnt C#, my backend experience was mostly with PHP. C# and .NET really helped me transition to a more structured and object-oriented approach to programming.",
-			"years": [
-				2020,
-				2025
-			],
-			"tags": [
-				"backend"
-			],
+			"years": [2020, 2025],
+			"tags": ["backend"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -427,14 +321,8 @@
 			"type": "skill",
 			"label": "Vite",
 			"description": "I remember the day I discovered Vite. Coming from webpack, it was a gamechanger for our team. I led the charge in adopting it for our projects, and although the transition had its many challenges, the benefits were clear. Vite's fast hot module replacement and optimized build process significantly improved our development workflow. I look forward to adopting Rolldown and other Void(0) tooling in future.",
-			"years": [
-				2022,
-				2025
-			],
-			"tags": [
-				"frontend",
-				"tooling"
-			],
+			"years": [2022, 2025],
+			"tags": ["frontend", "tooling"],
 			"level": "expert",
 			"skill_type": "technical"
 		},
@@ -443,13 +331,8 @@
 			"type": "skill",
 			"label": "LAMP stack",
 			"description": "LAMP stack was the first full stack architecture I learned. In particular, I created a complex market management system for Goodwill Projects using Codeigniter 3. Although LAMP stack is considered somewhat outdated now, it provided me with a solid foundation in web development, and there's a special place for it in my heart always.",
-			"years": [
-				2014,
-				2020
-			],
-			"tags": [
-				"backend"
-			],
+			"years": [2014, 2020],
+			"tags": ["backend"],
 			"level": "expert",
 			"skill_type": "technical"
 		},
@@ -458,13 +341,8 @@
 			"type": "skill",
 			"label": "jQuery",
 			"description": "When I first started web development, there was no Typescript, there was no ES6. Cross-browser compatibility was a major concern, and manipulating the DOM was a cumbersome process. It's hard to believe that jQuery was once a game changer for me. I spent many years relying on it to build complex frontend interfaces, and I became very familiar with many of it's plugins. In addition to the simple things I use it to create complex mapping interfaces, drag and drop interactions, and multi-layered animations.",
-			"years": [
-				2012,
-				2020
-			],
-			"tags": [
-				"frontend"
-			],
+			"years": [2012, 2020],
+			"tags": ["frontend"],
 			"level": "expert",
 			"skill_type": "technical"
 		},
@@ -473,18 +351,8 @@
 			"type": "skill",
 			"label": "LLM Application Engineering",
 			"description": "While it's still an emerging technology, I have been actively exploring it's potential applications in various domains. I have built several POC applications showcasing its capabilities for my team, and so far one of my projects has gone live into production. I created this portfolio as an example of how LLMs aren't just useful for creating chatbots. They can be powerful decision makers. I am very interested in how LLMs can be integrated into existing workflows and tools, and I believe they will play a crucial role in the future of software development.",
-			"years": [
-				2023,
-				2025
-			],
-			"tags": [
-				"llm",
-				"ai-apps",
-				"gpt",
-				"claude",
-				"gemini",
-				"rag"
-			],
+			"years": [2023, 2025],
+			"tags": ["llm", "ai-apps", "gpt", "claude", "gemini", "rag"],
 			"level": "advanced",
 			"skill_type": "technical"
 		},
@@ -493,14 +361,8 @@
 			"type": "skill",
 			"label": "Local Model Integration",
 			"description": "I have been exploring the use of local LLMs for applications where data privacy and security are paramount. I have experimented with models like Llama3, Mistral, Kimi K2, Gemma 3, and I am particularly interested in how they can be fine-tuned for specific tasks and domains. I have been involved in commercial projects that leverage these models for sensitive data processing. I am excited about the potential of local models to provide powerful AI capabilities without relying on external APIs.",
-			"years": [
-				2024,
-				2025
-			],
-			"tags": [
-				"llm",
-				"local"
-			],
+			"years": [2024, 2025],
+			"tags": ["llm", "local"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -509,16 +371,8 @@
 			"type": "skill",
 			"label": "Three.js",
 			"description": "I took an interest in Three.js while working on a mapping project. We started with a 2D top-down visualisation and I was amazed by the possibilities Three.js offered for creating 3D visualisations in javascript. After experimenting with it for months, but struggling to find an application for it at my workplace, I decided to take Bruno Simon's course (Three js Journey) to really deepen my understanding. I have since worked extensively with Three.js for a diagramming tool we developed at Codebots between 2020 and 2025.",
-			"years": [
-				2020,
-				2025
-			],
-			"tags": [
-				"frontend",
-				"3d",
-				"webgl",
-				"data-viz"
-			],
+			"years": [2020, 2025],
+			"tags": ["frontend", "3d", "webgl", "data-viz"],
 			"level": "advanced",
 			"skill_type": "technical"
 		},
@@ -527,14 +381,8 @@
 			"type": "skill",
 			"label": "PHP",
 			"description": "PHP is the first backend language I ever worked with. I started when PHP 5.6 was revolutionary, and I have since worked with various versions up to PHP 8.0. A large portion of my PHP work was through Codeigniter 3, Laravel, and using composer. I hear many opinions on PHP, but it will always hold a special place in my heart, and it's still used by 80% of the internet.",
-			"years": [
-				2014,
-				2025
-			],
-			"tags": [
-				"backend",
-				"web"
-			],
+			"years": [2014, 2025],
+			"tags": ["backend", "web"],
 			"level": "advanced",
 			"skill_type": "technical"
 		},
@@ -543,14 +391,8 @@
 			"type": "skill",
 			"label": "MySQL",
 			"description": "MySQL has been my primary database choice for many early full-stack projects, particularly during my LAMP stack development years. I have experience with database design, optimization, and complex queries for large-scale applications. Many of the tricks and skills I learnt have now been made quite easy with the advent of ORMs and database management tools, but I consider myself proficient in writing raw SQL queries and understanding the underlying database architecture.",
-			"years": [
-				2014,
-				2025
-			],
-			"tags": [
-				"database",
-				"backend"
-			],
+			"years": [2014, 2025],
+			"tags": ["database", "backend"],
 			"level": "advanced",
 			"skill_type": "technical"
 		},
@@ -559,14 +401,8 @@
 			"type": "skill",
 			"label": "PostgreSQL",
 			"description": "I have experience with PostgreSQL in various projects, appreciating its robust feature set and reliability. My experience includes schema design, performance optimization, and integration with modern web applications. I enjoy working with its advanced capabilities like JSONB support and full-text search, which have been beneficial in several applications I've developed.",
-			"years": [
-				2020,
-				2025
-			],
-			"tags": [
-				"database",
-				"backend"
-			],
+			"years": [2020, 2025],
+			"tags": ["database", "backend"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -575,15 +411,8 @@
 			"type": "skill",
 			"label": "Docker",
 			"description": "Docker has become an essential tool in my development workflow. I use it for containerizing applications, creating consistent development environments, and streamlining deployment processes. I appreciate how it simplifies dependency management and makes applications more portable. I have experience creating Dockerfiles, managing multi-container applications with Docker Compose, and deploying containerized applications to various environments.",
-			"years": [
-				2020,
-				2025
-			],
-			"tags": [
-				"devops",
-				"containers",
-				"tooling"
-			],
+			"years": [2020, 2025],
+			"tags": ["devops", "containers", "tooling"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -592,15 +421,8 @@
 			"type": "skill",
 			"label": "Linux",
 			"description": "I maintain several VPS instances running various Linux distributions (mostly Debian). My experience includes server configuration for web applications, performance tuning, and security hardening. I am comfortable with a linux environment, SSH and the command-line. But I would consider myself a Windows user, who appreciates the advent of WSL.",
-			"years": [
-				2016,
-				2025
-			],
-			"tags": [
-				"devops",
-				"systems",
-				"cli"
-			],
+			"years": [2016, 2025],
+			"tags": ["devops", "systems", "cli"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -609,15 +431,8 @@
 			"type": "skill",
 			"label": "Apache",
 			"description": "Apache was my primary web server during my LAMP stack development years. I have experience with configuration, virtual hosts, URL rewriting, and performance optimization. While I've since worked with other web servers, Apache provided me with a solid foundation in web server administration.",
-			"years": [
-				2014,
-				2020
-			],
-			"tags": [
-				"webserver",
-				"backend",
-				"devops"
-			],
+			"years": [2014, 2020],
+			"tags": ["webserver", "backend", "devops"],
 			"level": "intermediate",
 			"skill_type": "technical"
 		},
@@ -625,16 +440,9 @@
 			"id": "skill_leadership",
 			"type": "skill",
 			"label": "Leadership & Team Management",
-			"description": "I have extensive experience leading technical teams and initiatives. As a senior developer, I led a company-wide frontend focus group of 15-20 developers for two years, and currently serve as Quality Lead embedded across multiple squads. I've successfully guided teams through complex technical migrations and challenging project deadlines while fostering collaboration and knowledge sharing.",
-			"years": [
-				2020,
-				2025
-			],
-			"tags": [
-				"leadership",
-				"management",
-				"collaboration"
-			],
+			"description": "I have extensive experience leading technical teams and initiatives. As a senior developer, I led a company-wide frontend focus group of 15-20 developers for two years and later served as Quality Lead embedded across multiple squads at Codebots. I've successfully guided teams through complex technical migrations and challenging project deadlines while fostering collaboration and knowledge sharing.",
+			"years": [2020, 2025],
+			"tags": ["leadership", "management", "collaboration"],
 			"level": "advanced",
 			"skill_type": "soft"
 		},
@@ -643,15 +451,8 @@
 			"type": "skill",
 			"label": "Mentoring & Knowledge Transfer",
 			"description": "I'm passionate about developing others and sharing knowledge. Through running frontend focus groups, I've mentored junior developers, showcased best practices, and fostered a culture of continuous learning. I believe in leading by example and creating environments where team members can grow and succeed.",
-			"years": [
-				2020,
-				2025
-			],
-			"tags": [
-				"mentoring",
-				"knowledge-sharing",
-				"development"
-			],
+			"years": [2020, 2025],
+			"tags": ["mentoring", "knowledge-sharing", "development"],
 			"level": "advanced",
 			"skill_type": "soft"
 		},
@@ -660,15 +461,8 @@
 			"type": "skill",
 			"label": "Project Management",
 			"description": "I have strong experience managing complex technical projects from conception to delivery. This includes coordinating multi-year platform development, managing shifting client-driven deadlines, and balancing feature requests with technical debt. I've successfully delivered projects ranging from internal tools to enterprise applications while maintaining team productivity and code quality.",
-			"years": [
-				2014,
-				2025
-			],
-			"tags": [
-				"project-management",
-				"coordination",
-				"delivery"
-			],
+			"years": [2014, 2025],
+			"tags": ["project-management", "coordination", "delivery"],
 			"level": "advanced",
 			"skill_type": "soft"
 		},
@@ -677,15 +471,8 @@
 			"type": "skill",
 			"label": "Process Improvement",
 			"description": "I excel at identifying inefficiencies and implementing systematic improvements. I've led major performance optimizations, automated manual processes (reducing 3-4 hour tasks to under a minute), and established quality practices across teams. My approach focuses on measurable outcomes and sustainable change management.",
-			"years": [
-				2016,
-				2025
-			],
-			"tags": [
-				"optimization",
-				"automation",
-				"efficiency"
-			],
+			"years": [2016, 2025],
+			"tags": ["optimization", "automation", "efficiency"],
 			"level": "expert",
 			"skill_type": "soft"
 		},
@@ -694,15 +481,8 @@
 			"type": "skill",
 			"label": "Strategic Planning",
 			"description": "I have a strong track record of making strategic technical decisions that align with business goals. This includes planning and executing major technology migrations (React upgrades, Webpack to Vite), introducing new technologies like TypeScript code generation, and identifying opportunities for innovation with emerging technologies like AI/LLM applications.",
-			"years": [
-				2018,
-				2025
-			],
-			"tags": [
-				"strategy",
-				"planning",
-				"innovation"
-			],
+			"years": [2018, 2025],
+			"tags": ["strategy", "planning", "innovation"],
 			"level": "advanced",
 			"skill_type": "soft"
 		},
@@ -711,15 +491,8 @@
 			"type": "skill",
 			"label": "Cross-functional Collaboration",
 			"description": "I work effectively across disciplines, particularly with design and product teams. I excel at translating between technical and non-technical stakeholders, iterating closely with designers to achieve pixel-perfect implementations, and coordinating across multiple teams to deliver complex features under tight deadlines.",
-			"years": [
-				2014,
-				2025
-			],
-			"tags": [
-				"collaboration",
-				"communication",
-				"cross-functional"
-			],
+			"years": [2014, 2025],
+			"tags": ["collaboration", "communication", "cross-functional"],
 			"level": "advanced",
 			"skill_type": "soft"
 		},
@@ -728,15 +501,8 @@
 			"type": "skill",
 			"label": "Technical Communication",
 			"description": "I'm skilled at communicating complex technical concepts to diverse audiences. This includes running focus groups, creating technical documentation, presenting architectural decisions, and establishing automated documentation pipelines. I believe clear communication is essential for successful technical leadership and knowledge transfer.",
-			"years": [
-				2020,
-				2025
-			],
-			"tags": [
-				"communication",
-				"documentation",
-				"presentation"
-			],
+			"years": [2020, 2025],
+			"tags": ["communication", "documentation", "presentation"],
 			"level": "advanced",
 			"skill_type": "soft"
 		},
@@ -745,55 +511,35 @@
 			"type": "value",
 			"label": "Mentorship & Community",
 			"summary": "I ran a company-wide frontend focus group for two years (15–20 devs attending) that showcased the frontend successes in our company, promoted discussion about best practices and controversial ideas, and mentored junior developers. I found it to be a very rewarding experience, and I believe it helped foster a culture of collaboration and continuous learning within the team.",
-			"tags": [
-				"leadership",
-				"mentoring",
-				"practice"
-			]
+			"tags": ["leadership", "mentoring", "practice"]
 		},
 		{
 			"id": "value_quality",
 			"type": "value",
 			"label": "Quality & Observability",
 			"summary": "As quality lead for our company (Codebots), I helped to establish a culture of quality by implementing best practices for end to end testing, application architecture, and observability. I advocated for the use of automated testing tools and worked with quality engineers to integrate them into their team's workflows. This resulted in improved code quality, faster feedback loops, increased confidence in our releases, and stakeholders who were kept informed.",
-			"tags": [
-				"quality",
-				"testing",
-				"observability"
-			]
+			"tags": ["quality", "testing", "observability"]
 		},
 		{
 			"id": "value_design_perf",
 			"type": "value",
 			"label": "Design Polish & Performance",
 			"summary": "I have one important belief about creating applications: no matter how fast your backend works, if your user interface is slow, unresponsive, or badly designed, that will drive the user's perception of the entire application. For some developers the frontend is an afterthought. For me, it's the first priority. Designs must be implemented as closely as possible to the original vision, and I am committed to achieving pixel-perfect execution.\nPerformance is not just a nice-to-have; it's a fundamental aspect of user experience. I place a strong emphasis on an optimisation phase of development, noting that trying to optimise too early can lead to slow development.",
-			"tags": [
-				"ui-ux",
-				"performance",
-				"craft"
-			]
+			"tags": ["ui-ux", "performance", "craft"]
 		},
 		{
 			"id": "value_innovation",
 			"type": "value",
 			"label": "Innovation with Emerging Tech",
 			"summary": "I have a strong passion for exploring and implementing emerging technologies, lately in the realm of AI. I believe that staying ahead of the curve is crucial for delivering cutting-edge solutions that meet the evolving needs of users. I have a long history of pushing the boundaries of what's possible with current technology, and my curiosity drives me to continuously learn and adapt.",
-			"tags": [
-				"innovation",
-				"llm",
-				"ai"
-			]
+			"tags": ["innovation", "llm", "ai"]
 		},
 		{
 			"id": "value_open_source",
 			"type": "value",
 			"label": "Open Source Contribution",
 			"summary": "I have an appreciation for the open source community and mentality, and I am excited to share some of my work. My first open source library, `react-granular-store`, is a state management solution for React that emphasizes fine-grained reactivity and performance. It has been used in several enterprise projects, showcasing its effectiveness in real-world applications.\nI am currently working on open sourcing two more libraries: `react-highlight`, a library which highlights DOM elements on a user's page, and `react-minimap-scrollbar`, a library which virtualises a scrolling container into a minimap that you can scroll.",
-			"tags": [
-				"oss",
-				"community",
-				"contribution"
-			]
+			"tags": ["oss", "community", "contribution"]
 		},
 		{
 			"id": "story_css_perf",
@@ -801,10 +547,7 @@
 			"label": "Performance Revolution",
 			"summary": "Migrated from CSS-in-JS to standard CSS, improving load/render times.",
 			"description": "Our company invested a lot of time and effort into the CSS-in-JS school of thought. We used frameworks such as styled-components and Chakra extensively. As some of our applications got bigger, I spent some time researching and testing, and identified CSS-in-JS as the bottleneck. I pitched a controversial migration to standard CSS, created guidelines, and led adoption across frontend teams. This led to significant improvements in load and render times.",
-			"years": [
-				2022,
-				2023
-			]
+			"years": [2022, 2023]
 		},
 		{
 			"id": "story_deadlines",
@@ -812,20 +555,14 @@
 			"label": "Deadline Leadership",
 			"summary": "Delivered under tight, client-driven deadlines by rallying teams around just-enough features.",
 			"description": "At Codebots, our team mostly worked on an internal application that our sister company (Working Mouse) used to create applications for clients. Our small team had to balance feature requests, bug fixes, with new development. We had complex deadlines that often shifted based on downstream client needs. Sometimes I had to make tough calls about prioritizing certain features over others to meet these deadlines, and sometimes we had to be creative and create interfaces that satisfied multiple requests. Getting some of these projects across the line required leadership and collaboration across teams.",
-			"years": [
-				2020,
-				2025
-			]
+			"years": [2020, 2025]
 		},
 		{
 			"id": "story_pixel_perfect",
 			"type": "story",
 			"label": "Pixel-Perfect Execution",
 			"summary": "As a frontend developer, I take a lot of pride in delivering pixel-perfect designs that match the original vision. My ultimate compliment is the designer mistaking my work for their design. I have a strong eye for detail and I am committed to achieving the highest level of craftsmanship in my work. Designers in the past have attested that my ability to fill in the gaps between design and implementation is exceptional.",
-			"years": [
-				2021,
-				2025
-			]
+			"years": [2021, 2025]
 		},
 		{
 			"id": "story_bank_recon",
@@ -833,40 +570,28 @@
 			"label": "Automated Bank Reconciliation",
 			"summary": "Replaced a cumbersome manual task with a fully automated reconciliation system.",
 			"description": "One of my biggest contributions to a company was when I designed and built an automated bank reconciliation system to handle the matching of bank transactions with invoices. At the time, this process was entirely manual and took our bookkeeper a full week to complete each month. I suggested automating the process end to end by creating an invoicing/client identification system, integrating it with their bank feeds, automating the reconciliation process, implementing a user-friendly interface for our bookkeeper to review and approve matches, and exporting this data in a MyOB friendly format. This virtually eliminated the manual workload and the company has since expanded from hundreds to tens of thousands of transactions per month without needing to hire additional staff.",
-			"years": [
-				2016,
-				2019
-			]
+			"years": [2016, 2019]
 		},
 		{
 			"id": "story_first_html",
 			"type": "story",
 			"label": "First Website",
 			"summary": "I built my first website when I was 10 years old. I have not provided a link to it as I can't bear the public ridicule. But it is still out there, and you can find it if you look hard enough!",
-			"years": [
-				1999,
-				1999
-			]
+			"years": [1999, 1999]
 		},
 		{
 			"id": "story_flash_portals",
 			"type": "story",
 			"label": "Flash Portals",
 			"summary": "When I was 14 years old, I was fascinated by the possibilities of Flash and was part of a larger community of animators on various websites. At the time I was experimenting with PHP and web development, and I helped some very young companies get their flash portals off the ground. I was lucky enough to work with the founders of Smosh.com and the popular Cyanide & Happiness web comic.",
-			"years": [
-				2003,
-				2003
-			]
+			"years": [2003, 2003]
 		},
 		{
 			"id": "story_flash_spellcheck",
 			"type": "story",
 			"label": "Flash Spellchecker",
 			"summary": "When I was 16, I got my first paid project as a Flash developer. A psychological testing company wanted a custom Flash-based test tool that could be passed a configuration file to dynamically present different test questions based on the user's profile. As an added challenge, I wanted to implement a real-time spell checker for the long text input fields, but there were only two libraries that could do this at the time, and they were both quite expensive.\nI spent weeks researching and experimenting and managed to create a performant plugin that I released for free.",
-			"years": [
-				2006,
-				2006
-			]
+			"years": [2006, 2006]
 		}
 	],
 	"edges": [
@@ -886,6 +611,12 @@
 			"id": "e1c",
 			"source": "person_lindsay",
 			"target": "role_codebots_quality_lead",
+			"rel": "worked_as"
+		},
+		{
+			"id": "e1d",
+			"source": "person_lindsay",
+			"target": "role_canva_sfe",
 			"rel": "worked_as"
 		},
 		{
@@ -1581,6 +1312,6 @@
 	],
 	"meta": {
 		"personId": "person_lindsay",
-		"lastUpdated": "2025-09-04"
+		"lastUpdated": "2026-03-23"
 	}
 }

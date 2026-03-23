@@ -41,7 +41,7 @@ export function WelcomeMessage() {
 	return (
 		<div className={className}>
 			<div className="name">Lindsay Spencer</div>
-			<div className="job-title">Senior Full Stack Engineer</div>
+			<div className="job-title">Senior Frontend Engineer</div>
 		</div>
 	);
 }

@@ -103,7 +103,7 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 				<TreeStream as="header">
 					<TreeStream as="h1">Lindsay Spencer</TreeStream>
 					<TreeStream as="div" className="meta">
-						Senior Full Stack Developer (Frontend Specialist) · Brisbane, Australia
+						Senior Frontend Engineer at Canva · Brisbane, Australia
 					</TreeStream>
 					<TreeStream className="meta contact-links">
 						<a href="mailto:lindsayjspencer@gmail.com" aria-label="Email">
@@ -133,8 +133,18 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 						<TreeStream as="h2">Experience</TreeStream>
 
 						<TreeStream as="div" className="role">
+							<TreeStream as="h3">Senior Frontend Engineer — Canva</TreeStream>
+							<TreeStream className="meta">Dec 2025 – Present · Brisbane</TreeStream>
+							<TreeStream as="ul">
+								<TreeStream as="li">
+									Senior Frontend Engineer in Canva&apos;s Print Browse team.
+								</TreeStream>
+							</TreeStream>
+						</TreeStream>
+
+						<TreeStream as="div" className="role">
 							<TreeStream as="h3">Quality Lead — Codebots</TreeStream>
-							<TreeStream className="meta">Jan 2025 – Present · Brisbane</TreeStream>
+							<TreeStream className="meta">Jan 2025 – Nov 2025 · Brisbane</TreeStream>
 							<TreeStream as="ul">
 								<TreeStream as="li">
 									Embedded within squads, enhancing testing, observability, and traceability
@@ -232,7 +242,7 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 						<TreeStream as="div" className="project">
 							<TreeStream as="h3">Codebots Platform</TreeStream>
 							<TreeStream as="div" className="meta">
-								Brisbane, Australia · May 2020 – Present · Senior Full Stack Developer
+								Brisbane, Australia · May 2020 – Nov 2025 · Codebots
 							</TreeStream>
 							<TreeStream as="ul">
 								<TreeStream as="li">
@@ -261,7 +271,7 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 								<a href="https://codebots.com">demo</a>
 							</TreeStream>
 							<TreeStream as="div" className="meta">
-								Brisbane, Australia · Aug 2025 – Sep 2025 · Senior Full Stack Developer
+								Brisbane, Australia · Aug 2025 – Sep 2025 · Codebots
 							</TreeStream>
 							<TreeStream as="ul">
 								<TreeStream as="li">
@@ -286,7 +296,7 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 								<a href="https://www.npmjs.com/package/react-granular-store">npm</a>
 							</TreeStream>
 							<TreeStream as="div" className="meta">
-								Brisbane, Australia · Dec 2023 – Present · Senior Full Stack Developer
+								Brisbane, Australia · Dec 2023 – Present · Open Source
 							</TreeStream>
 							<TreeStream as="ul">
 								<TreeStream as="li">
@@ -302,7 +312,7 @@ export function ResumeView({ transitionPhase = 'stable', onRegisterCallbacks }: 
 						<TreeStream as="div" className="project">
 							<TreeStream as="h3">Markets & Events Platform</TreeStream>
 							<TreeStream as="div" className="meta">
-								Brisbane, Australia · Jun 2014 – Mar 2020 · Full Stack Developer
+								Brisbane, Australia · Jun 2014 – Mar 2020 · Goodwill Projects
 							</TreeStream>
 							<TreeStream as="ul">
 								<TreeStream as="li">
