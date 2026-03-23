@@ -1,6 +1,6 @@
 import type { LanguageModel } from 'ai';
-import { suggestAnswersTool } from '~/lib/ai/suggestAnswersTool';
 import {
+	createExploreDirective,
 	compareDirective,
 	exploreDirective,
 	projectsDirective,
@@ -9,13 +9,21 @@ import {
 	timelineDirective,
 	type Directive,
 	valuesDirective,
+	DEFAULT_THEME,
 } from '~/lib/ai/directiveTools';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
 import { getThemeNames, type ThemeName } from '~/lib/themes';
 import { validateUrlDirective } from '~/utils/urlState';
-import { ASK_PROMPT_CACHE_KEY, ASK_SYSTEM_PROMPT, buildAskMessages } from './prompt';
+import {
+	ASK_NARRATION_PROMPT_CACHE_KEY,
+	ASK_NARRATION_SYSTEM_PROMPT,
+	ASK_PLANNER_PROMPT_CACHE_KEY,
+	ASK_PLANNER_SYSTEM_PROMPT,
+	buildNarrationMessages,
+	buildPlannerMessages,
+} from './prompt';
 
-export const askTools = {
+export const plannerTools = {
 	showTimelineView: timelineDirective,
 	showProjectsView: projectsDirective,
 	showSkillsView: skillsDirective,
@@ -23,7 +31,6 @@ export const askTools = {
 	showCompareView: compareDirective,
 	showExploreView: exploreDirective,
 	showResumeView: resumeDirective,
-	suggestAnswers: suggestAnswersTool,
 } as const;
 
 export const directiveToolNames = [
@@ -81,14 +88,24 @@ function extractDirectiveTheme(input: unknown, fallbackTheme: Directive['theme']
 	return input.theme as ThemeName;
 }
 
-function stripDirectiveToolTheme(input: unknown): unknown {
+function stripPlannerOnlyFields(input: unknown): unknown {
 	if (!isRecord(input)) {
 		return input;
 	}
 
 	const data = { ...input };
 	delete data.theme;
+	delete data.reason;
 	return data;
+}
+
+export function extractDirectiveReason(input: unknown): string | null {
+	if (!isRecord(input) || typeof input.reason !== 'string') {
+		return null;
+	}
+
+	const reason = input.reason.trim();
+	return reason.length > 0 ? reason : null;
 }
 
 export function toDirectiveFromToolCall(
@@ -99,13 +116,21 @@ export function toDirectiveFromToolCall(
 	const candidate = {
 		mode: directiveToolModeByName[toolName],
 		theme: extractDirectiveTheme(input, fallbackTheme),
-		data: stripDirectiveToolTheme(input),
+		data: stripPlannerOnlyFields(input),
 	};
 	const validated = validateUrlDirective(candidate);
 	return validated ? (validated as Directive) : null;
 }
 
-export function buildAskCallOptions({
+export function buildPlannerFallbackDirective(currentDirective: Directive | null): Directive {
+	if (currentDirective && currentDirective.mode !== 'landing') {
+		return currentDirective;
+	}
+
+	return createExploreDirective(currentDirective?.theme ?? DEFAULT_THEME);
+}
+
+export function buildPlannerCallOptions({
 	model,
 	messages,
 	currentDirective,
@@ -116,13 +141,41 @@ export function buildAskCallOptions({
 }) {
 	return {
 		model,
-		system: ASK_SYSTEM_PROMPT,
-		messages: buildAskMessages(messages, currentDirective),
-		tools: askTools,
-		toolChoice: 'auto' as const,
+		system: ASK_PLANNER_SYSTEM_PROMPT,
+		messages: buildPlannerMessages(messages, currentDirective),
+		tools: plannerTools,
+		toolChoice: 'required' as const,
 		providerOptions: {
 			openai: {
-				promptCacheKey: ASK_PROMPT_CACHE_KEY,
+				promptCacheKey: ASK_PLANNER_PROMPT_CACHE_KEY,
+				promptCacheRetention: 'in_memory' as const,
+			},
+		},
+	};
+}
+
+export function buildNarrationCallOptions({
+	model,
+	messages,
+	directive,
+	plannerReason,
+}: {
+	model: LanguageModel;
+	messages: AskRequestMessage[];
+	directive: Directive;
+	plannerReason: string | null | undefined;
+}) {
+	return {
+		model,
+		system: ASK_NARRATION_SYSTEM_PROMPT,
+		messages: buildNarrationMessages({
+			messages,
+			directive,
+			plannerReason,
+		}),
+		providerOptions: {
+			openai: {
+				promptCacheKey: ASK_NARRATION_PROMPT_CACHE_KEY,
 				promptCacheRetention: 'in_memory' as const,
 			},
 		},

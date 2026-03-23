@@ -25,14 +25,18 @@ Current choices:
 
 ## Initial Shape
 
-The first eval is [`evals/ask-routing.eval.ts`](../evals/ask-routing.eval.ts).
+The current eval entry points are:
 
-It exercises the real ask prompt stack:
+- [`evals/ask-routing.eval.ts`](../evals/ask-routing.eval.ts)
+- [`evals/landing-suggestion-chips.eval.ts`](../evals/landing-suggestion-chips.eval.ts)
 
-- uses the production prompt from `src/server/ask/prompt.ts`
-- uses the production OpenAI model from `src/server/model/index.ts`
-- uses the same view tools and `suggestAnswers` tool as `/api/ask`
-- wraps the model with `wrapAISDKModel(...)` so Evalite can cache and trace calls
+They exercise the real ask flow:
+
+- planner pass first, narrator pass second
+- production prompts from `src/server/ask/prompt.ts`
+- production models from `src/server/model/index.ts`
+- the same planner-selected view tools used by `/api/ask`
+- wrapped models via `wrapAISDKModel(...)` so Evalite can cache and trace calls
 
 The helper lives in [`evals/helpers/runAskEval.ts`](../evals/helpers/runAskEval.ts).
 
@@ -44,19 +48,14 @@ Note:
 
 ## What The First Eval Checks
 
-Historically, the routing eval checked high-signal prompt behavior such as:
+The current evals check:
 
-- resume requests route to a resume view tool
-- broad project requests route to a projects view tool
-- ambiguous prompts trigger clarifying behavior
-- portfolio-mechanics questions use the special product-specific handling flow
+- explicit routing for a few unambiguous asks
+- one supporting view per turn
+- narration present
+- no raw JSON leakage in narration
 
-It intentionally normalizes tool calls before scoring:
-
-- ignores `changeTheme`
-- compares only stable routing fields such as `toolName` and `variant`
-
-That keeps the eval focused on routing behavior instead of incidental prompt details like highlight lists.
+The landing chip eval intentionally does not prescribe one exact view per prompt. It is currently a hard-line behavior suite, not a rigid routing suite.
 
 ## Suggested Next Evals
 
@@ -67,16 +66,11 @@ After this starter eval, the next useful files would be:
    - weaknesses response shape
    - pride/accomplishment behavior
 
-2. `evals/ask-directive-arguments.eval.ts`
-   - do highlights contain the right entity ids
-   - do compare requests populate `leftId` and `rightId`
-   - do project deep-dives pick `case-study` instead of `grid`
-
-3. `evals/ask-regressions.eval.ts`
+2. `evals/ask-regressions.eval.ts`
    - a curated set of prompts that have previously misrouted
    - used as a permanent regression suite when prompt edits land
 
-4. `evals/ask-variants.eval.ts`
+3. `evals/ask-variants.eval.ts`
    - compare prompt versions with `evalite.each(...)`
    - useful once the prompt is split into modules and you want A/B comparisons
 

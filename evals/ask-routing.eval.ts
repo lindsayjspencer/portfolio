@@ -1,7 +1,13 @@
 import { evalite } from 'evalite';
-import { toolCallAccuracy } from 'evalite/scorers/deterministic';
 import { createDefaultLandingDirective, type Directive } from '~/lib/ai/directiveTools';
-import { normalizeAskToolCalls, runAskEvalTurn, type AskEvalOutput, type NormalizedToolCall } from './helpers/runAskEval';
+import { normalizeAskToolCalls, runAskEvalTurn, type AskEvalOutput } from './helpers/runAskEval';
+import {
+	scoreExactlyOneViewTool,
+	scoreExpectedPrimaryDirective,
+	scoreNarrationPresent,
+	scoreNoRawJsonInNarration,
+	type ExpectedPrimaryDirective,
+} from './helpers/askEvalScorers';
 
 type AskRoutingInput = {
 	caseName: string;
@@ -10,18 +16,8 @@ type AskRoutingInput = {
 };
 
 type AskRoutingExpected = {
-	toolCalls: NormalizedToolCall[];
+	primaryDirective: ExpectedPrimaryDirective | ExpectedPrimaryDirective[];
 };
-
-const PRIMARY_DIRECTIVE_TOOL_NAMES = new Set([
-	'timelineDirective',
-	'projectsDirective',
-	'skillsDirective',
-	'valuesDirective',
-	'compareDirective',
-	'exploreDirective',
-	'resumeDirective',
-]);
 
 const defineAskRoutingEval = process.env.OPENAI_API_KEY ? evalite : evalite.skip;
 
@@ -34,7 +30,7 @@ defineAskRoutingEval<AskRoutingInput, AskEvalOutput, AskRoutingExpected>('Ask Pr
 				currentDirective: createDefaultLandingDirective(),
 			},
 			expected: {
-				toolCalls: [{ toolName: 'resumeDirective' }],
+				primaryDirective: { toolName: 'showResumeView' },
 			},
 		},
 		{
@@ -44,34 +40,27 @@ defineAskRoutingEval<AskRoutingInput, AskEvalOutput, AskRoutingExpected>('Ask Pr
 				currentDirective: createDefaultLandingDirective(),
 			},
 			expected: {
-				toolCalls: [{ toolName: 'projectsDirective', input: { variant: 'grid' } }],
+				primaryDirective: { toolName: 'showProjectsView', variant: 'grid' },
 			},
 		},
 		{
 			input: {
-				caseName: 'Ambiguous experience request offers suggested answers',
-				userMessage: 'Show me your experience',
+				caseName: 'Explicit technical expertise requests use the skills view',
+				userMessage: 'Do you have experience in TypeScript?',
 				currentDirective: createDefaultLandingDirective(),
 			},
 			expected: {
-				toolCalls: [
-					{
-						toolName: 'suggestAnswers',
-						input: {
-							answers: ['Career Timeline', 'Technical Skills', 'Project Work'],
-						},
-					},
-				],
+				primaryDirective: { toolName: 'showSkillsView', variant: 'technical' },
 			},
 		},
 		{
 			input: {
-				caseName: 'Portfolio mechanics question may answer directly without tool calls',
+				caseName: 'Portfolio mechanics questions use the explore view',
 				userMessage: 'How does this portfolio app work?',
 				currentDirective: createDefaultLandingDirective(),
 			},
 			expected: {
-				toolCalls: [],
+				primaryDirective: { toolName: 'showExploreView' },
 			},
 		},
 	],
@@ -82,25 +71,24 @@ defineAskRoutingEval<AskRoutingInput, AskEvalOutput, AskRoutingExpected>('Ask Pr
 		}),
 	scorers: [
 		{
-			name: 'Normalized Tool Routing',
+			name: 'Expected Primary View',
 			scorer: async ({ output, expected }) =>
-				toolCallAccuracy({
-					actualCalls: normalizeAskToolCalls(output.toolCalls),
-					expectedCalls: expected.toolCalls,
-					mode: 'flexible',
+				scoreExpectedPrimaryDirective({
+					output,
+					expected: expected.primaryDirective,
 				}),
 		},
 		{
+			name: 'Exactly One View Tool',
+			scorer: async ({ output }) => scoreExactlyOneViewTool({ output }),
+		},
+		{
 			name: 'Narration Present',
-			scorer: async ({ output }) => {
-				const text = output.text.trim();
-				return {
-					score: text.length > 0 ? 1 : 0,
-					metadata: {
-						text,
-					},
-				};
-			},
+			scorer: async ({ output }) => scoreNarrationPresent({ output }),
+		},
+		{
+			name: 'No Raw JSON In Narration',
+			scorer: async ({ output }) => scoreNoRawJsonInNarration({ output }),
 		},
 	],
 	columns: ({ input, output, expected }) => [
@@ -111,8 +99,8 @@ defineAskRoutingEval<AskRoutingInput, AskEvalOutput, AskRoutingExpected>('Ask Pr
 			value: JSON.stringify(normalizeAskToolCalls(output.toolCalls), null, 2),
 		},
 		{
-			label: 'Expected Tool Calls',
-			value: JSON.stringify(expected?.toolCalls ?? [], null, 2),
+			label: 'Expected Primary View',
+			value: JSON.stringify(expected?.primaryDirective ?? null, null, 2),
 		},
 		{
 			label: 'Text Preview',

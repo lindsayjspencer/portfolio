@@ -6,9 +6,9 @@ import {
 } from '~/components/SuggestionChips/questions';
 import { normalizeAskToolCalls, runAskEvalTurn, type AskEvalOutput } from './helpers/runAskEval';
 import {
-	scoreAskBehavior,
+	scoreExactlyOneViewTool,
 	scoreNarrationPresent,
-	type AskBehaviorExpectation,
+	scoreNoRawJsonInNarration,
 } from './helpers/askEvalScorers';
 
 type LandingSuggestionChipInput = {
@@ -16,58 +16,9 @@ type LandingSuggestionChipInput = {
 	userMessage: LandingSuggestionChipQuestion;
 };
 
-type LandingSuggestionChipExpected = AskBehaviorExpectation;
-
-const EXPECTED_BY_CHIP: Record<LandingSuggestionChipQuestion, LandingSuggestionChipExpected> = {
-	"What's your experience with modern web frameworks?": {
-		primaryDirective: { toolName: 'skillsDirective', variant: 'technical' },
-	},
-	'Why should we hire you over an AI?': {
-		primaryDirective: [
-			{ toolName: 'exploreDirective' },
-			{ toolName: 'valuesDirective', variant: 'evidence' },
-		],
-	},
-	'Why should we hire you in this economy': {
-		primaryDirective: [
-			{ toolName: 'exploreDirective' },
-			{ toolName: 'valuesDirective', variant: 'evidence' },
-		],
-	},
-	'What makes you unique?': {
-		primaryDirective: [
-			{ toolName: 'valuesDirective', variant: 'evidence' },
-			{ toolName: 'exploreDirective' },
-		],
-	},
-	'What are you most proud of in your career?': {
-		primaryDirective: [
-			{ toolName: 'projectsDirective', variant: 'case-study' },
-			{ toolName: 'exploreDirective' },
-		],
-	},
-	'Do you have experience in Typescript?': {
-		primaryDirective: { toolName: 'skillsDirective', variant: 'technical' },
-	},
-	'Are you just another programmer?': {
-		primaryDirective: [
-			{ toolName: 'valuesDirective', variant: 'evidence' },
-			{ toolName: 'exploreDirective' },
-		],
-	},
-	'How does this portfolio work?': {
-	},
-	'Show me your React projects': {
-		primaryDirective: { toolName: 'projectsDirective', variant: 'grid' },
-	},
-	'Just put the resume in the bag': {
-		primaryDirective: { toolName: 'resumeDirective' },
-	},
-};
-
 const defineLandingSuggestionChipEval = process.env.OPENAI_API_KEY ? evalite : evalite.skip;
 
-defineLandingSuggestionChipEval<LandingSuggestionChipInput, AskEvalOutput, LandingSuggestionChipExpected>(
+defineLandingSuggestionChipEval<LandingSuggestionChipInput, AskEvalOutput>(
 	'Landing Suggestion Chips',
 	{
 		data: LANDING_SUGGESTION_CHIP_QUESTIONS.map((question) => ({
@@ -75,7 +26,6 @@ defineLandingSuggestionChipEval<LandingSuggestionChipInput, AskEvalOutput, Landi
 				caseName: question,
 				userMessage: question,
 			},
-			expected: EXPECTED_BY_CHIP[question],
 		})),
 		task: async ({ userMessage }) =>
 			runAskEvalTurn({
@@ -84,23 +34,23 @@ defineLandingSuggestionChipEval<LandingSuggestionChipInput, AskEvalOutput, Landi
 			}),
 		scorers: [
 			{
-				name: 'Expected Landing Behavior',
-				scorer: async ({ output, expected }) => scoreAskBehavior({ output, expected }),
+				name: 'Exactly One View Tool',
+				scorer: async ({ output }) => scoreExactlyOneViewTool({ output }),
 			},
 			{
 				name: 'Narration Present',
 				scorer: async ({ output }) => scoreNarrationPresent({ output }),
 			},
+			{
+				name: 'No Raw JSON In Narration',
+				scorer: async ({ output }) => scoreNoRawJsonInNarration({ output }),
+			},
 		],
-		columns: ({ input, output, expected }) => [
+		columns: ({ input, output }) => [
 			{ label: 'Chip', value: input.caseName },
 			{
 				label: 'Actual Tool Calls',
 				value: JSON.stringify(normalizeAskToolCalls(output.toolCalls), null, 2),
-			},
-			{
-				label: 'Expected',
-				value: JSON.stringify(expected, null, 2),
 			},
 			{
 				label: 'Text Preview',

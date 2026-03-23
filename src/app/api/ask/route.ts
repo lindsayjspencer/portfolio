@@ -1,12 +1,18 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
-import { smoothStream, streamText } from 'ai';
-import type { SuggestedAnswersPayload } from '~/lib/ai/suggestAnswersTool';
+import { streamText } from 'ai';
 import { askRequestBodySchema } from '~/lib/ai/ask-contract';
-import { DEFAULT_THEME, type Directive } from '~/lib/ai/directiveTools';
+import type { Directive } from '~/lib/ai/directiveTools';
 import { langfuse } from '~/server/langfuse';
-import { GENERAL_MODEL_ID, generalModel } from '~/server/model';
-import { buildAskCallOptions, isDirectiveToolName, toDirectiveFromToolCall } from '~/server/ask/runtime';
+import { GENERAL_MODEL_ID, generalModel, PLANNER_MODEL_ID, plannerModel } from '~/server/model';
+import {
+	buildNarrationCallOptions,
+	buildPlannerCallOptions,
+	buildPlannerFallbackDirective,
+	extractDirectiveReason,
+	isDirectiveToolName,
+	toDirectiveFromToolCall,
+} from '~/server/ask/runtime';
 import { toAskUsageSummary, toLangfuseUsageDetails } from '~/server/ask/usage';
 
 const encoder = new TextEncoder();
@@ -28,6 +34,26 @@ function safeEnqueue(controller: ReadableStreamDefaultController<Uint8Array>, ch
 		controller.enqueue(chunk);
 	} catch {
 		// Ignore enqueue failures after disconnects.
+	}
+}
+
+async function resolveUsage(
+	result: { totalUsage: PromiseLike<Parameters<typeof toAskUsageSummary>[0]> } | null,
+	label: string,
+) {
+	if (!result) {
+		return { summary: null, details: undefined };
+	}
+
+	try {
+		const totalUsage = await result.totalUsage;
+		return {
+			summary: toAskUsageSummary(totalUsage),
+			details: toLangfuseUsageDetails(totalUsage),
+		};
+	} catch (usageError) {
+		console.error(`Failed to resolve ${label} usage:`, usageError);
+		return { summary: null, details: undefined };
 	}
 }
 
@@ -58,39 +84,110 @@ export async function POST(req: Request) {
 
 	const { messages, currentDirective } = parsedBody.data;
 	const trace = langfuse.trace({ id: randomUUID(), name: 'ask-stream' });
-	const askCallOptions = buildAskCallOptions({
-		model: generalModel,
-		messages,
-		currentDirective,
-	});
 	const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')?.content;
 
 	if (latestUserMessage) {
 		console.log('[ask-debug] user:', latestUserMessage);
 	}
 
-	// This is the main cost boundary for the route. If you change deployment/platform-level
-	// protection later, make sure abusive traffic is still stopped before `streamText(...)`
-	// is reached, because everything below can spend model tokens and hold open an SSE stream.
-	const result = streamText({
-		...askCallOptions,
-		// experimental_transform: [
-		// 	smoothStream({
-		// 		delayInMs: 30,
-		// 		chunking: 'word',
-		// 	}),
-		// ],
-	});
-
 	const stream = new ReadableStream<Uint8Array>({
 		async start(controller) {
-			const toolCalls: Array<{ name: string; input: unknown }> = [];
+			const plannerToolCalls: Array<{ name: string; input: unknown }> = [];
+			const narratorToolCalls: Array<{ name: string; input: unknown }> = [];
 			let streamedText = '';
 			let streamError: string | null = null;
-			let activeTheme: Directive['theme'] = currentDirective?.theme ?? DEFAULT_THEME;
+			let plannerError: string | null = null;
+			let plannerSelection: Directive | null = null;
+			let plannerReason: string | null = null;
+			let plannerDirectiveEmitted = false;
+			let narratorResult: ReturnType<typeof streamText> | null = null;
+			const plannerResult = streamText(
+				buildPlannerCallOptions({
+					model: plannerModel,
+					messages,
+					currentDirective,
+				}),
+			);
+			let resolvePlannerSelection: (() => void) | null = null;
+			const plannerSelectionReady = new Promise<void>((resolve) => {
+				resolvePlannerSelection = resolve;
+			});
+			const settlePlannerSelection = () => {
+				if (resolvePlannerSelection) {
+					resolvePlannerSelection();
+					resolvePlannerSelection = null;
+				}
+			};
+			const plannerDrainPromise = (async () => {
+				try {
+					for await (const part of plannerResult.fullStream) {
+						if (part.type === 'text-delta') {
+							console.log('[ask-debug] planner text ignored:', part.text);
+							continue;
+						}
+
+						if (part.type === 'tool-call') {
+							plannerToolCalls.push({ name: part.toolName, input: part.input });
+							console.log('[ask-debug] planner tool-call:', part.toolName, part.input);
+
+							if (!plannerSelection && isDirectiveToolName(part.toolName)) {
+								const directive = toDirectiveFromToolCall(
+									part.toolName,
+									part.input,
+									currentDirective?.theme ?? 'cold',
+								);
+
+								if (directive) {
+									plannerSelection = directive;
+									plannerReason = extractDirectiveReason(part.input);
+
+									if (!plannerDirectiveEmitted) {
+										plannerDirectiveEmitted = true;
+										safeEnqueue(controller, sseEvent('directive', directive));
+									}
+
+									settlePlannerSelection();
+								}
+							}
+
+							continue;
+						}
+
+						if (part.type === 'error') {
+							plannerError = getErrorMessage(part.error);
+							console.error('Planner stream error part:', plannerError);
+						}
+					}
+				} catch (error) {
+					plannerError = getErrorMessage(error);
+					console.error('Planner stream failed:', error);
+				} finally {
+					settlePlannerSelection();
+				}
+			})();
+
+			await plannerSelectionReady;
+
+			if (!plannerSelection) {
+				plannerSelection = buildPlannerFallbackDirective(currentDirective);
+
+				if (!plannerDirectiveEmitted) {
+					plannerDirectiveEmitted = true;
+					safeEnqueue(controller, sseEvent('directive', plannerSelection));
+				}
+			}
 
 			try {
-				for await (const part of result.fullStream) {
+				narratorResult = streamText(
+					buildNarrationCallOptions({
+						model: generalModel,
+						messages,
+						directive: plannerSelection,
+						plannerReason,
+					}),
+				);
+
+				for await (const part of narratorResult.fullStream) {
 					if (part.type === 'text-delta') {
 						streamedText += part.text;
 						console.log('[ask-debug] text:', part.text);
@@ -99,19 +196,8 @@ export async function POST(req: Request) {
 					}
 
 					if (part.type === 'tool-call') {
-						toolCalls.push({ name: part.toolName, input: part.input });
-						console.log('[ask-debug] tool-call:', part.toolName, part.input);
-
-						if (isDirectiveToolName(part.toolName)) {
-							const directive = toDirectiveFromToolCall(part.toolName, part.input, activeTheme);
-							if (directive) {
-								activeTheme = directive.theme;
-								safeEnqueue(controller, sseEvent('directive', directive));
-							}
-						} else if (part.toolName === 'suggestAnswers') {
-							safeEnqueue(controller, sseEvent('suggestAnswers', part.input as SuggestedAnswersPayload));
-						}
-
+						narratorToolCalls.push({ name: part.toolName, input: part.input });
+						console.log('[ask-debug] unexpected narrator tool-call:', part.toolName, part.input);
 						continue;
 					}
 
@@ -126,47 +212,62 @@ export async function POST(req: Request) {
 			}
 
 			safeEnqueue(controller, sseEvent('done', { ok: streamError === null }));
+			controller.close();
 
-			let usageSummary: ReturnType<typeof toAskUsageSummary> | null = null;
-			let usageDetails: Record<string, number> | undefined;
-
-			try {
-				const totalUsage = await result.totalUsage;
-				usageSummary = toAskUsageSummary(totalUsage);
-				usageDetails = toLangfuseUsageDetails(totalUsage);
-			} catch (usageError) {
-				console.error('Failed to resolve ask-stream usage:', usageError);
-			}
+			const [plannerUsage, narrationUsage] = await Promise.all([
+				plannerDrainPromise.then(() => resolveUsage(plannerResult, 'ask planner')),
+				resolveUsage(narratorResult, 'ask narration'),
+			]);
 
 			const inputPayload = {
 				messages,
 				currentDirective,
 			};
 			const outputPayload = {
-				toolCalls,
-				streamedText,
-				streamError,
-				usage: usageSummary,
+				planner: {
+					toolCalls: plannerToolCalls,
+					selectedDirective: plannerSelection,
+					reason: plannerReason,
+					streamError: plannerError,
+					usage: plannerUsage.summary,
+				},
+				narration: {
+					toolCalls: narratorToolCalls,
+					streamedText,
+					streamError,
+					usage: narrationUsage.summary,
+				},
 			};
 
 			try {
 				trace.update({
 					input: inputPayload,
 					output: outputPayload,
-					metadata: { model: GENERAL_MODEL_ID },
+					metadata: {
+						plannerModel: PLANNER_MODEL_ID,
+						narrationModel: GENERAL_MODEL_ID,
+					},
 				});
 				trace.generation({
-					name: 'portfolio-ask-stream',
-					model: GENERAL_MODEL_ID,
+					name: 'portfolio-ask-planner',
+					model: PLANNER_MODEL_ID,
 					input: inputPayload,
-					output: outputPayload,
-					usageDetails,
+					output: outputPayload.planner,
+					usageDetails: plannerUsage.details,
+				});
+				trace.generation({
+					name: 'portfolio-ask-narration',
+					model: GENERAL_MODEL_ID,
+					input: {
+						...inputPayload,
+						selectedDirective: plannerSelection,
+					},
+					output: outputPayload.narration,
+					usageDetails: narrationUsage.details,
 				});
 				await langfuse.flushAsync();
 			} catch (telemetryError) {
 				console.error('Langfuse ask-stream telemetry failed:', telemetryError);
-			} finally {
-				controller.close();
 			}
 		},
 	});

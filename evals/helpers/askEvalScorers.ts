@@ -1,32 +1,15 @@
 import { directiveToolNames, type DirectiveToolName } from '~/server/ask/runtime';
 import { normalizeAskToolCalls, type AskEvalOutput, type NormalizedToolCall } from './runAskEval';
 
-const PRIMARY_DIRECTIVE_TOOL_NAMES = new Set<DirectiveToolName>(directiveToolNames);
+const VIEW_TOOL_NAMES = new Set<DirectiveToolName>(directiveToolNames);
 
 export type ExpectedPrimaryDirective = {
 	toolName: DirectiveToolName;
 	variant?: string;
 };
 
-export type ExpectedSuggestedAnswersCall = {
-	answers: string[];
-};
-
-export type AskBehaviorExpectation = {
-	primaryDirective?: ExpectedPrimaryDirective | ExpectedPrimaryDirective[];
-	suggestAnswers?: ExpectedSuggestedAnswersCall;
-};
-
-function sameStringArray(left: string[] | undefined, right: string[] | undefined): boolean {
-	if (left === undefined && right === undefined) {
-		return true;
-	}
-
-	if (!left || !right || left.length !== right.length) {
-		return false;
-	}
-
-	return left.every((value, index) => value === right[index]);
+function asString(value: unknown): string {
+	return typeof value === 'string' ? value : '';
 }
 
 function matchesDirective(
@@ -56,73 +39,46 @@ function matchesDirective(
 	});
 }
 
-function matchesSuggestedAnswers(
-	actual: NormalizedToolCall | undefined,
-	expected: ExpectedSuggestedAnswersCall | undefined,
-): boolean {
-	if (!expected) {
-		return actual === undefined;
-	}
-
-	if (!actual || actual.toolName !== 'suggestAnswers' || !actual.input) {
-		return false;
-	}
-
-	return sameStringArray(asStringArray(actual.input.answers), expected.answers);
-}
-
-function asStringArray(value: unknown): string[] | undefined {
-	if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
-		return undefined;
-	}
-
-	return value;
-}
-
-export function getPrimaryDirective(toolCalls: NormalizedToolCall[]): NormalizedToolCall | undefined {
-	return toolCalls.find(
+function getNormalizedViewToolCalls(toolCalls: NormalizedToolCall[]): NormalizedToolCall[] {
+	return toolCalls.filter(
 		(call): call is NormalizedToolCall & { toolName: DirectiveToolName } =>
-			PRIMARY_DIRECTIVE_TOOL_NAMES.has(call.toolName as DirectiveToolName),
+			VIEW_TOOL_NAMES.has(call.toolName as DirectiveToolName),
 	);
 }
 
-export function getSuggestAnswersCall(toolCalls: NormalizedToolCall[]): NormalizedToolCall | undefined {
-	return toolCalls.find((call) => call.toolName === 'suggestAnswers');
+export function getPrimaryDirective(toolCalls: NormalizedToolCall[]): NormalizedToolCall | undefined {
+	return getNormalizedViewToolCalls(toolCalls)[0];
 }
 
-export function scoreAskBehavior({
+export function scoreExpectedPrimaryDirective({
 	output,
 	expected,
 }: {
 	output: AskEvalOutput;
-	expected: AskBehaviorExpectation;
+	expected: ExpectedPrimaryDirective | ExpectedPrimaryDirective[];
 }) {
 	const normalizedToolCalls = normalizeAskToolCalls(output.toolCalls);
 	const primaryDirective = getPrimaryDirective(normalizedToolCalls);
-	const suggestAnswersCall = getSuggestAnswersCall(normalizedToolCalls);
-	const score =
-		matchesDirective(primaryDirective, expected.primaryDirective) &&
-		matchesSuggestedAnswers(suggestAnswersCall, expected.suggestAnswers)
-			? 1
-			: 0;
+	const score = matchesDirective(primaryDirective, expected) ? 1 : 0;
 
 	return {
 		score,
 		metadata: {
 			actualPrimaryDirective: primaryDirective,
-			actualSuggestAnswersCall: suggestAnswersCall,
+			actualToolCalls: normalizedToolCalls,
 		},
 	};
 }
 
-export function scorePrimaryDirectivePresent({ output }: { output: AskEvalOutput }) {
+export function scoreExactlyOneViewTool({ output }: { output: AskEvalOutput }) {
 	const normalizedToolCalls = normalizeAskToolCalls(output.toolCalls);
-	const primaryDirective = getPrimaryDirective(normalizedToolCalls);
+	const viewToolCalls = getNormalizedViewToolCalls(normalizedToolCalls);
 
 	return {
-		score: primaryDirective ? 1 : 0,
+		score: viewToolCalls.length === 1 ? 1 : 0,
 		metadata: {
-			actualPrimaryDirective: primaryDirective,
+			viewToolCount: viewToolCalls.length,
+			viewToolCalls,
 		},
 	};
 }
@@ -134,6 +90,23 @@ export function scoreNarrationPresent({ output }: { output: AskEvalOutput }) {
 		score: text.length > 0 ? 1 : 0,
 		metadata: {
 			text,
+		},
+	};
+}
+
+export function scoreNoRawJsonInNarration({ output }: { output: AskEvalOutput }) {
+	const text = asString(output.text).trim();
+	const hasJsonLikeContent =
+		/```json/i.test(text) ||
+		/<functions\./i.test(text) ||
+		/\{\s*"[^"]+"\s*:/.test(text) ||
+		/\[\s*\{\s*"[^"]+"\s*:/.test(text);
+
+	return {
+		score: hasJsonLikeContent ? 0 : 1,
+		metadata: {
+			text,
+			hasJsonLikeContent,
 		},
 	};
 }

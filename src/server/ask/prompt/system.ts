@@ -1,29 +1,39 @@
 import {
-	buildContextSection,
+	buildNarrationContextSection,
+	buildPlannerContextSection,
 	CHARACTER_GUIDELINES_SECTION,
-	DECISION_RULES_SECTION,
-	FORMATTING_RULES_SECTION,
-	MISSION_SECTION,
+	NARRATION_FORMATTING_RULES_SECTION,
+	NARRATOR_MISSION_SECTION,
+	NARRATOR_RESPONSE_RULES_SECTION,
+	PLANNER_DECISION_RULES_SECTION,
+	PLANNER_MISSION_SECTION,
+	PLANNER_VIEW_TOOLS_SECTION,
 	PROMPT_IDENTITY_SECTION,
 	SPECIAL_RESPONSE_RULES_SECTION,
-	VIEW_SELECTION_SECTION,
-	VIEW_TOOLS_SECTION,
 } from './sections';
 
-export function createAskSystemPrompt() {
+export function createAskPlannerSystemPrompt() {
 	return [
 		PROMPT_IDENTITY_SECTION,
-		MISSION_SECTION,
-		VIEW_TOOLS_SECTION,
-		DECISION_RULES_SECTION,
-		VIEW_SELECTION_SECTION,
-		SPECIAL_RESPONSE_RULES_SECTION,
-		FORMATTING_RULES_SECTION,
+		PLANNER_MISSION_SECTION,
+		PLANNER_VIEW_TOOLS_SECTION,
+		PLANNER_DECISION_RULES_SECTION,
 		CHARACTER_GUIDELINES_SECTION,
 	].join('\n\n');
 }
 
-export function createAskContextPrompt({
+export function createAskNarrationSystemPrompt() {
+	return [
+		PROMPT_IDENTITY_SECTION,
+		NARRATOR_MISSION_SECTION,
+		NARRATOR_RESPONSE_RULES_SECTION,
+		SPECIAL_RESPONSE_RULES_SECTION,
+		NARRATION_FORMATTING_RULES_SECTION,
+		CHARACTER_GUIDELINES_SECTION,
+	].join('\n\n');
+}
+
+export function createAskPlannerContextPrompt({
 	lindsayProfileContext,
 	portfolioContext,
 	caseStudiesContext,
@@ -32,7 +42,23 @@ export function createAskContextPrompt({
 	portfolioContext: string;
 	caseStudiesContext: string;
 }) {
-	return buildContextSection({
+	return buildPlannerContextSection({
+		lindsayProfileContext,
+		portfolioContext,
+		caseStudiesContext,
+	});
+}
+
+export function createAskNarrationContextPrompt({
+	lindsayProfileContext,
+	portfolioContext,
+	caseStudiesContext,
+}: {
+	lindsayProfileContext: string;
+	portfolioContext: string;
+	caseStudiesContext: string;
+}) {
+	return buildNarrationContextSection({
 		lindsayProfileContext,
 		portfolioContext,
 		caseStudiesContext,

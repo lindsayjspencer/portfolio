@@ -38,6 +38,7 @@ const TYPE_LABELS: Record<(typeof TYPE_ORDER)[number], string> = {
 	value: 'Values',
 	story: 'Stories',
 };
+
 const LINDSAY_PROFILE_INDEX = `- Voice anchors: concise, analytical, pragmatic, disciplined, curious.
 - Personal facts if directly relevant: endurance runner, dog named Cauliflower, likes movies, podcasts, and Italian food.
 - Values to reflect in tone: honesty, discipline, efficiency, consistency, balance.`;
@@ -52,7 +53,7 @@ function truncate(text: string | undefined, maxLength = 140): string | undefined
 		return normalized;
 	}
 
-	return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
+	return `${normalized.slice(0, maxLength - 3).trimEnd()}...`;
 }
 
 function formatNodeYears(node: PortfolioNode): string | null {
@@ -71,8 +72,13 @@ function formatNodeYears(node: PortfolioNode): string | null {
 	return String(start ?? end);
 }
 
-function formatNodeIndexLine(node: PortfolioNode): string {
-	const parts = [`- ${node.id}`, node.label];
+function formatNodeIndexLine(node: PortfolioNode, includeIds: boolean): string {
+	const parts = [includeIds ? `- ${node.id}` : `- ${node.label}`];
+
+	if (includeIds) {
+		parts.push(node.label);
+	}
+
 	const years = formatNodeYears(node);
 	if (years) {
 		parts.push(years);
@@ -106,7 +112,7 @@ function sortNodes(nodes: PortfolioNode[]): PortfolioNode[] {
 	});
 }
 
-export function formatPortfolioAsIndex(graph: PortfolioGraph): string {
+export function formatPortfolioAsIndex(graph: PortfolioGraph, includeIds: boolean): string {
 	const nodesByType = graph.nodes.reduce<Record<string, PortfolioNode[]>>((acc, node) => {
 		const bucket = acc[node.type] ?? [];
 		bucket.push(node);
@@ -120,17 +126,22 @@ export function formatPortfolioAsIndex(graph: PortfolioGraph): string {
 			return null;
 		}
 
-		const lines = typeNodes.map((node) => formatNodeIndexLine(node));
+		const lines = typeNodes.map((node) => formatNodeIndexLine(node, includeIds));
 		return `${TYPE_LABELS[type]}:\n${lines.join('\n')}`;
 	})
 		.filter((section): section is string => section !== null)
 		.join('\n\n');
 }
 
-export function formatCaseStudiesAsIndex(caseStudies: Record<string, CaseStudy>): string {
+export function formatCaseStudiesAsIndex(caseStudies: Record<string, CaseStudy>, includeIds: boolean): string {
 	return Object.values(caseStudies)
 		.map((caseStudy) => {
-			const parts = [`- ${caseStudy.projectId}`, caseStudy.title ?? caseStudy.id];
+			const parts = [includeIds ? `- ${caseStudy.projectId}` : `- ${caseStudy.title ?? caseStudy.id}`];
+
+			if (includeIds) {
+				parts.push(caseStudy.title ?? caseStudy.id);
+			}
+
 			const summary = truncate(caseStudy.summary, 160);
 			if (summary) {
 				parts.push(summary);
@@ -152,7 +163,9 @@ export function formatCaseStudiesAsIndex(caseStudies: Record<string, CaseStudy>)
 export function buildAskPromptContexts() {
 	return {
 		lindsayProfileContext: LINDSAY_PROFILE_INDEX,
-		portfolioContext: formatPortfolioAsIndex(portfolioGraph),
-		caseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES),
+		plannerPortfolioContext: formatPortfolioAsIndex(portfolioGraph, true),
+		narrationPortfolioContext: formatPortfolioAsIndex(portfolioGraph, false),
+		plannerCaseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES, true),
+		narrationCaseStudiesContext: formatCaseStudiesAsIndex(CASE_STUDIES, false),
 	};
 }

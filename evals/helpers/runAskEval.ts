@@ -3,10 +3,18 @@ import type { AppLanguageModel } from '~/server/model';
 import { wrapAISDKModel } from 'evalite/ai-sdk';
 import type { Directive } from '~/lib/ai/directiveTools';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
-import { generalModel } from '~/server/model';
-import { buildAskCallOptions, isDirectiveToolName } from '~/server/ask/runtime';
+import { generalModel, plannerModel } from '~/server/model';
+import {
+	buildNarrationCallOptions,
+	buildPlannerCallOptions,
+	buildPlannerFallbackDirective,
+	extractDirectiveReason,
+	isDirectiveToolName,
+	toDirectiveFromToolCall,
+} from '~/server/ask/runtime';
 
-const model = wrapAISDKModel(generalModel) as AppLanguageModel;
+const narrationEvalModel = wrapAISDKModel(generalModel) as AppLanguageModel;
+const plannerEvalModel = wrapAISDKModel(plannerModel) as AppLanguageModel;
 
 type RawToolCall = {
 	toolName: string;
@@ -30,46 +38,58 @@ export async function runAskEvalTurn({
 	messages: AskRequestMessage[];
 	currentDirective?: Directive | null;
 }): Promise<AskEvalOutput> {
-	const askCallOptions = buildAskCallOptions({
-		model,
-		messages,
-		currentDirective,
-	});
+	const plannerResult = await generateText(
+		buildPlannerCallOptions({
+			model: plannerEvalModel,
+			messages,
+			currentDirective,
+		}),
+	);
 
-	const result = await generateText(askCallOptions);
-	const toolCalls = result.toolCalls.map((call) => ({
+	const toolCalls = plannerResult.toolCalls.map((call) => ({
 		toolName: call.toolName,
 		input: call.input,
 	}));
 
+	const firstDirectiveCall = plannerResult.toolCalls.find((call) => isDirectiveToolName(call.toolName));
+	const selectedDirective =
+		firstDirectiveCall && isDirectiveToolName(firstDirectiveCall.toolName)
+			? toDirectiveFromToolCall(firstDirectiveCall.toolName, firstDirectiveCall.input, currentDirective?.theme ?? 'cold')
+			: null;
+	const plannerReason =
+		firstDirectiveCall && isDirectiveToolName(firstDirectiveCall.toolName)
+			? extractDirectiveReason(firstDirectiveCall.input)
+			: null;
+
+	const narrationResult = await generateText(
+		buildNarrationCallOptions({
+			model: narrationEvalModel,
+			messages,
+			directive: selectedDirective ?? buildPlannerFallbackDirective(currentDirective),
+			plannerReason,
+		}),
+	);
+
 	return {
-		text: result.text,
+		text: narrationResult.text,
 		toolCalls,
 	};
 }
 
 export function normalizeAskToolCalls(toolCalls: RawToolCall[]): NormalizedToolCall[] {
-	return toolCalls
-		.map((call) => {
-			if (isDirectiveToolName(call.toolName)) {
-				const variant = readStringField(call.input, 'variant');
-				return variant
-					? {
-							toolName: call.toolName,
-							input: { variant },
-						}
-					: { toolName: call.toolName };
-			}
+	return toolCalls.map((call) => {
+		if (isDirectiveToolName(call.toolName)) {
+			const variant = readStringField(call.input, 'variant');
+			return variant
+				? {
+						toolName: call.toolName,
+						input: { variant },
+					}
+				: { toolName: call.toolName };
+		}
 
-			if (call.toolName === 'suggestAnswers') {
-				return {
-					toolName: call.toolName,
-					input: pickFields(call.input, ['answers']),
-				};
-			}
-
-			return { toolName: call.toolName };
-		});
+		return { toolName: call.toolName };
+	});
 }
 
 function readStringField(value: unknown, key: string): string | undefined {
@@ -79,23 +99,6 @@ function readStringField(value: unknown, key: string): string | undefined {
 
 	const field = value[key];
 	return typeof field === 'string' ? field : undefined;
-}
-
-function pickFields(value: unknown, keys: string[]): Record<string, unknown> | undefined {
-	if (!isRecord(value)) {
-		return undefined;
-	}
-
-	const out: Record<string, unknown> = {};
-
-	for (const key of keys) {
-		const field = value[key];
-		if (field !== undefined) {
-			out[key] = field;
-		}
-	}
-
-	return Object.keys(out).length > 0 ? out : undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
