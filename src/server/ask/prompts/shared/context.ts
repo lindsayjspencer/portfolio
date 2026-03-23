@@ -112,7 +112,7 @@ function sortNodes(nodes: PortfolioNode[]): PortfolioNode[] {
 	});
 }
 
-export function formatPortfolioAsIndex(graph: PortfolioGraph, includeIds: boolean): string {
+function formatPortfolioAsIndex(graph: PortfolioGraph, includeIds: boolean): string {
 	const nodesByType = graph.nodes.reduce<Record<string, PortfolioNode[]>>((acc, node) => {
 		const bucket = acc[node.type] ?? [];
 		bucket.push(node);
@@ -133,7 +133,7 @@ export function formatPortfolioAsIndex(graph: PortfolioGraph, includeIds: boolea
 		.join('\n\n');
 }
 
-export function formatCaseStudiesAsIndex(caseStudies: Record<string, CaseStudy>, includeIds: boolean): string {
+function formatCaseStudiesAsIndex(caseStudies: Record<string, CaseStudy>, includeIds: boolean): string {
 	return Object.values(caseStudies)
 		.map((caseStudy) => {
 			const parts = [includeIds ? `- ${caseStudy.projectId}` : `- ${caseStudy.title ?? caseStudy.id}`];

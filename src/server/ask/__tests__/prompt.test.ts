@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { ASK_GUARD_SYSTEM_PROMPT, buildGuardMessages } from '../prompts/guard/prompt';
 import {
 	ASK_NARRATION_CONTEXT_PROMPT,
 	ASK_NARRATION_SYSTEM_PROMPT,
+	buildNarrationMessages,
+} from '../prompts/narrator/prompt';
+import {
 	ASK_PLANNER_CONTEXT_PROMPT,
 	ASK_PLANNER_SYSTEM_PROMPT,
-	buildNarrationMessages,
 	buildPlannerMessages,
-} from '../prompt';
+} from '../prompts/planner/prompt';
 
 describe('planner prompt', () => {
 	it('prepends static context and inserts planning state immediately before the latest user message', () => {
@@ -39,6 +42,29 @@ describe('planner prompt', () => {
 		expect(ASK_PLANNER_SYSTEM_PROMPT).toContain('Do not use suggestAnswers in this planner step');
 		expect(ASK_PLANNER_CONTEXT_PROMPT).toContain('## Portfolio Index');
 		expect(ASK_PLANNER_CONTEXT_PROMPT).toContain('skill_typescript');
+	});
+});
+
+describe('guard prompt', () => {
+	it('uses a narrow safety gate prompt and only recent conversation messages', () => {
+		const messages = buildGuardMessages([
+			{ role: 'user', content: 'first' },
+			{ role: 'assistant', content: 'second' },
+			{ role: 'user', content: 'third' },
+			{ role: 'assistant', content: 'fourth' },
+			{ role: 'user', content: 'fifth' },
+			{ role: 'assistant', content: 'sixth' },
+			{ role: 'user', content: 'seventh' },
+		]);
+
+		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('narrow safety and input-quality gate');
+		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('Default to "allow"');
+		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('interactive portfolio for Lindsay Spencer');
+		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('"ask_to_rephrase"');
+		expect(ASK_GUARD_SYSTEM_PROMPT).toContain('Return structured output only');
+		expect(messages).toHaveLength(6);
+		expect(messages[0]).toMatchObject({ content: 'second' });
+		expect(messages.at(-1)).toMatchObject({ content: 'seventh' });
 	});
 });
 

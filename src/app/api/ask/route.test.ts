@@ -3,12 +3,14 @@ import { parseAskSseBlock } from '~/lib/askStream';
 import type { LanguageModelUsage } from 'ai';
 
 const streamTextMock = vi.fn();
+const generateObjectMock = vi.fn();
 const traceUpdateMock = vi.fn();
 const traceGenerationMock = vi.fn();
 const flushAsyncMock = vi.fn();
 
 vi.mock('ai', () => ({
 	streamText: streamTextMock,
+	generateObject: generateObjectMock,
 	tool: <T>(config: T) => config,
 }));
 
@@ -54,6 +56,7 @@ function createStreamResult(parts: unknown[]) {
 
 afterEach(() => {
 	streamTextMock.mockReset();
+	generateObjectMock.mockReset();
 	traceUpdateMock.mockReset();
 	traceGenerationMock.mockReset();
 	flushAsyncMock.mockReset();
@@ -62,6 +65,14 @@ afterEach(() => {
 
 describe('POST /api/ask', () => {
 	it('emits directive before narration, never forwards planner text, and uses a tool-free narrator call', async () => {
+		generateObjectMock.mockResolvedValue({
+			object: {
+				decision: 'allow',
+				category: 'safe',
+				reason: 'Normal portfolio question.',
+			},
+			usage: createUsage(),
+		});
 		streamTextMock.mockImplementation((_options: unknown) => {
 			return streamTextMock.mock.calls.length === 1
 				? createStreamResult([
@@ -102,10 +113,7 @@ describe('POST /api/ask', () => {
 			}),
 		);
 
-		expect(streamTextMock.mock.calls[0]?.[0]).toMatchObject({
-			toolChoice: 'required',
-		});
-
+		expect(generateObjectMock).toHaveBeenCalledTimes(1);
 		const body = await response.text();
 		const events = body
 			.trim()
@@ -127,6 +135,82 @@ describe('POST /api/ask', () => {
 		expect(events[1]).toMatchObject({ type: 'text' });
 		expect(body).not.toContain('Internal planning text');
 		expect(body).toContain("I'm strongest when the work needs deep frontend craft");
+		expect(body).not.toContain('showSkillsView');
 		expect(events.at(-1)).toEqual({ type: 'done', ok: true });
+	});
+
+	it('short-circuits overly long prompts with a text response and skips planner/narrator model calls', async () => {
+		const { POST } = await import('./route');
+		const response = await POST(
+			new Request('http://localhost/api/ask', {
+				method: 'POST',
+				body: JSON.stringify({
+					messages: [{ role: 'user', content: `Please review this:\n${'A'.repeat(3_000)}` }],
+					currentDirective: null,
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			}),
+		);
+
+		const body = await response.text();
+		const events = body
+			.trim()
+			.split('\n\n')
+			.map((block) => parseAskSseBlock(block))
+			.filter((event): event is NonNullable<typeof event> => event !== null);
+
+		expect(generateObjectMock).not.toHaveBeenCalled();
+		expect(streamTextMock).not.toHaveBeenCalled();
+		expect(events).toEqual([
+			{
+				type: 'text',
+				delta: "That's too much to parse cleanly in one go. Give me one shorter question or a brief summary and I'll answer it.",
+			},
+			{ type: 'done', ok: true },
+		]);
+	});
+
+	it('short-circuits out-of-scope prompts with a rephrase response and skips planner/narrator model calls', async () => {
+		generateObjectMock.mockResolvedValue({
+			object: {
+				decision: 'ask_to_rephrase',
+				category: 'out_of_scope',
+				reason: 'The question is unrelated to Lindsay, her work, or the portfolio.',
+			},
+			usage: createUsage(),
+		});
+
+		const { POST } = await import('./route');
+		const response = await POST(
+			new Request('http://localhost/api/ask', {
+				method: 'POST',
+				body: JSON.stringify({
+					messages: [{ role: 'user', content: 'Who won the football game last night?' }],
+					currentDirective: null,
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			}),
+		);
+
+		const body = await response.text();
+		const events = body
+			.trim()
+			.split('\n\n')
+			.map((block) => parseAskSseBlock(block))
+			.filter((event): event is NonNullable<typeof event> => event !== null);
+
+		expect(generateObjectMock).toHaveBeenCalledTimes(1);
+		expect(streamTextMock).not.toHaveBeenCalled();
+		expect(events).toEqual([
+			{
+				type: 'text',
+				delta: "I'm here to answer questions about my work, projects, skills, values, hiring fit, or this portfolio. Can you rephrase that in that direction?",
+			},
+			{ type: 'done', ok: true },
+		]);
 	});
 });

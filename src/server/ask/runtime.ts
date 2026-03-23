@@ -13,15 +13,18 @@ import {
 } from '~/lib/ai/directiveTools';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
 import { getThemeNames, type ThemeName } from '~/lib/themes';
+import { buildOpenAIPromptCacheOptions } from '~/server/model/promptCache';
 import { validateUrlDirective } from '~/utils/urlState';
 import {
 	ASK_NARRATION_PROMPT_CACHE_KEY,
 	ASK_NARRATION_SYSTEM_PROMPT,
+	buildNarrationMessages,
+} from './prompts/narrator/prompt';
+import {
 	ASK_PLANNER_PROMPT_CACHE_KEY,
 	ASK_PLANNER_SYSTEM_PROMPT,
-	buildNarrationMessages,
 	buildPlannerMessages,
-} from './prompt';
+} from './prompts/planner/prompt';
 
 export const plannerTools = {
 	showTimelineView: timelineDirective,
@@ -145,12 +148,7 @@ export function buildPlannerCallOptions({
 		messages: buildPlannerMessages(messages, currentDirective),
 		tools: plannerTools,
 		toolChoice: 'required' as const,
-		providerOptions: {
-			openai: {
-				promptCacheKey: ASK_PLANNER_PROMPT_CACHE_KEY,
-				promptCacheRetention: 'in_memory' as const,
-			},
-		},
+		providerOptions: buildOpenAIPromptCacheOptions(ASK_PLANNER_PROMPT_CACHE_KEY),
 	};
 }
 
@@ -173,11 +171,6 @@ export function buildNarrationCallOptions({
 			directive,
 			plannerReason,
 		}),
-		providerOptions: {
-			openai: {
-				promptCacheKey: ASK_NARRATION_PROMPT_CACHE_KEY,
-				promptCacheRetention: 'in_memory' as const,
-			},
-		},
+		providerOptions: buildOpenAIPromptCacheOptions(ASK_NARRATION_PROMPT_CACHE_KEY),
 	};
 }
