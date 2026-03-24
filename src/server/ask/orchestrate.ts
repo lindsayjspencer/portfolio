@@ -1,23 +1,31 @@
 import { streamText } from 'ai';
+import { isWhitelistedSuggestionChipQuestion } from '~/components/SuggestionChips/questions';
 import type { AskRequestMessage } from '~/lib/ai/ask-contract';
-import type { SuggestedAnswersPayload } from '~/lib/ai/suggestAnswersTool';
 import type { Directive } from '~/lib/ai/directiveTools';
 import {
 	GENERAL_MODEL_ID,
 	generalModel,
 	PLANNER_MODEL_ID,
 	plannerModel,
-	PURPOSE_MODEL_ID,
-	purposeModel,
-	SECURITY_MODEL_ID,
-	securityModel,
 } from '~/server/model';
-import { runAskSizePolicy, type AskSizePolicyOutcome } from './guard/policy';
-import { runAskSecurity } from './guard/runtime';
-import type { AskSecurityOutcome } from './guard/types';
-import { trimAskHistory, ASK_HISTORY_MESSAGE_LIMIT } from './history';
-import { runAskPurpose } from './purpose/runtime';
-import type { AskPurposeOutcome } from './purpose/types';
+import {
+	buildOutputPayload,
+	createBaseMetadata,
+	createGeneration,
+	emitTerminalResponse,
+	getLatestUserMessage,
+} from './orchestration/shared';
+import { runPurposeStage } from './orchestration/purposeStage';
+import { runSecurityStage } from './orchestration/securityStage';
+import { runSizePolicyStage } from './orchestration/sizePolicyStage';
+import type {
+	AskNarrationPayload,
+	AskOrchestrationTelemetry,
+	AskPlannerPayload,
+	AskStreamEvent,
+	AskUsageBlock,
+} from './orchestration/types';
+import { trimAskHistory } from './history';
 import {
 	buildNarrationCallOptions,
 	buildPlannerCallOptions,
@@ -26,7 +34,6 @@ import {
 	isDirectiveToolName,
 	toDirectiveFromToolCall,
 } from './runtime';
-import { emitSyntheticWordStream } from './streaming';
 import { toAskUsageSummary, toLangfuseUsageDetails } from './usage';
 
 const SHORTEN_REPLY =
@@ -34,65 +41,7 @@ const SHORTEN_REPLY =
 const SECURITY_REJECT_REPLY =
 	"Nice try. I'm here to talk about my work, not expose hidden instructions or internal wiring. Ask me about my experience, projects, or skills instead.";
 
-type AskUsageSummary = ReturnType<typeof toAskUsageSummary>;
-type AskUsageDetails = ReturnType<typeof toLangfuseUsageDetails>;
-
-export type AskStreamEvent =
-	| { type: 'directive'; directive: Directive }
-	| { type: 'text'; delta: string }
-	| { type: 'suggestAnswers'; payload: SuggestedAnswersPayload }
-	| { type: 'error'; message: string }
-	| { type: 'done'; ok: boolean };
-
-type AskGenerationPayload = {
-	name: string;
-	model: string;
-	input: unknown;
-	output: unknown;
-	usageDetails?: AskUsageDetails;
-};
-
-type AskUsageBlock = {
-	summary: AskUsageSummary | null;
-	details: AskUsageDetails | undefined;
-};
-
-export type AskOrchestrationTelemetry = {
-	inputPayload: {
-		messages: AskRequestMessage[];
-		trimmedMessages: AskRequestMessage[];
-		currentDirective: Directive | null;
-	};
-	outputPayload: {
-		sizePolicy: {
-			outcome: AskSizePolicyOutcome;
-			usage: null;
-		};
-		security: {
-			outcome: AskSecurityOutcome;
-			usage: AskUsageSummary | null;
-		} | null;
-		purpose: {
-			outcome: AskPurposeOutcome;
-			usage: AskUsageSummary | null;
-		} | null;
-		planner: {
-			toolCalls: Array<{ name: string; input: unknown }>;
-			selectedDirective: Directive | null;
-			reason: string | null;
-			streamError: string | null;
-			usage: AskUsageSummary | null;
-		} | null;
-		narration: {
-			toolCalls: Array<{ name: string; input: unknown }>;
-			streamedText: string;
-			streamError: string | null;
-			usage: AskUsageSummary | null;
-		} | null;
-	};
-	metadata: Record<string, string>;
-	generations: AskGenerationPayload[];
-};
+export type { AskOrchestrationTelemetry, AskStreamEvent } from './orchestration/types';
 
 function getErrorMessage(error: unknown): string {
 	if (error instanceof Error && error.message) {
@@ -122,23 +71,6 @@ async function resolveUsage(
 	}
 }
 
-function createDeterministicGeneration({
-	name,
-	input,
-	output,
-}: {
-	name: string;
-	input: unknown;
-	output: unknown;
-}): AskGenerationPayload {
-	return {
-		name,
-		model: 'deterministic-policy',
-		input,
-		output,
-	};
-}
-
 export async function orchestrateAsk({
 	messages,
 	currentDirective,
@@ -149,51 +81,40 @@ export async function orchestrateAsk({
 	emit: (event: AskStreamEvent) => void;
 }): Promise<AskOrchestrationTelemetry> {
 	const trimmedMessages = trimAskHistory(messages);
+	const latestUserMessage = getLatestUserMessage(messages);
+	const whitelistedSuggestionChipBypass =
+		latestUserMessage !== null && isWhitelistedSuggestionChipQuestion(latestUserMessage);
 	const inputPayload = {
 		messages,
 		trimmedMessages,
 		currentDirective,
 	};
-	const baseMetadata = {
-		historyMessageLimit: String(ASK_HISTORY_MESSAGE_LIMIT),
-	};
-	const sizePolicyOutcome = runAskSizePolicy(messages);
-	const sizePolicyGeneration = createDeterministicGeneration({
-		name: 'portfolio-ask-size-policy',
-		input: {
-			messages,
-		},
-		output: {
-			outcome: sizePolicyOutcome,
-		},
+	const baseMetadata = createBaseMetadata(whitelistedSuggestionChipBypass);
+
+	const sizePolicyStage = runSizePolicyStage({
+		messages,
+		whitelistedSuggestionChipBypass,
 	});
 
-	if (sizePolicyOutcome.decision === 'ask_to_shorten') {
-		await emitSyntheticWordStream({
+	if (sizePolicyStage.outcome.decision === 'ask_to_shorten') {
+		await emitTerminalResponse({
 			text: SHORTEN_REPLY,
 			emit,
 		});
-		emit({ type: 'done', ok: true });
 
 		return {
 			inputPayload,
-			outputPayload: {
-				sizePolicy: {
-					outcome: sizePolicyOutcome,
-					usage: null,
-				},
-				security: null,
-				purpose: null,
-				planner: null,
-				narration: null,
-			},
+			outputPayload: buildOutputPayload({
+				sizePolicyStage,
+			}),
 			metadata: baseMetadata,
 			generations: [
-				sizePolicyGeneration,
-				createDeterministicGeneration({
+				sizePolicyStage.generation,
+				createGeneration({
 					name: 'portfolio-ask-size-policy-response',
+					model: 'deterministic-policy',
 					input: {
-						outcome: sizePolicyOutcome,
+						outcome: sizePolicyStage.outcome,
 					},
 					output: {
 						reply: SHORTEN_REPLY,
@@ -203,191 +124,79 @@ export async function orchestrateAsk({
 		};
 	}
 
-	let securityOutcome: AskSecurityOutcome;
-	let securityUsage: AskUsageBlock = { summary: null, details: undefined };
-	let securityGenerationModel = SECURITY_MODEL_ID;
+	const securityStage = await runSecurityStage({
+		trimmedMessages,
+		whitelistedSuggestionChipBypass,
+	});
 
-	try {
-		const result = await runAskSecurity({
-			model: securityModel,
-			messages: trimmedMessages,
-		});
-		console.log('Security outcome:', result.outcome);
-		securityOutcome = result.outcome;
-		securityUsage = {
-			summary: result.usage.summary ? toAskUsageSummary(result.usage.summary) : null,
-			details: result.usage.details ? toLangfuseUsageDetails(result.usage.details) : undefined,
-		};
-	} catch (error) {
-		console.error('Security check failed, continuing without a block:', error);
-		securityOutcome = {
-			decision: 'allow',
-			category: 'other',
-			reason: 'Security model failed, so the request was allowed by fallback.',
-			source: 'fallback',
-		};
-		securityGenerationModel = `${SECURITY_MODEL_ID}:fallback-open`;
-	}
-
-	const securityGeneration: AskGenerationPayload = {
-		name: 'portfolio-ask-security',
-		model: securityGenerationModel,
-		input: {
-			trimmedMessages,
-		},
-		output: {
-			outcome: securityOutcome,
-			usage: securityUsage.summary,
-		},
-		usageDetails: securityUsage.details,
-	};
-
-	if (securityOutcome.decision === 'reject') {
-		await emitSyntheticWordStream({
+	if (securityStage.outcome.decision === 'reject') {
+		await emitTerminalResponse({
 			text: SECURITY_REJECT_REPLY,
 			emit,
 		});
-		emit({ type: 'done', ok: true });
 
 		return {
 			inputPayload,
-			outputPayload: {
-				sizePolicy: {
-					outcome: sizePolicyOutcome,
-					usage: null,
-				},
-				security: {
-					outcome: securityOutcome,
-					usage: securityUsage.summary,
-				},
-				purpose: null,
-				planner: null,
-				narration: null,
-			},
+			outputPayload: buildOutputPayload({
+				sizePolicyStage,
+				securityStage,
+			}),
 			metadata: {
 				...baseMetadata,
-				securityModel: securityGenerationModel,
+				securityModel: securityStage.model,
 			},
-			generations: [sizePolicyGeneration, securityGeneration],
+			generations: [sizePolicyStage.generation, securityStage.generation],
 		};
 	}
 
-	let purposeOutcome: AskPurposeOutcome;
-	let purposeUsage: AskUsageBlock = { summary: null, details: undefined };
-	let purposeGenerationModel = PURPOSE_MODEL_ID;
+	const purposeStage = await runPurposeStage({
+		trimmedMessages,
+		currentDirective,
+		whitelistedSuggestionChipBypass,
+	});
 
-	try {
-		const result = await runAskPurpose({
-			model: purposeModel,
-			messages: trimmedMessages,
-			currentDirective,
-		});
-		console.log('Purpose outcome:', result.outcome);
-		purposeOutcome = result.outcome;
-		purposeUsage = {
-			summary: result.usage.summary ? toAskUsageSummary(result.usage.summary) : null,
-			details: result.usage.details ? toLangfuseUsageDetails(result.usage.details) : undefined,
-		};
-	} catch (error) {
-		console.error('Purpose check failed, continuing without a block:', error);
-		purposeOutcome = {
-			decision: 'allow',
-			category: 'other',
-			reason: 'Purpose model failed, so the request was allowed by fallback.',
-			source: 'fallback',
-		};
-		purposeGenerationModel = `${PURPOSE_MODEL_ID}:fallback-open`;
-	}
-
-	const purposeGeneration: AskGenerationPayload = {
-		name: 'portfolio-ask-purpose',
-		model: purposeGenerationModel,
-		input: {
-			trimmedMessages,
-			currentDirective,
-		},
-		output: {
-			outcome: purposeOutcome,
-			usage: purposeUsage.summary,
-		},
-		usageDetails: purposeUsage.details,
-	};
-
-	if (purposeOutcome.decision === 'ask_to_rephrase') {
-		await emitSyntheticWordStream({
-			text: purposeOutcome.text,
-			emit,
-		});
-		emit({ type: 'done', ok: true });
-
-		return {
-			inputPayload,
-			outputPayload: {
-				sizePolicy: {
-					outcome: sizePolicyOutcome,
-					usage: null,
-				},
-				security: {
-					outcome: securityOutcome,
-					usage: securityUsage.summary,
-				},
-				purpose: {
-					outcome: purposeOutcome,
-					usage: purposeUsage.summary,
-				},
-				planner: null,
-				narration: null,
-			},
-			metadata: {
-				...baseMetadata,
-				securityModel: securityGenerationModel,
-				purposeModel: purposeGenerationModel,
-			},
-			generations: [sizePolicyGeneration, securityGeneration, purposeGeneration],
-		};
-	}
-
-	if (purposeOutcome.decision === 'ask_to_clarify') {
-		await emitSyntheticWordStream({
-			text: purposeOutcome.question,
+	if (purposeStage.outcome.decision === 'ask_to_rephrase') {
+		await emitTerminalResponse({
+			text: purposeStage.outcome.text,
 			emit,
 		});
 
-		if (purposeOutcome.suggestedAnswers?.length) {
-			emit({
-				type: 'suggestAnswers',
-				payload: {
-					answers: purposeOutcome.suggestedAnswers,
-				},
-			});
-		}
+		return {
+			inputPayload,
+			outputPayload: buildOutputPayload({
+				sizePolicyStage,
+				securityStage,
+				purposeStage,
+			}),
+			metadata: {
+				...baseMetadata,
+				securityModel: securityStage.model,
+				purposeModel: purposeStage.model,
+			},
+			generations: [sizePolicyStage.generation, securityStage.generation, purposeStage.generation],
+		};
+	}
 
-		emit({ type: 'done', ok: true });
+	if (purposeStage.outcome.decision === 'ask_to_clarify') {
+		await emitTerminalResponse({
+			text: purposeStage.outcome.question,
+			emit,
+			suggestedAnswers: purposeStage.outcome.suggestedAnswers,
+		});
 
 		return {
 			inputPayload,
-			outputPayload: {
-				sizePolicy: {
-					outcome: sizePolicyOutcome,
-					usage: null,
-				},
-				security: {
-					outcome: securityOutcome,
-					usage: securityUsage.summary,
-				},
-				purpose: {
-					outcome: purposeOutcome,
-					usage: purposeUsage.summary,
-				},
-				planner: null,
-				narration: null,
-			},
+			outputPayload: buildOutputPayload({
+				sizePolicyStage,
+				securityStage,
+				purposeStage,
+			}),
 			metadata: {
 				...baseMetadata,
-				securityModel: securityGenerationModel,
-				purposeModel: purposeGenerationModel,
+				securityModel: securityStage.model,
+				purposeModel: purposeStage.model,
 			},
-			generations: [sizePolicyGeneration, securityGeneration, purposeGeneration],
+			generations: [sizePolicyStage.generation, securityStage.generation, purposeStage.generation],
 		};
 	}
 
@@ -520,77 +329,60 @@ export async function orchestrateAsk({
 		resolveUsage(narratorResult, 'ask narration'),
 	]);
 
+	const plannerPayload: AskPlannerPayload = {
+		toolCalls: plannerToolCalls,
+		selectedDirective: plannerSelection,
+		reason: plannerReason,
+		streamError: plannerError,
+		usage: plannerUsage.summary,
+	};
+	const narrationPayload: AskNarrationPayload = {
+		toolCalls: narratorToolCalls,
+		streamedText,
+		streamError,
+		usage: narrationUsage.summary,
+	};
+
 	return {
 		inputPayload,
-		outputPayload: {
-			sizePolicy: {
-				outcome: sizePolicyOutcome,
-				usage: null,
-			},
-			security: {
-				outcome: securityOutcome,
-				usage: securityUsage.summary,
-			},
-			purpose: {
-				outcome: purposeOutcome,
-				usage: purposeUsage.summary,
-			},
-			planner: {
-				toolCalls: plannerToolCalls,
-				selectedDirective: plannerSelection,
-				reason: plannerReason,
-				streamError: plannerError,
-				usage: plannerUsage.summary,
-			},
-			narration: {
-				toolCalls: narratorToolCalls,
-				streamedText,
-				streamError,
-				usage: narrationUsage.summary,
-			},
-		},
+		outputPayload: buildOutputPayload({
+			sizePolicyStage,
+			securityStage,
+			purposeStage,
+			planner: plannerPayload,
+			narration: narrationPayload,
+		}),
 		metadata: {
 			...baseMetadata,
-			securityModel: securityGenerationModel,
-			purposeModel: purposeGenerationModel,
+			securityModel: securityStage.model,
+			purposeModel: purposeStage.model,
 			plannerModel: PLANNER_MODEL_ID,
 			narrationModel: GENERAL_MODEL_ID,
 		},
 		generations: [
-			sizePolicyGeneration,
-			securityGeneration,
-			purposeGeneration,
-			{
+			sizePolicyStage.generation,
+			securityStage.generation,
+			purposeStage.generation,
+			createGeneration({
 				name: 'portfolio-ask-planner',
 				model: PLANNER_MODEL_ID,
 				input: {
 					trimmedMessages,
 					currentDirective,
 				},
-				output: {
-					toolCalls: plannerToolCalls,
-					selectedDirective: plannerSelection,
-					reason: plannerReason,
-					streamError: plannerError,
-					usage: plannerUsage.summary,
-				},
+				output: plannerPayload,
 				usageDetails: plannerUsage.details,
-			},
-			{
+			}),
+			createGeneration({
 				name: 'portfolio-ask-narration',
 				model: GENERAL_MODEL_ID,
 				input: {
 					trimmedMessages,
 					selectedDirective: plannerSelection,
 				},
-				output: {
-					toolCalls: narratorToolCalls,
-					streamedText,
-					streamError,
-					usage: narrationUsage.summary,
-				},
+				output: narrationPayload,
 				usageDetails: narrationUsage.details,
-			},
+			}),
 		],
 	};
 }

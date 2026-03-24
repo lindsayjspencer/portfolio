@@ -69,7 +69,7 @@ export type AskPurposeDecision =
 			decision: 'ask_to_clarify';
 	  } & z.infer<typeof askToClarifyInputSchema>);
 
-export type AskPurposeSource = 'model' | 'fallback';
+export type AskPurposeSource = 'model' | 'fallback' | 'whitelist';
 
 export type AskPurposeOutcome = AskPurposeDecision & {
 	source: AskPurposeSource;

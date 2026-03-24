@@ -15,7 +15,7 @@ export const askSecurityDecisionSchema = z.object({
 
 export type AskSecurityDecision = z.infer<typeof askSecurityDecisionSchema>;
 
-export type AskSecuritySource = 'model' | 'fallback';
+export type AskSecuritySource = 'model' | 'fallback' | 'whitelist';
 
 export type AskSecurityOutcome = AskSecurityDecision & {
 	source: AskSecuritySource;

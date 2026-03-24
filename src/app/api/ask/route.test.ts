@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parseAskSseBlock, type AskStreamEvent } from '~/lib/askStream';
+import { LANDING_FIXED_SUGGESTION_CHIP_QUESTION } from '~/components/SuggestionChips/questions';
 import type { LanguageModelUsage } from 'ai';
 
 const streamTextMock = vi.fn();
@@ -243,6 +244,102 @@ describe('POST /api/ask', () => {
 		);
 		expect((generateObjectMock.mock.calls[0]?.[0]?.messages as Array<{ content: string }>).at(-1)?.content).toBe(
 			'short message 29',
+		);
+	});
+
+	it('skips size, security, and purpose checks for exact-match whitelisted suggestion chip questions on any turn', async () => {
+		streamTextMock
+			.mockReturnValueOnce(
+				createStreamResult([
+					{
+						type: 'tool-call',
+						toolName: 'showResumeView',
+						input: {
+							reason: 'The resume view best supports this request.',
+						},
+					},
+				]),
+			)
+			.mockReturnValueOnce(
+				createStreamResult([
+					{
+						type: 'text-delta',
+						text: 'Here is the resume view, along with the short version of my background.',
+					},
+				]),
+			);
+
+		const { POST } = await import('./route');
+		const response = await POST(
+			new Request('http://localhost/api/ask', {
+				method: 'POST',
+				body: JSON.stringify({
+					messages: [
+						{ role: 'user', content: 'What kinds of roles are you targeting?' },
+						{ role: 'assistant', content: 'Product-heavy frontend or full-stack roles suit me best.' },
+						{ role: 'user', content: LANDING_FIXED_SUGGESTION_CHIP_QUESTION },
+					],
+					currentDirective: {
+						mode: 'skills',
+						theme: 'cold',
+						data: {
+							variant: 'technical',
+							highlights: [],
+						},
+					},
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			}),
+		);
+
+		const body = await response.text();
+		const events = parseEvents(body);
+
+		expect(generateObjectMock).not.toHaveBeenCalled();
+		expect(generateTextMock).not.toHaveBeenCalled();
+		expect(streamTextMock).toHaveBeenCalledTimes(2);
+		expect(events[0]).toMatchObject({
+			type: 'directive',
+			directive: {
+				mode: 'resume',
+				theme: 'cold',
+			},
+		});
+		expect(getTextDeltas(events).join('')).toBe(
+			'Here is the resume view, along with the short version of my background.',
+		);
+		expect(events.at(-1)).toEqual({ type: 'done', ok: true });
+
+		expect(traceUpdateMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				metadata: expect.objectContaining({
+					whitelistedSuggestionChipBypass: 'true',
+					securityModel: 'deterministic-whitelist',
+					purposeModel: 'deterministic-whitelist',
+				}),
+				output: expect.objectContaining({
+					sizePolicy: expect.objectContaining({
+						outcome: expect.objectContaining({
+							reason: expect.stringContaining('Size checks were skipped by whitelist.'),
+						}),
+					}),
+					security: expect.objectContaining({
+						outcome: expect.objectContaining({
+							source: 'whitelist',
+						}),
+					}),
+					purpose: expect.objectContaining({
+						outcome: expect.objectContaining({
+							source: 'whitelist',
+						}),
+					}),
+				}),
+			}),
+		);
+		expect(traceGenerationMock.mock.calls.map(([generation]) => generation.name)).toEqual(
+			expect.arrayContaining(['portfolio-ask-security-whitelist', 'portfolio-ask-purpose-whitelist']),
 		);
 	});
 

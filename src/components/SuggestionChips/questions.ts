@@ -1,3 +1,5 @@
+// Every question in this file is automatically whitelisted to bypass ask size,
+// security, and purpose checks. Treat copy edits here as behavior changes.
 export const LANDING_ROTATING_SUGGESTION_CHIP_QUESTIONS = [
 	"What's your experience with modern web frameworks?",
 	'Why should we hire you over an AI?',
@@ -13,7 +15,7 @@ export const LANDING_ROTATING_SUGGESTION_CHIP_QUESTIONS = [
 	'Show me a project that had real business impact',
 	'What would I be hiring you to solve?',
 	'Do you have backend experience too?',
-	'What’s your strongest technical skill?',
+	"What's your strongest technical skill?",
 ] as const;
 
 export const LANDING_FIXED_SUGGESTION_CHIP_QUESTION = 'Just let me see the resume' as const;
@@ -24,3 +26,7 @@ export const LANDING_SUGGESTION_CHIP_QUESTIONS = [
 ] as const;
 
 export type LandingSuggestionChipQuestion = (typeof LANDING_SUGGESTION_CHIP_QUESTIONS)[number];
+
+export function isWhitelistedSuggestionChipQuestion(question: string): question is LandingSuggestionChipQuestion {
+	return LANDING_SUGGESTION_CHIP_QUESTIONS.includes(question as LandingSuggestionChipQuestion);
+}
