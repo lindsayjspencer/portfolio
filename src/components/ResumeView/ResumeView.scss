@@ -14,13 +14,13 @@
 	--accent: var(--color-accent-500);
 
 	// Map body rules
-	font-family: var(--font-inter), system-ui, sans-serif;
+	font-family: var(--font-family-body);
 	background: var(--bg);
 	color: var(--text);
 	margin: 0;
 	padding: 0;
+	padding-block-end: var(--page-view-bottom-padding);
 	line-height: 1.5;
-	padding-bottom: calc(var(--chat-container-height) + 4rem) !important;
 
 	// Download button styled like Options dropdown trigger, fixed to right
 	.resume-download-container {
@@ -43,8 +43,8 @@
 			backdrop-filter: blur(10px);
 			background-color: white;
 			color: var(--color-neutral-700);
-			font-size: 16px;
-			line-height: 16px;
+			font-size: var(--text-body);
+			line-height: 1;
 			cursor: pointer;
 
 			&:hover {
@@ -115,14 +115,16 @@
 
 	h1 {
 		margin: 0;
-		font-size: 2rem;
+		font-size: 2.25rem;
+		letter-spacing: var(--tracking-display);
 		color: var(--primary);
 	}
 
 	h2 {
 		margin-top: 1rem;
 		margin-bottom: 0.75rem;
-		font-size: 1.25rem;
+		font-size: 1.375rem;
+		letter-spacing: var(--tracking-heading);
 		color: var(--primary);
 		border-bottom: 1px solid var(--color-neutral-200);
 		padding-bottom: 0.25rem;
@@ -134,8 +136,8 @@
 
 	h3 {
 		margin: 0;
-		font-size: 1rem;
-		font-weight: 600;
+		font-size: 1.0625rem;
+		font-weight: var(--font-weight-semibold);
 	}
 
 	.role,
@@ -144,8 +146,9 @@
 	}
 
 	.meta {
-		font-size: 0.9rem;
+		font-size: 0.9375rem;
 		color: var(--muted);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.contact-links {
@@ -203,7 +206,7 @@
 
 	/* Sidebar */
 	.sidebar {
-		font-size: 0.9rem;
+		font-size: 0.9375rem;
 	}
 
 	.skill-tags {

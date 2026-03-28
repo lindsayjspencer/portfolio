@@ -5,8 +5,8 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	padding: 3.5rem 2rem 10rem 2rem;
-	padding-bottom: calc(var(--chat-container-height) + 4rem) !important;
+	padding-block: 3.5rem var(--page-view-bottom-padding);
+	padding-inline: 2rem;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 
@@ -29,25 +29,27 @@
 	}
 
 	&__title {
-		font-size: 2.5rem;
-		font-weight: 700;
+		font-size: var(--text-display-lg);
+		font-weight: var(--font-weight-semibold);
+		letter-spacing: var(--tracking-display);
 		color: var(--color-neutral-900);
 		margin: 0 0 0.5rem 0;
 		line-height: 1.2;
 	}
 
 	&__subtitle {
-		font-size: 1rem;
+		font-size: var(--text-body-lg);
 		color: var(--color-neutral-600);
 		margin: 0;
-		font-weight: 400;
+		font-weight: var(--font-weight-regular);
+		line-height: var(--leading-copy);
 	}
 
 	&__legend {
 		display: flex;
 		align-items: center;
 		gap: 1.5rem;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		color: var(--color-neutral-600);
 	}
 
@@ -158,7 +160,8 @@
 				font-size: 1.5rem;
 				opacity: 0.08;
 				animation: float 8s ease-in-out infinite;
-				font-family: 'JetBrains Mono', monospace;
+				font-family: var(--font-family-display);
+				letter-spacing: -0.05em;
 
 				&:nth-child(1) {
 					top: 15%;
@@ -225,15 +228,15 @@
 			}
 
 			.title {
-				font-size: 0.875rem;
-				font-weight: 600;
+				font-size: var(--text-sm);
+				font-weight: var(--font-weight-semibold);
 				margin-bottom: 0.25rem;
 				color: var(--color-neutral-500);
 			}
 
 			.subtitle {
-				font-size: 0.75rem;
-				line-height: 1.3;
+				font-size: var(--text-label);
+				line-height: 1.45;
 				opacity: 0.8;
 			}
 		}
@@ -331,7 +334,8 @@
 	text-align: right;
 	padding: 8px 16px 8px 12px;
 	font-weight: 600;
-	font-size: 0.875rem;
+	font-size: 0.9375rem;
+	line-height: 1.4;
 	color: var(--color-neutral-900);
 	white-space: nowrap;
 	z-index: 1;
@@ -356,6 +360,7 @@
 		font-size: 0.75rem;
 		font-weight: 500;
 		color: var(--color-neutral-500);
+		font-variant-numeric: tabular-nums;
 		background: var(--color-neutral-100);
 		border-radius: 12px;
 		padding: 2px 6px;
@@ -486,6 +491,7 @@
 	font-size: 0.6rem;
 	font-weight: 500;
 	color: var(--color-neutral-500);
+	font-variant-numeric: tabular-nums;
 	background: var(--color-neutral-100);
 	border-radius: 8px;
 	padding: 1px 4px;
@@ -571,7 +577,8 @@
 		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 		color: white;
 		padding: 6px 8px;
-		font-size: 12px;
+		font-size: 0.8125rem;
+		font-family: var(--font-family-body);
 		line-height: 1.2;
 	}
 
@@ -596,7 +603,7 @@
 	justify-content: center;
 	min-height: 200px;
 	color: var(--color-neutral-600);
-	font-size: 14px;
+	font-size: 0.9375rem;
 }
 
 // Empty state
@@ -611,22 +618,22 @@
 
 	h3 {
 		margin: 0 0 8px 0;
-		font-size: 16px;
+		font-size: 1rem;
 		font-weight: 500;
 		color: var(--color-neutral-900);
 	}
 
 	p {
 		margin: 0;
-		font-size: 14px;
+		font-size: 0.9375rem;
 	}
 }
 
 // Responsive Design - matching ProjectsGridView breakpoints
 @media (max-width: 768px) {
 	.skills-matrix-view {
-		padding: 4rem 1rem 6rem 1rem;
-		padding-bottom: calc(var(--chat-container-height) + 4rem);
+		padding-block-start: 4rem;
+		padding-inline: 1rem;
 
 		&__container {
 			width: 100%;
@@ -693,7 +700,8 @@
 // Very small screens (mobile)
 @media (max-width: 480px) {
 	.skills-matrix-view {
-		padding: 3rem 0.75rem 6rem 0.75rem;
+		padding-block-start: 3rem;
+		padding-inline: 0.75rem;
 
 		&__title {
 			font-size: 1.75rem;

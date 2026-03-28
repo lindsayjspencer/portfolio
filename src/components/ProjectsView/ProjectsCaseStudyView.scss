@@ -16,8 +16,8 @@
 	-webkit-overflow-scrolling: touch;
 	display: block;
 	color: var(--color-neutral-900);
-	padding: 3.5rem 2rem 10rem 2rem;
-	padding-bottom: calc(var(--chat-container-height) + 4rem) !important;
+	padding-block: 3.5rem var(--page-view-bottom-padding);
+	padding-inline: 2rem;
 
 	.pcs-container {
 		max-width: 1200px;
@@ -54,15 +54,17 @@
 	}
 
 	.pcs-title {
-		font-size: 2.5rem;
+		font-size: var(--text-display-lg);
+		font-weight: var(--font-weight-semibold);
+		letter-spacing: var(--tracking-display);
 		line-height: 1.2;
-
 		margin: 0;
 	}
 
 	.pcs-period {
 		color: var(--color-neutral-600);
-		font-size: 0.95rem;
+		font-size: var(--text-sm);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.pcs-tech {
@@ -92,15 +94,17 @@
 		padding: var(--pcs-card-pad);
 
 		h2 {
-			font-size: 1.25rem;
-			font-weight: 600;
+			font-size: 1.375rem;
+			font-weight: var(--font-weight-semibold);
+			letter-spacing: var(--tracking-heading);
 			color: var(--color-neutral-900);
 			margin: 0 0 0.75rem 0;
 		}
 
 		p {
 			color: var(--color-neutral-650, var(--color-neutral-600));
-			line-height: 1.6;
+			font-size: var(--text-body);
+			line-height: var(--leading-copy);
 			margin: 0;
 		}
 	}
@@ -146,8 +150,9 @@
 	}
 
 	.pcs-tile-title {
-		font-size: 1rem;
-		font-weight: 600;
+		font-size: 1.0625rem;
+		font-weight: var(--font-weight-semibold);
+		letter-spacing: var(--tracking-heading);
 		color: var(--color-neutral-900);
 		margin: 0 0 4px 0;
 		overflow: hidden;
@@ -159,9 +164,10 @@
 	}
 
 	.pcs-tile-text {
-		font-size: 0.9rem;
+		font-size: var(--text-body);
 		color: var(--color-neutral-700);
 		margin: 0;
+		line-height: 1.55;
 		display: -webkit-box;
 		-webkit-line-clamp: 3;
 		line-clamp: 3;
@@ -246,8 +252,8 @@
 		max-width: 70ch;
 		p {
 			margin: 0;
-			font-size: 0.95rem;
-			line-height: 1.5;
+			font-size: var(--text-body);
+			line-height: var(--leading-copy-loose);
 			display: -webkit-box;
 			-webkit-line-clamp: 3;
 			line-clamp: 3;
@@ -264,8 +270,8 @@
 		background: none;
 		border: none;
 		color: var(--color-primary-600);
-		font-size: 0.85rem;
-		font-weight: 600;
+		font-size: var(--text-sm);
+		font-weight: var(--font-weight-semibold);
 		padding: 0;
 		margin-top: 6px;
 		cursor: pointer;
@@ -283,7 +289,8 @@
 		}
 		figcaption {
 			color: var(--color-neutral-600);
-			font-size: 0.9rem;
+			font-size: var(--text-sm);
+			line-height: 1.5;
 			margin-top: 0.5rem;
 		}
 	}
@@ -315,7 +322,8 @@
 		li {
 			margin: 0.25rem 0;
 			color: var(--color-neutral-600);
-			line-height: 1.5;
+			font-size: var(--text-body);
+			line-height: var(--leading-copy);
 		}
 	}
 
@@ -326,12 +334,14 @@
 			font-size: 1.1rem;
 			font-style: italic;
 			color: var(--color-neutral-700);
+			line-height: 1.6;
 			margin: 0;
 		}
 		footer {
 			margin-top: 0.5rem;
 			color: var(--color-neutral-500);
-			font-size: 0.9rem;
+			font-size: var(--text-sm);
+			font-variant-numeric: tabular-nums;
 		}
 	}
 
@@ -351,21 +361,26 @@
 
 		.pcs-metric-label {
 			color: var(--color-neutral-500);
-			font-size: 0.85rem;
-			font-weight: 500;
+			font-size: var(--text-label);
+			font-weight: var(--font-weight-semibold);
+			letter-spacing: var(--tracking-label);
+			text-transform: uppercase;
 		}
 
 		.pcs-metric-value {
 			color: var(--color-neutral-900);
-			font-size: 1.1rem;
-			font-weight: 600;
+			font-size: 1.25rem;
+			font-weight: var(--font-weight-semibold);
+			line-height: 1.2;
+			font-variant-numeric: tabular-nums;
 		}
 	}
 
 	// Mobile responsive adjustments
 	@media (max-width: 768px) {
 		// Match grid view mobile padding
-		padding: 4rem 1rem 6rem 1rem;
+		padding-block-start: 4rem;
+		padding-inline: 1rem;
 		.pcs-tile {
 			min-height: 72px;
 		}
@@ -405,7 +420,8 @@
 	// Very small screens
 	@media (max-width: 480px) {
 		// Keep consistent padding approach for very small screens
-		padding: 5rem 0.75rem 6rem 0.75rem;
+		padding-block-start: 5rem;
+		padding-inline: 0.75rem;
 
 		.pcs-section {
 			padding: 0.75rem;

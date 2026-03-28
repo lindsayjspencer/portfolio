@@ -23,8 +23,9 @@
 
 		h2 {
 			margin: 0;
-			font-size: 1.35rem;
-			font-weight: 700;
+			font-size: 1.375rem;
+			font-weight: var(--font-weight-semibold);
+			letter-spacing: var(--tracking-heading);
 			color: var(--color-neutral-900);
 		}
 
@@ -47,8 +48,8 @@
 
 		p {
 			margin: 0;
-			font-size: 0.95rem;
-			line-height: 1.5;
+			font-size: var(--text-body);
+			line-height: var(--leading-copy-loose);
 			display: -webkit-box;
 			-webkit-line-clamp: 3;
 			line-clamp: 3;
@@ -66,8 +67,8 @@
 		background: none;
 		border: none;
 		color: var(--color-primary-600);
-		font-size: 0.85rem;
-		font-weight: 600;
+		font-size: var(--text-sm);
+		font-weight: var(--font-weight-semibold);
 		padding: 0;
 		margin-top: 6px;
 		cursor: pointer;
@@ -90,9 +91,9 @@
 		align-items: center;
 		gap: 6px;
 		color: var(--color-neutral-500);
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.02em;
+		font-size: var(--text-caption);
+		font-weight: var(--font-weight-semibold);
+		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
 
@@ -131,8 +132,9 @@
 	}
 
 	&__tile-title {
-		font-size: 1rem;
-		font-weight: 600;
+		font-size: 1.0625rem;
+		font-weight: var(--font-weight-semibold);
+		letter-spacing: var(--tracking-heading);
 		color: var(--color-neutral-900);
 		margin: 0 0 4px 0;
 		// Clamp long titles to a single line with ellipsis
@@ -145,15 +147,17 @@
 	}
 
 	&__tile-meta {
-		font-size: 0.8rem;
+		font-size: var(--text-label);
 		color: var(--color-neutral-500);
 		margin-bottom: 6px;
+		font-variant-numeric: tabular-nums;
 	}
 
 	&__tile-text {
-		font-size: 0.9rem;
+		font-size: var(--text-body);
 		color: var(--color-neutral-700);
 		margin: 0;
+		line-height: 1.55;
 		// Clamp body text to 3 lines with ellipsis
 		display: -webkit-box;
 		-webkit-line-clamp: 3;

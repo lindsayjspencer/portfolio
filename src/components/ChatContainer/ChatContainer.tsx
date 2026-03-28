@@ -147,10 +147,12 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container) return;
+		const shell = container.closest('.home-page');
+		if (!(shell instanceof HTMLElement)) return;
 
 		const updateChatHeight = () => {
 			const rect = container.getBoundingClientRect();
-			document.documentElement.style.setProperty('--chat-container-height', `${rect.height}px`);
+			shell.style.setProperty('--chat-container-height', `${rect.height}px`);
 		};
 
 		const resizeObserver = new ResizeObserver(updateChatHeight);
@@ -161,6 +163,7 @@ export function ChatContainer({ onSubmitSuccess }: ChatContainerProps) {
 
 		return () => {
 			resizeObserver.disconnect();
+			shell.style.removeProperty('--chat-container-height');
 		};
 	}, []);
 

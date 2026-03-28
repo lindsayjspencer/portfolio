@@ -1,9 +1,9 @@
 import type { useTheme } from '~/contexts/theme-context';
-import { lato } from '~/lib/fonts';
+import { bodyFont } from '~/lib/fonts';
 import type { ExtendedNodeObject, ForceDirectedGraphNode, AnchorNode } from './Common';
 import { isAnchorNode } from './Common';
 
-const latoFontFamily = `${lato.style.fontFamily}, sans-serif`;
+const canvasFontFamily = `${bodyFont.style.fontFamily}, "Segoe UI", sans-serif`;
 
 // Type definitions for drawing utilities
 interface GraphNodeThemeSet {
@@ -82,8 +82,8 @@ interface NodeLayout {
 }
 
 export class DrawingUtils {
-	private static getLatoFont(size: number): string {
-		return `normal ${size}px ${latoFontFamily}`;
+	private static getCanvasFont(size: number, weight = 500): string {
+		return `${weight} ${size}px ${canvasFontFamily}`;
 	}
 
 	private static isRoleNodeSettings(settings: CustomNodeSettings): settings is RoleNodeSettings {
@@ -567,7 +567,7 @@ export class DrawingUtils {
 		const height = dimensions.scale(25);
 
 		// Calculate text width
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(14), 500);
 		const nameTextWidth = ctx.measureText(itemName).width;
 		const totalWidth =
 			dimensions.padding + dimensions.iconSize + dimensions.padding + nameTextWidth + dimensions.padding;
@@ -592,7 +592,7 @@ export class DrawingUtils {
 		// Draw text
 		DrawingUtils.setupTextRendering(ctx);
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(14), 500);
 		ctx.fillText(itemName, layout.textStartX, y);
 
 		return {
@@ -682,10 +682,10 @@ export class DrawingUtils {
 		const height = dimensions.scale(40); // Taller for two lines
 
 		// Text measurements
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(14), 500);
 		const titleTextWidth = ctx.measureText(position).width;
 
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(12), 400);
 		const companyTextWidth = ctx.measureText(company).width;
 
 		// Use the wider text to determine node width
@@ -710,14 +710,14 @@ export class DrawingUtils {
 
 		// Role title (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(14), 500);
 		const titleY = y - dimensions.scale(8);
 		ctx.fillText(position, layout.textStartX, titleY);
 
 		// Company name (secondary text)
 		if (company) {
 			ctx.fillStyle = currentStyle.resourceTypeIconColor;
-			ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
+			ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(12), 400);
 			const companyY = y + dimensions.scale(8);
 			ctx.fillText(company, layout.textStartX, companyY);
 		}
@@ -769,10 +769,10 @@ export class DrawingUtils {
 		const height = dimensions.scale(40); // Same as role nodes
 
 		// Text measurements
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(14), 500);
 		const skillTextWidth = ctx.measureText(itemName).width;
 
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(12), 400);
 		const subtitleTextWidth = ctx.measureText(subtitle).width;
 
 		// Use the wider text to determine node width
@@ -799,13 +799,13 @@ export class DrawingUtils {
 
 		// Skill name (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(14), 500);
 		const skillY = y - dimensions.scale(8); // Move up for subtitle
 		ctx.fillText(itemName, layout.textStartX, skillY);
 
 		// Level + tag (secondary text)
 		ctx.fillStyle = currentStyle.resourceTypeIconColor;
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(12), 400);
 		const subtitleY = y + dimensions.scale(8);
 		ctx.fillText(subtitle, layout.textStartX, subtitleY);
 
@@ -862,10 +862,10 @@ export class DrawingUtils {
 		const height = dimensions.scale(40); // Same as role and skill nodes
 
 		// Text measurements
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(14), 500);
 		const projectTextWidth = ctx.measureText(itemName).width;
 
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(12), 400);
 		const subtitleTextWidth = subtitle ? ctx.measureText(subtitle).width : 0;
 
 		// Use the wider text to determine node width
@@ -886,14 +886,14 @@ export class DrawingUtils {
 
 		// Project name (primary text)
 		ctx.fillStyle = currentStyle.nodeText;
-		ctx.font = DrawingUtils.getLatoFont(dimensions.scale(14));
+		ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(14), 500);
 		const projectY = subtitle ? y - dimensions.scale(8) : y; // Move up if there's a subtitle
 		ctx.fillText(itemName, layout.textStartX, projectY);
 
 		// Time + tags (secondary text)
 		if (subtitle) {
 			ctx.fillStyle = currentStyle.resourceTypeIconColor;
-			ctx.font = DrawingUtils.getLatoFont(dimensions.scale(12));
+			ctx.font = DrawingUtils.getCanvasFont(dimensions.scale(12), 400);
 			const subtitleY = y + dimensions.scale(8);
 			ctx.fillText(subtitle, layout.textStartX, subtitleY);
 		}

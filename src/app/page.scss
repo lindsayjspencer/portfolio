@@ -4,6 +4,13 @@
 	align-items: stretch;
 }
 .home-page {
+	--chat-container-height: 0px;
+	--chat-resting-bottom-offset: 1.5rem;
+	--page-view-bottom-gap: 0.75rem;
+	--page-view-bottom-padding: calc(
+		var(--chat-container-height) + var(--chat-resting-bottom-offset) + var(--page-view-bottom-gap)
+	);
+
 	display: flex;
 	height: 100vh;
 	width: 100%;
@@ -18,6 +25,26 @@
 	background-size: 400% 400%;
 	animation: subtle-gradient 12s ease-in-out infinite;
 	position: relative;
+
+	@media (max-width: 768px) {
+		--chat-resting-bottom-offset: 1.25rem;
+		--page-view-bottom-gap: 0.625rem;
+	}
+
+	@media (max-width: 640px) {
+		--chat-resting-bottom-offset: 0px;
+		--page-view-bottom-gap: 0.5rem;
+	}
+
+	@media (min-width: 1280px) {
+		--chat-resting-bottom-offset: 2rem;
+		--page-view-bottom-gap: 0.875rem;
+	}
+
+	@media (min-width: 1536px) {
+		--chat-resting-bottom-offset: 2.5rem;
+		--page-view-bottom-gap: 1rem;
+	}
 
 	.theme-switcher-container {
 		position: absolute;
@@ -100,15 +127,6 @@
 /* Base font + smoothing */
 html,
 body {
-	font-family:
-		var(--font-inter),
-		ui-sans-serif,
-		system-ui,
-		-apple-system,
-		'Segoe UI',
-		Roboto,
-		'Helvetica Neue',
-		Arial;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }

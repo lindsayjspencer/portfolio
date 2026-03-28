@@ -4,8 +4,8 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	padding: 3.5rem 2rem 10rem 2rem;
-	padding-bottom: calc(var(--chat-container-height) + 4rem) !important;
+	padding-block: 3.5rem var(--page-view-bottom-padding);
+	padding-inline: 2rem;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 
@@ -19,8 +19,9 @@
 	}
 
 	&__title {
-		font-size: 2.5rem;
-		font-weight: 700;
+		font-size: var(--text-display-lg);
+		font-weight: var(--font-weight-semibold);
+		letter-spacing: var(--tracking-display);
 		color: var(--color-neutral-900);
 		margin: 0;
 		line-height: 1.2;
@@ -31,8 +32,9 @@
 	}
 
 	&__section-title {
-		font-size: 1.5rem;
-		font-weight: 600;
+		font-size: var(--text-title-md);
+		font-weight: var(--font-weight-semibold);
+		letter-spacing: var(--tracking-heading);
 		color: var(--color-neutral-900);
 		margin: 0 0 1.5rem 0;
 		display: flex;
@@ -60,8 +62,8 @@
 	}
 
 	@media (max-width: 768px) {
-		padding: 4rem 1rem 6rem 1rem;
-		padding-bottom: calc(var(--chat-container-height) + 4rem);
+		padding-block-start: 4rem;
+		padding-inline: 1rem;
 
 		&__container {
 			width: 100%;
@@ -102,7 +104,8 @@
 	// Very small screens
 	@media (max-width: 480px) {
 		// Match case study view granularity for very small screens
-		padding: 5rem 0.75rem 6rem 0.75rem;
+		padding-block-start: 5rem;
+		padding-inline: 0.75rem;
 
 		&__title {
 			font-size: 1.75rem;
@@ -166,11 +169,12 @@
 	}
 
 	&__title {
-		font-size: 1.25rem;
-		font-weight: 600;
+		font-size: 1.1875rem;
+		font-weight: var(--font-weight-semibold);
+		letter-spacing: var(--tracking-heading);
 		color: var(--color-neutral-900);
 		margin: 0;
-		line-height: 1.3;
+		line-height: 1.25;
 		flex: 1;
 	}
 
@@ -182,10 +186,11 @@
 	}
 
 	&__period {
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		color: var(--color-neutral-600);
-		font-weight: 500;
-		line-height: 1.2;
+		font-weight: var(--font-weight-medium);
+		line-height: 1.35;
+		font-variant-numeric: tabular-nums;
 	}
 
 	&__duration {
@@ -194,9 +199,9 @@
 	}
 
 	&__summary {
-		font-size: 0.9rem;
+		font-size: var(--text-body);
 		color: var(--color-neutral-600);
-		line-height: 1.4;
+		line-height: var(--leading-copy);
 		margin: 0;
 		display: -webkit-box;
 		-webkit-line-clamp: 3;
@@ -245,10 +250,11 @@
 	}
 
 	&__stat {
-		font-size: 0.75rem;
+		font-size: var(--text-label);
 		color: var(--color-neutral-500);
-		font-weight: 500;
+		font-weight: var(--font-weight-medium);
 		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
 	}
 
 	&__links {

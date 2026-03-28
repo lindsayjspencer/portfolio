@@ -15,10 +15,10 @@
 		all: unset;
 		font-family: inherit;
 		border-radius: 0.5rem;
-		font-size: 0.75rem;
-		font-weight: 600;
+		font-size: 0.8125rem;
+		font-weight: var(--font-weight-semibold);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.08em;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -99,10 +99,10 @@
 
 	.dropdown-header {
 		color: var(--color-neutral-600);
-		font-size: 0.75rem;
-		font-weight: 600;
+		font-size: var(--text-caption);
+		font-weight: var(--font-weight-semibold);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.1em;
 		margin-bottom: 0.5rem;
 		padding: 0 20px 0.5rem 25px;
 		border-bottom: 1px solid var(--color-neutral-200);
@@ -110,8 +110,8 @@
 
 	.mode-button {
 		all: unset;
-		font-size: 13px;
-		line-height: 1;
+		font-size: 0.875rem;
+		line-height: 1.25;
 		color: var(--color-neutral-700);
 		border-radius: 3px;
 		display: flex;
@@ -179,7 +179,7 @@
 		}
 
 		.mode-button {
-			font-size: 12px;
+			font-size: 0.8125rem;
 			height: 22px;
 			padding-left: 20px;
 		}
@@ -260,8 +260,8 @@
 
 	.mode-button {
 		// Make submenu items consistent with main menu styling
-		font-size: 13px;
-		line-height: 1;
+		font-size: 0.875rem;
+		line-height: 1.25;
 		color: var(--color-neutral-700);
 		border-radius: 3px;
 		display: flex;
@@ -305,7 +305,7 @@
 		padding: 4px;
 
 		.mode-button {
-			font-size: 12px;
+			font-size: 0.8125rem;
 			height: 22px;
 			padding-left: 20px;
 		}

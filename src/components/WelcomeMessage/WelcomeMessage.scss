@@ -25,13 +25,14 @@
 
 /* Name */
 .welcome-message .name {
-	font-size: 2.5rem; /* ~40px */
+	font-family: var(--font-family-body);
+	font-size: var(--text-display-xl);
 	font-weight: 800;
-	letter-spacing: -0.02em;
-	line-height: 1.1;
+	letter-spacing: -0.055em;
+	line-height: 0.92;
 	margin: 0;
 	color: var(--color-neutral-900);
-	text-shadow: 0 1px 0 rgba(255,255,255,.35); /* subtle lift on particle bg */
+	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35); /* subtle lift on particle bg */
 }
 
 /* Job title row */
@@ -46,10 +47,12 @@
 
 /* Title text */
 .welcome-message .job-title {
-	font-size: 1.125rem; /* 18px */
-	font-weight: 500;
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
 	color: var(--color-neutral-600);
-	line-height: 1.2;
+	line-height: 1.35;
 }
 
 /* Subtle entrance */
@@ -66,8 +69,9 @@
 
 /* Responsive scale */
 @media (min-width: 768px) {
-	.welcome-message .name { font-size: 3rem; }     /* 48px */
-	.welcome-message .job-title { font-size: 1.25rem; } /* 20px */
+	.welcome-message .job-title {
+		font-size: 0.9375rem;
+	}
 	.welcome-message .job-title canvas,
 	.welcome-message .job-title .flagword,
 	.welcome-message .job-title .flag-word { height: 2.1rem; }

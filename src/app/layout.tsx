@@ -2,7 +2,7 @@ import '~/styles/main.scss';
 import { type Metadata } from 'next';
 import { headers } from 'next/headers';
 import { IconPreloader } from '~/components/Ui';
-import { inter, lato } from '~/lib/fonts';
+import { bodyFont, displayFont } from '~/lib/fonts';
 
 const baseMetadata: Metadata = {
 	title: 'Lindsay Spencer - Interactive Portfolio',
@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="en" className={`${inter.variable} ${lato.variable}`}>
+		<html lang="en" className={`${bodyFont.variable} ${displayFont.variable}`}>
 			<head>
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -1,16 +1,15 @@
-import { Inter, Lato } from 'next/font/google';
+import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
 
-export const inter = Inter({
+export const bodyFont = Plus_Jakarta_Sans({
 	subsets: ['latin'],
 	weight: ['400', '500', '600', '700', '800'],
 	display: 'swap',
-	variable: '--font-inter',
+	variable: '--font-body',
 });
 
-export const lato = Lato({
+export const displayFont = Fraunces({
 	subsets: ['latin'],
-	weight: ['400'],
-	style: ['normal'],
+	weight: ['600', '700'],
 	display: 'swap',
-	variable: '--font-lato',
+	variable: '--font-display',
 });

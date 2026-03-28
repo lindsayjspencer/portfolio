@@ -4,31 +4,115 @@
 /* Tippy.js tooltips */
 @import 'tippy.js/dist/tippy.css';
 
+/* Typography system */
+:root {
+	--font-family-body:
+		var(--font-body),
+		'Segoe UI',
+		'Helvetica Neue',
+		Arial,
+		sans-serif;
+	--font-family-display:
+		var(--font-display),
+		'Times New Roman',
+		serif;
+	--font-family-mono:
+		'JetBrains Mono',
+		'SFMono-Regular',
+		Consolas,
+		monospace;
+
+	--font-weight-regular: 400;
+	--font-weight-medium: 500;
+	--font-weight-semibold: 600;
+	--font-weight-bold: 700;
+
+	--text-caption: 0.75rem;
+	--text-label: 0.8125rem;
+	--text-sm: 0.875rem;
+	--text-body: 1rem;
+	--text-body-lg: 1.125rem;
+	--text-title-sm: 1.25rem;
+	--text-title-md: 1.5rem;
+	--text-display-lg: clamp(2.4rem, 2rem + 1vw, 3.2rem);
+	--text-display-xl: clamp(3rem, 2.45rem + 1.45vw, 4.25rem);
+
+	--leading-tight: 1.08;
+	--leading-heading: 1.18;
+	--leading-copy: 1.62;
+	--leading-copy-loose: 1.7;
+
+	--tracking-display: -0.04em;
+	--tracking-heading: -0.025em;
+	--tracking-body: -0.01em;
+	--tracking-label: 0.06em;
+
+	--measure-reading: 68ch;
+}
+
 /* Base styles */
-* {
+html {
+	font-size: 100%;
+	font-kerning: normal;
+	text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
 	padding: 0;
 	margin: 0;
-	font-family: var(--font-inter), sans-serif;
+	box-sizing: border-box;
 }
-
-/*typography*/
-
-a {
-	color: var(--color-primary-500);
-}
-
-.material-symbols-outlined {
-	font-size: 1.3rem;
-}
-
-/*divs*/
 
 body {
-	background-color: #fff;
+	background-color: var(--color-neutral-0, #fcfcfd);
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	min-height: 100vh;
+	font-family: var(--font-family-body);
+	font-size: var(--text-body);
+	line-height: var(--leading-copy);
+	letter-spacing: var(--tracking-body);
+	color: var(--color-neutral-900);
+	font-feature-settings:
+		'kern' 1,
+		'liga' 1,
+		'calt' 1;
+}
+
+:where(h1, h2) {
+	font-family: var(--font-family-display);
+	font-weight: var(--font-weight-semibold);
+	line-height: var(--leading-heading);
+	letter-spacing: var(--tracking-display);
+	text-wrap: balance;
+}
+
+:where(h3, h4, h5, h6) {
+	font-family: var(--font-family-body);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1.24;
+	letter-spacing: var(--tracking-heading);
+}
+
+:where(p, li, figcaption, blockquote) {
+	max-width: var(--measure-reading);
+}
+
+:where(button, input, textarea, select) {
+	font: inherit;
+	letter-spacing: inherit;
+}
+
+a {
+	color: var(--color-primary-600);
+	text-underline-offset: 0.12em;
+}
+
+.material-symbols-outlined {
+	font-size: 1.3rem;
 }
 
 textarea:focus {

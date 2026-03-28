@@ -2,7 +2,6 @@ import type {
 	ForceDirectedGraphNode,
 	ForceDirectedGraphData,
 	ForceDirectedGraphLink,
-	AnchorNode,
 } from '~/components/ForceGraph/Common';
 import { makeAnchor, linkToAnchor, connectAnchors } from '~/components/ForceGraph/Common';
 import { type Graph, type Node, type Edge, type SkillNode, type ProjectNode } from '~/lib/PortfolioStore';
@@ -20,50 +19,50 @@ function getAnchorPositions(type: 'venn' | 'sideBySide' | 'spectrum'): {
 	center?: { fx: number; fy: number };
 } {
 	const isMobile = isMobileLayout();
-	
+
 	if (type === 'venn') {
 		if (isMobile) {
 			return {
 				left: { fx: 0, fy: -150 },
 				right: { fx: 0, fy: 150 },
-				center: { fx: 0, fy: 0 }
+				center: { fx: 0, fy: 0 },
 			};
 		}
 		return {
 			left: { fx: -220, fy: 0 },
 			right: { fx: 220, fy: 0 },
-			center: { fx: 0, fy: 0 }
+			center: { fx: 0, fy: 0 },
 		};
 	}
-	
+
 	if (type === 'sideBySide') {
 		if (isMobile) {
 			return {
 				left: { fx: 0, fy: -200 },
-				right: { fx: 0, fy: 200 }
+				right: { fx: 0, fy: 200 },
 			};
 		}
 		return {
 			left: { fx: -220, fy: 0 },
-			right: { fx: 220, fy: 0 }
+			right: { fx: 220, fy: 0 },
 		};
 	}
-	
+
 	if (type === 'spectrum') {
 		if (isMobile) {
 			return {
 				left: { fx: 0, fy: -180 },
 				right: { fx: 0, fy: 180 },
-				center: { fx: 0, fy: 0 }
+				center: { fx: 0, fy: 0 },
 			};
 		}
 		return {
 			left: { fx: -240, fy: 0 },
 			right: { fx: 240, fy: 0 },
-			center: { fx: 0, fy: 0 }
+			center: { fx: 0, fy: 0 },
 		};
 	}
-	
+
 	return { left: { fx: -220, fy: 0 }, right: { fx: 220, fy: 0 } };
 }
 
